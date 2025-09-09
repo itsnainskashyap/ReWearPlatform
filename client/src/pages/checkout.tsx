@@ -149,7 +149,7 @@ export default function Checkout() {
             <Button
               variant="ghost"
               size="icon"
-              onClick={() => navigate(-1)}
+              onClick={() => navigate("/")}
               className="hover-lift rounded-2xl"
             >
               <ArrowLeft className="w-6 h-6" />

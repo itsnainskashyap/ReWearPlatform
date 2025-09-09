@@ -211,11 +211,11 @@ export class DatabaseStorage implements IStorage {
       .orderBy(desc(products.createdAt));
 
     if (options.limit) {
-      query = query.limit(options.limit);
+      query = query.limit(options.limit) as any;
     }
 
     if (options.offset) {
-      query = query.offset(options.offset);
+      query = query.offset(options.offset) as any;
     }
 
     return await query;
