@@ -36,12 +36,12 @@ export default function CartModal() {
         onClick={handleBackdropClick}
       />
       <div 
-        className={`absolute bottom-0 left-0 right-0 glassmorphism border-t border-white/20 rounded-t-3xl transition-all duration-500 h-[85vh] flex flex-col ${
+        className={`fixed bottom-20 left-0 right-0 glassmorphism border-t border-white/20 rounded-t-3xl transition-all duration-500 h-[75vh] flex flex-col ${
           isVisible ? 'animate-slide-up' : 'translate-y-full'
         }`}
       >
         {/* Header */}
-        <div className="p-6 border-b border-white/10">
+        <div className="p-4 border-b border-white/10 flex-shrink-0">
           <div className="flex items-center justify-between">
             <div className="flex items-center space-x-3">
               <div className="w-10 h-10 bg-gradient-to-r from-accent to-accent/80 rounded-2xl flex items-center justify-center">
@@ -71,7 +71,7 @@ export default function CartModal() {
         </div>
 
         {/* Content */}
-        <div className="flex-1 overflow-y-auto p-6 pb-6">
+        <div className="flex-1 overflow-y-auto p-4 pb-4">
           {isLoading ? (
             <div className="space-y-4">
               {[...Array(3)].map((_, index) => (
@@ -215,8 +215,8 @@ export default function CartModal() {
                 )}
 
                 {/* Total */}
-                <div className="border-t border-white/10 pt-4 sticky bottom-0 bg-background/95 backdrop-blur-sm rounded-b-3xl p-4 -mx-6 -mb-6">
-                  <div className="flex justify-between items-center text-xl font-bold mb-4">
+                <div className="border-t border-white/10 pt-3 sticky bottom-0 bg-background/95 backdrop-blur-sm rounded-b-3xl p-4 -mx-4 -mb-4">
+                  <div className="flex justify-between items-center text-lg font-bold mb-3">
                     <span>Total</span>
                     <span className="gradient-text text-2xl" data-testid="text-cart-total">
                       ₹{cart?.items?.reduce((total: number, item: any) => 
@@ -226,7 +226,7 @@ export default function CartModal() {
                   </div>
                   
                   <Button 
-                    className="w-full h-14 bg-gradient-to-r from-accent to-accent/90 text-accent-foreground hover:from-accent/90 hover:to-accent text-lg font-bold rounded-2xl button-glow hover-lift transition-all duration-300"
+                    className="w-full h-12 bg-gradient-to-r from-accent to-accent/90 text-accent-foreground hover:from-accent/90 hover:to-accent text-base font-bold rounded-2xl button-glow hover-lift transition-all duration-300"
                     data-testid="button-checkout"
                   >
                     <Sparkles className="w-5 h-5 mr-2" />
