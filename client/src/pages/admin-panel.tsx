@@ -208,6 +208,24 @@ export default function AdminPanel() {
   const [activeTab, setActiveTab] = useState("dashboard");
   const [, navigate] = useLocation();
   const { toast } = useToast();
+  const [showCouponDialog, setShowCouponDialog] = useState(false);
+  const [couponFormData, setCouponFormData] = useState({
+    code: "",
+    discountType: "percentage",
+    discountValue: "",
+    minPurchaseAmount: "",
+    description: ""
+  });
+  const [showProductDialog, setShowProductDialog] = useState(false);
+  const [productFormData, setProductFormData] = useState({
+    name: "",
+    description: "",
+    price: "",
+    categoryId: "",
+    brandId: "",
+    stock: "1",
+    images: []
+  });
 
   const handleLogout = () => {
     localStorage.removeItem("adminToken");
@@ -318,6 +336,81 @@ export default function AdminPanel() {
         title: "Coupon Created",
         description: "New coupon has been created successfully"
       });
+      setShowCouponDialog(false);
+      setCouponFormData({
+        code: "",
+        discountType: "percentage", 
+        discountValue: "",
+        minPurchaseAmount: "",
+        description: ""
+      });
+    }
+  });
+
+  // Delete coupon mutation
+  const deleteCoupon = useMutation({
+    mutationFn: (couponId: string) =>
+      apiRequest("DELETE", `/api/admin/coupons/${couponId}`),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["admin-coupons"] });
+      toast({
+        title: "Coupon Deleted",
+        description: "Coupon has been deleted successfully"
+      });
+    }
+  });
+
+  // Update coupon mutation
+  const updateCoupon = useMutation({
+    mutationFn: ({ couponId, data }: { couponId: string; data: any }) =>
+      apiRequest("PUT", `/api/admin/coupons/${couponId}`, data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["admin-coupons"] });
+      toast({
+        title: "Coupon Updated",
+        description: "Coupon has been updated successfully"
+      });
+    }
+  });
+
+  // Create product mutation
+  const createProduct = useMutation({
+    mutationFn: (productData: any) =>
+      apiRequest("POST", "/api/admin/products", productData),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["admin-products"] });
+      queryClient.invalidateQueries({ queryKey: ["admin-dashboard-stats"] });
+      toast({
+        title: "Product Created",
+        description: "New product has been created successfully"
+      });
+    }
+  });
+
+  // Update product mutation
+  const updateProduct = useMutation({
+    mutationFn: ({ productId, data }: { productId: string; data: any }) =>
+      apiRequest("PUT", `/api/admin/products/${productId}`, data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["admin-products"] });
+      toast({
+        title: "Product Updated",
+        description: "Product has been updated successfully"
+      });
+    }
+  });
+
+  // Delete product mutation
+  const deleteProduct = useMutation({
+    mutationFn: (productId: string) =>
+      apiRequest("DELETE", `/api/admin/products/${productId}`),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["admin-products"] });
+      queryClient.invalidateQueries({ queryKey: ["admin-dashboard-stats"] });
+      toast({
+        title: "Product Deleted",
+        description: "Product has been deleted successfully"
+      });
     }
   });
 
@@ -327,6 +420,69 @@ export default function AdminPanel() {
       setAdminToken(token);
     }
   }, []);
+
+  // Handler functions
+  const handleCreateCoupon = () => {
+    if (!couponFormData.code || !couponFormData.discountValue) {
+      toast({
+        title: "Error",
+        description: "Please fill in all required fields",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    createCoupon.mutate({
+      ...couponFormData,
+      code: couponFormData.code.toUpperCase(),
+      discountValue: parseFloat(couponFormData.discountValue),
+      minPurchaseAmount: couponFormData.minPurchaseAmount ? parseFloat(couponFormData.minPurchaseAmount) : null
+    });
+  };
+
+  const handleDeleteCoupon = (couponId: string) => {
+    if (confirm("Are you sure you want to delete this coupon?")) {
+      deleteCoupon.mutate(couponId);
+    }
+  };
+
+  const handleEditCoupon = (coupon: any) => {
+    setCouponFormData({
+      code: coupon.code,
+      discountType: coupon.discountType,
+      discountValue: coupon.discountValue,
+      minPurchaseAmount: coupon.minPurchaseAmount || "",
+      description: coupon.description || ""
+    });
+    setShowCouponDialog(true);
+  };
+
+  const handleCreateProduct = () => {
+    if (!productFormData.name || !productFormData.price || !productFormData.categoryId) {
+      toast({
+        title: "Error",
+        description: "Please fill in all required fields",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    createProduct.mutate({
+      ...productFormData,
+      price: parseFloat(productFormData.price),
+      stock: parseInt(productFormData.stock)
+    });
+  };
+
+  const handleDeleteProduct = (productId: string) => {
+    if (confirm("Are you sure you want to delete this product?")) {
+      deleteProduct.mutate(productId);
+    }
+  };
+
+  const handleUpdateOrderStatus = (orderId: string, newStatus: string) => {
+    updateOrderStatus.mutate({ orderId, status: newStatus });
+  };
 
   // Format currency
   const formatCurrency = (amount: number) => {
@@ -656,7 +812,7 @@ export default function AdminPanel() {
                     <CardDescription>Manage your product inventory</CardDescription>
                   </div>
                   <div className="flex gap-2">
-                    <Button>
+                    <Button onClick={() => setShowProductDialog(true)}>
                       <Plus className="w-4 h-4 mr-2" />
                       Add Product
                     </Button>
@@ -744,7 +900,7 @@ export default function AdminPanel() {
                       <CardTitle>Coupon Management</CardTitle>
                       <CardDescription>Create and manage discount codes</CardDescription>
                     </div>
-                    <Dialog>
+                    <Dialog open={showCouponDialog} onOpenChange={setShowCouponDialog}>
                       <DialogTrigger asChild>
                         <Button>
                           <Plus className="w-4 h-4 mr-2" />
@@ -761,11 +917,18 @@ export default function AdminPanel() {
                         <div className="space-y-4">
                           <div>
                             <Label>Coupon Code</Label>
-                            <Input placeholder="SAVE20" />
+                            <Input 
+                              placeholder="SAVE20" 
+                              value={couponFormData.code}
+                              onChange={(e) => setCouponFormData({...couponFormData, code: e.target.value})}
+                              data-testid="input-coupon-code"
+                            />
                           </div>
                           <div>
                             <Label>Discount Type</Label>
-                            <Select>
+                            <Select 
+                              value={couponFormData.discountType}
+                              onValueChange={(value) => setCouponFormData({...couponFormData, discountType: value})}>
                               <SelectTrigger>
                                 <SelectValue placeholder="Select type" />
                               </SelectTrigger>
@@ -777,13 +940,31 @@ export default function AdminPanel() {
                           </div>
                           <div>
                             <Label>Discount Value</Label>
-                            <Input type="number" placeholder="20" />
+                            <Input 
+                              type="number" 
+                              placeholder="20" 
+                              value={couponFormData.discountValue}
+                              onChange={(e) => setCouponFormData({...couponFormData, discountValue: e.target.value})}
+                              data-testid="input-discount-value"
+                            />
                           </div>
                           <div>
                             <Label>Minimum Purchase</Label>
-                            <Input type="number" placeholder="500" />
+                            <Input 
+                              type="number" 
+                              placeholder="500" 
+                              value={couponFormData.minPurchaseAmount}
+                              onChange={(e) => setCouponFormData({...couponFormData, minPurchaseAmount: e.target.value})}
+                              data-testid="input-min-purchase"
+                            />
                           </div>
-                          <Button className="w-full">Create Coupon</Button>
+                          <Button 
+                            className="w-full" 
+                            onClick={handleCreateCoupon}
+                            data-testid="button-create-coupon-submit"
+                          >
+                            Create Coupon
+                          </Button>
                         </div>
                       </DialogContent>
                     </Dialog>
@@ -818,10 +999,20 @@ export default function AdminPanel() {
                             <Badge variant="outline">
                               Used: {coupon.usageCount || 0}/{coupon.usageLimit || "∞"}
                             </Badge>
-                            <Button size="icon" variant="ghost">
+                            <Button 
+                              size="icon" 
+                              variant="ghost"
+                              onClick={() => handleEditCoupon(coupon)}
+                              data-testid={`button-edit-coupon-${coupon.id}`}
+                            >
                               <Edit className="w-4 h-4" />
                             </Button>
-                            <Button size="icon" variant="ghost">
+                            <Button 
+                              size="icon" 
+                              variant="ghost"
+                              onClick={() => handleDeleteCoupon(coupon.id)}
+                              data-testid={`button-delete-coupon-${coupon.id}`}
+                            >
                               <Trash2 className="w-4 h-4" />
                             </Button>
                           </div>
