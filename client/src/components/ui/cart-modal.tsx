@@ -36,7 +36,7 @@ export default function CartModal() {
         onClick={handleBackdropClick}
       />
       <div 
-        className={`fixed bottom-[7rem] left-4 right-4 glassmorphism border border-white/20 rounded-3xl transition-all duration-500 max-h-[70vh] flex flex-col shadow-2xl ${
+        className={`fixed bottom-[7rem] left-4 right-4 glassmorphism border border-white/20 rounded-3xl transition-all duration-500 max-h-[50vh] flex flex-col shadow-2xl ${
           isVisible ? 'animate-slide-up' : 'translate-y-full'
         }`}
       >
