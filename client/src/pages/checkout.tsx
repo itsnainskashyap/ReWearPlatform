@@ -448,7 +448,8 @@ export default function Checkout() {
                   <Button
                     onClick={handlePlaceOrder}
                     disabled={placeOrderMutation.isPending}
-                    className="flex-1 bg-gradient-to-r from-accent to-accent/90 text-accent-foreground rounded-2xl"
+                    className="flex-1 bg-gradient-to-r from-primary to-primary/80 text-primary-foreground rounded-2xl hover:from-primary/90 hover:to-primary/70"
+                    data-testid="button-place-order"
                   >
                     {placeOrderMutation.isPending ? 'Processing...' : 'Place Order'}
                   </Button>
