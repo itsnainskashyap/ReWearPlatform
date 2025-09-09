@@ -305,6 +305,27 @@ export default function AdminPanel() {
     enabled: !!adminToken && activeTab === "ai"
   });
 
+  // Products Query
+  const { data: productsData, isLoading: productsLoading } = useQuery({
+    queryKey: ["admin-products", activeTab],
+    queryFn: () => apiRequest("GET", "/api/admin/products?limit=20"),
+    enabled: !!adminToken && activeTab === "products"
+  });
+
+  // Categories Query
+  const { data: categoriesData } = useQuery({
+    queryKey: ["admin-categories"],
+    queryFn: () => apiRequest("GET", "/api/categories"),
+    enabled: !!adminToken
+  });
+
+  // Brands Query
+  const { data: brandsData } = useQuery({
+    queryKey: ["admin-brands"],
+    queryFn: () => apiRequest("GET", "/api/brands"),
+    enabled: !!adminToken
+  });
+
   // Audit Logs Query
   const { data: auditLogs, isLoading: auditLogsLoading } = useQuery({
     queryKey: ["admin-audit-logs", activeTab],
@@ -383,6 +404,16 @@ export default function AdminPanel() {
       toast({
         title: "Product Created",
         description: "New product has been created successfully"
+      });
+      setShowProductDialog(false);
+      setProductFormData({
+        name: "",
+        description: "",
+        price: "",
+        categoryId: "",
+        brandId: "",
+        stock: "1",
+        images: []
       });
     }
   });
@@ -824,11 +855,180 @@ export default function AdminPanel() {
                 </div>
               </CardHeader>
               <CardContent>
-                <p className="text-muted-foreground">
-                  Product management interface will be displayed here
-                </p>
+                {productsLoading ? (
+                  <div className="space-y-4">
+                    {[...Array(5)].map((_, i) => (
+                      <div key={i} className="h-20 bg-muted animate-pulse rounded" />
+                    ))}
+                  </div>
+                ) : (
+                  <div className="space-y-4">
+                    {productsData?.products?.map((product: any) => (
+                      <div key={product.id} className="flex items-center justify-between p-4 border rounded-lg">
+                        <div className="flex items-center gap-4">
+                          <div className="w-16 h-16 rounded bg-muted flex items-center justify-center">
+                            {product.images?.[0] ? (
+                              <img 
+                                src={product.images[0]} 
+                                alt={product.name}
+                                className="w-full h-full object-cover rounded"
+                              />
+                            ) : (
+                              <Package className="w-6 h-6 text-muted-foreground" />
+                            )}
+                          </div>
+                          <div>
+                            <p className="font-medium">{product.name}</p>
+                            <p className="text-sm text-muted-foreground">
+                              {product.category?.name} • Stock: {product.stock}
+                            </p>
+                            <p className="text-sm font-medium">{formatCurrency(product.price)}</p>
+                          </div>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <Badge variant={product.stock > 0 ? "default" : "destructive"}>
+                            {product.stock > 0 ? "In Stock" : "Out of Stock"}
+                          </Badge>
+                          <Button 
+                            size="icon" 
+                            variant="ghost"
+                            data-testid={`button-edit-product-${product.id}`}
+                          >
+                            <Edit className="w-4 h-4" />
+                          </Button>
+                          <Button 
+                            size="icon" 
+                            variant="ghost"
+                            onClick={() => handleDeleteProduct(product.id)}
+                            data-testid={`button-delete-product-${product.id}`}
+                          >
+                            <Trash2 className="w-4 h-4" />
+                          </Button>
+                        </div>
+                      </div>
+                    ))}
+                    {(!productsData?.products || productsData.products.length === 0) && (
+                      <div className="text-center py-8">
+                        <Package className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
+                        <p className="text-muted-foreground">No products found. Create your first product!</p>
+                      </div>
+                    )}
+                  </div>
+                )}
               </CardContent>
             </Card>
+
+            {/* Add Product Dialog */}
+            <Dialog open={showProductDialog} onOpenChange={setShowProductDialog}>
+              <DialogContent className="max-w-2xl">
+                <DialogHeader>
+                  <DialogTitle>Add New Product</DialogTitle>
+                  <DialogDescription>
+                    Create a new product for your store
+                  </DialogDescription>
+                </DialogHeader>
+                <div className="space-y-4 max-h-96 overflow-y-auto">
+                  <div>
+                    <Label htmlFor="product-name">Product Name *</Label>
+                    <Input
+                      id="product-name"
+                      placeholder="Product name"
+                      value={productFormData.name}
+                      onChange={(e) => setProductFormData({...productFormData, name: e.target.value})}
+                      data-testid="input-product-name"
+                    />
+                  </div>
+                  <div>
+                    <Label htmlFor="product-description">Description</Label>
+                    <Textarea
+                      id="product-description"
+                      placeholder="Product description"
+                      value={productFormData.description}
+                      onChange={(e) => setProductFormData({...productFormData, description: e.target.value})}
+                      data-testid="input-product-description"
+                    />
+                  </div>
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <Label htmlFor="product-price">Price (₹) *</Label>
+                      <Input
+                        id="product-price"
+                        type="number"
+                        placeholder="0.00"
+                        value={productFormData.price}
+                        onChange={(e) => setProductFormData({...productFormData, price: e.target.value})}
+                        data-testid="input-product-price"
+                      />
+                    </div>
+                    <div>
+                      <Label htmlFor="product-stock">Stock *</Label>
+                      <Input
+                        id="product-stock"
+                        type="number"
+                        placeholder="1"
+                        value={productFormData.stock}
+                        onChange={(e) => setProductFormData({...productFormData, stock: e.target.value})}
+                        data-testid="input-product-stock"
+                      />
+                    </div>
+                  </div>
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <Label htmlFor="product-category">Category *</Label>
+                      <Select 
+                        value={productFormData.categoryId}
+                        onValueChange={(value) => setProductFormData({...productFormData, categoryId: value})}
+                      >
+                        <SelectTrigger data-testid="select-product-category">
+                          <SelectValue placeholder="Select category" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {categoriesData?.map((category: any) => (
+                            <SelectItem key={category.id} value={category.id}>
+                              {category.name}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    <div>
+                      <Label htmlFor="product-brand">Brand</Label>
+                      <Select 
+                        value={productFormData.brandId}
+                        onValueChange={(value) => setProductFormData({...productFormData, brandId: value})}
+                      >
+                        <SelectTrigger data-testid="select-product-brand">
+                          <SelectValue placeholder="Select brand" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {brandsData?.map((brand: any) => (
+                            <SelectItem key={brand.id} value={brand.id}>
+                              {brand.name}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                  </div>
+                </div>
+                <div className="flex justify-end gap-2">
+                  <Button 
+                    variant="outline" 
+                    onClick={() => setShowProductDialog(false)}
+                    data-testid="button-cancel-product"
+                  >
+                    Cancel
+                  </Button>
+                  <Button 
+                    onClick={handleCreateProduct}
+                    disabled={createProduct.isPending}
+                    data-testid="button-create-product-submit"
+                  >
+                    {createProduct.isPending ? "Creating..." : "Create Product"}
+                  </Button>
+                </div>
+              </DialogContent>
+            </Dialog>
           </TabsContent>
 
           {/* Users Tab */}
