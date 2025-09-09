@@ -30,13 +30,13 @@ export default function CartModal() {
   };
 
   return (
-    <div className={`fixed inset-0 z-50 transition-opacity duration-300 ${isVisible ? 'opacity-100' : 'opacity-0'}`}>
+    <div className={`fixed inset-0 z-[100] transition-opacity duration-300 ${isVisible ? 'opacity-100' : 'opacity-0'}`}>
       <div 
         className="absolute inset-0 drawer-overlay"
         onClick={handleBackdropClick}
       />
       <div 
-        className={`absolute bottom-0 left-0 right-0 glassmorphism border-t border-white/20 rounded-t-3xl transition-all duration-500 max-h-[90vh] overflow-hidden ${
+        className={`absolute bottom-0 left-0 right-0 glassmorphism border-t border-white/20 rounded-t-3xl transition-all duration-500 max-h-[80vh] overflow-hidden pb-20 ${
           isVisible ? 'animate-slide-up' : 'translate-y-full'
         }`}
       >
@@ -71,7 +71,7 @@ export default function CartModal() {
         </div>
 
         {/* Content */}
-        <div className="flex-1 overflow-y-auto p-6 pb-4">
+        <div className="flex-1 overflow-y-auto p-6 pb-24">
           {isLoading ? (
             <div className="space-y-4">
               {[...Array(3)].map((_, index) => (
@@ -131,7 +131,7 @@ export default function CartModal() {
                       
                       {/* Product Info */}
                       <div className="flex-1 min-w-0">
-                        <h3 className="font-bold text-base mb-1 truncate" data-testid={`text-product-name-${item.id}`}>
+                        <h3 className="font-bold text-base mb-1 line-clamp-1" data-testid={`text-product-name-${item.id}`}>
                           {item.product.name}
                         </h3>
                         {item.product.size && (
@@ -139,11 +139,11 @@ export default function CartModal() {
                         )}
                         <div className="flex items-center space-x-2">
                           <span className="font-bold text-lg text-primary" data-testid={`text-product-price-${item.id}`}>
-                            ₹{item.product.price}
+                            ₹{parseFloat(item.product.price).toFixed(2)}
                           </span>
                           {item.product.originalPrice && parseFloat(item.product.originalPrice) > parseFloat(item.product.price) && (
                             <span className="text-sm text-muted-foreground line-through">
-                              ₹{item.product.originalPrice}
+                              ₹{parseFloat(item.product.originalPrice).toFixed(2)}
                             </span>
                           )}
                         </div>
