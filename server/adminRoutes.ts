@@ -313,13 +313,11 @@ export function setupAdminRoutes(app: Express) {
         return res.status(404).json({ message: "Order not found" });
       }
 
-      await db
-        .update(orders)
-        .set({
-          status,
-          updatedAt: new Date()
-        })
-        .where(eq(orders.id, orderId));
+      const updatedOrder = await storage.updateOrderStatus(orderId, status);
+      
+      if (!updatedOrder) {
+        return res.status(404).json({ message: "Order not found" });
+      }
 
       await logAuditAction(
         req.admin!.id,
@@ -331,7 +329,7 @@ export function setupAdminRoutes(app: Express) {
         req.headers["user-agent"]
       );
 
-      res.json({ message: "Order status updated successfully" });
+      res.json({ message: "Order status updated successfully", order: updatedOrder });
     } catch (error) {
       console.error("Order status update error:", error);
       res.status(500).json({ message: "Failed to update order status" });
