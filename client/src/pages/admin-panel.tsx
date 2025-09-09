@@ -209,6 +209,15 @@ export default function AdminPanel() {
   const [, navigate] = useLocation();
   const { toast } = useToast();
 
+  const handleLogout = () => {
+    localStorage.removeItem("adminToken");
+    setAdminToken(null);
+    toast({
+      title: "Logged out",
+      description: "You have been logged out successfully"
+    });
+  };
+
   // API request helper with auth
   const apiRequest = async (method: string, url: string, body?: any) => {
     if (!adminToken) {
@@ -319,19 +328,6 @@ export default function AdminPanel() {
     }
   }, []);
 
-  const handleLogout = () => {
-    localStorage.removeItem("adminToken");
-    setAdminToken(null);
-    toast({
-      title: "Logged out",
-      description: "You have been logged out successfully"
-    });
-  };
-
-  if (!adminToken) {
-    return <AdminLogin onLogin={setAdminToken} />;
-  }
-
   // Format currency
   const formatCurrency = (amount: number) => {
     return new Intl.NumberFormat("en-IN", {
@@ -343,6 +339,10 @@ export default function AdminPanel() {
 
   // Chart colors
   const CHART_COLORS = ["#10b981", "#3b82f6", "#f59e0b", "#ef4444", "#8b5cf6"];
+
+  if (!adminToken) {
+    return <AdminLogin onLogin={setAdminToken} />;
+  }
 
   return (
     <div className="min-h-screen bg-background">
