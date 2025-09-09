@@ -209,28 +209,12 @@ export default function AdminPanel() {
   const [, navigate] = useLocation();
   const { toast } = useToast();
 
-  useEffect(() => {
-    const token = localStorage.getItem("adminToken");
-    if (token) {
-      setAdminToken(token);
-    }
-  }, []);
-
-  const handleLogout = () => {
-    localStorage.removeItem("adminToken");
-    setAdminToken(null);
-    toast({
-      title: "Logged out",
-      description: "You have been logged out successfully"
-    });
-  };
-
-  if (!adminToken) {
-    return <AdminLogin onLogin={setAdminToken} />;
-  }
-
   // API request helper with auth
   const apiRequest = async (method: string, url: string, body?: any) => {
+    if (!adminToken) {
+      throw new Error("No admin token");
+    }
+    
     const response = await fetch(url, {
       method,
       headers: {
@@ -255,49 +239,50 @@ export default function AdminPanel() {
   const { data: stats, isLoading: statsLoading } = useQuery({
     queryKey: ["admin-dashboard-stats"],
     queryFn: () => apiRequest("GET", "/api/admin/dashboard/stats"),
-    refetchInterval: 30000 // Refresh every 30 seconds
+    enabled: !!adminToken,
+    refetchInterval: adminToken ? 30000 : false // Refresh every 30 seconds
   });
 
   // Orders Query
   const { data: ordersData, isLoading: ordersLoading } = useQuery({
     queryKey: ["admin-orders", activeTab],
     queryFn: () => apiRequest("GET", "/api/admin/orders?limit=20"),
-    enabled: activeTab === "orders"
+    enabled: !!adminToken && activeTab === "orders"
   });
 
   // Users Query
   const { data: usersData, isLoading: usersLoading } = useQuery({
     queryKey: ["admin-users", activeTab],
     queryFn: () => apiRequest("GET", "/api/admin/users?limit=20"),
-    enabled: activeTab === "users"
+    enabled: !!adminToken && activeTab === "users"
   });
 
   // Coupons Query
   const { data: coupons, isLoading: couponsLoading } = useQuery({
     queryKey: ["admin-coupons", activeTab],
     queryFn: () => apiRequest("GET", "/api/admin/coupons"),
-    enabled: activeTab === "marketing"
+    enabled: !!adminToken && activeTab === "marketing"
   });
 
   // Banners Query
   const { data: banners, isLoading: bannersLoading } = useQuery({
     queryKey: ["admin-banners", activeTab],
     queryFn: () => apiRequest("GET", "/api/admin/banners"),
-    enabled: activeTab === "content"
+    enabled: !!adminToken && activeTab === "content"
   });
 
   // AI Config Query
   const { data: aiConfig, isLoading: aiConfigLoading } = useQuery({
     queryKey: ["admin-ai-config", activeTab],
     queryFn: () => apiRequest("GET", "/api/admin/ai-config"),
-    enabled: activeTab === "ai"
+    enabled: !!adminToken && activeTab === "ai"
   });
 
   // Audit Logs Query
   const { data: auditLogs, isLoading: auditLogsLoading } = useQuery({
     queryKey: ["admin-audit-logs", activeTab],
     queryFn: () => apiRequest("GET", "/api/admin/audit-logs?limit=100"),
-    enabled: activeTab === "logs"
+    enabled: !!adminToken && activeTab === "logs"
   });
 
   // Update order status mutation
@@ -326,6 +311,26 @@ export default function AdminPanel() {
       });
     }
   });
+
+  useEffect(() => {
+    const token = localStorage.getItem("adminToken");
+    if (token) {
+      setAdminToken(token);
+    }
+  }, []);
+
+  const handleLogout = () => {
+    localStorage.removeItem("adminToken");
+    setAdminToken(null);
+    toast({
+      title: "Logged out",
+      description: "You have been logged out successfully"
+    });
+  };
+
+  if (!adminToken) {
+    return <AdminLogin onLogin={setAdminToken} />;
+  }
 
   // Format currency
   const formatCurrency = (amount: number) => {
