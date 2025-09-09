@@ -44,6 +44,9 @@ function Router() {
   return (
     <div className={`transition-all duration-500 ${isTransitioning ? 'opacity-0 transform scale-95' : 'opacity-100 transform scale-100'}`}>
       <Switch>
+        {/* Admin panel is accessible without user authentication (has its own auth) */}
+        <Route path="/admin-panel" component={AdminPanel} />
+        
         {isLoading || !isAuthenticated ? (
           <Route path="/" component={Landing} />
         ) : (
@@ -62,7 +65,6 @@ function Router() {
             <Route path="/policies" component={Policies} />
             <Route path="/careers" component={Careers} />
             <Route path="/admin" component={Admin} />
-            <Route path="/admin-panel" component={AdminPanel} />
             <Route path="/blog" component={Blog} />
           </>
         )}

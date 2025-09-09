@@ -383,8 +383,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
           and(
             eq(coupons.isActive, true),
             or(
-              isNull(coupons.expiresAt),
-              gte(coupons.expiresAt, now)
+              isNull(coupons.endDate),
+              gte(coupons.endDate, now)
             )
           )
         );
@@ -410,8 +410,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
             eq(coupons.code, code.toUpperCase()),
             eq(coupons.isActive, true),
             or(
-              isNull(coupons.expiresAt),
-              gte(coupons.expiresAt, now)
+              isNull(coupons.endDate),
+              gte(coupons.endDate, now)
             )
           )
         );
@@ -427,13 +427,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
       
       let discount = 0;
-      if (coupon.type === 'percentage') {
-        discount = (Number(total) * Number(coupon.value)) / 100;
+      if (coupon.discountType === 'percentage') {
+        discount = (Number(total) * Number(coupon.discountValue)) / 100;
         if (coupon.maxDiscountAmount) {
           discount = Math.min(discount, Number(coupon.maxDiscountAmount));
         }
       } else {
-        discount = Number(coupon.value);
+        discount = Number(coupon.discountValue);
       }
       
       res.json({
