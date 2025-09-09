@@ -8,6 +8,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { AddProductModal } from "@/components/ui/add-product-modal";
+import { EditProductModal } from "@/components/ui/edit-product-modal";
 import { 
   BarChart3, 
   Users, 
@@ -49,6 +50,8 @@ export default function Admin() {
 
   const [selectedTab, setSelectedTab] = useState("dashboard");
   const [showAddProduct, setShowAddProduct] = useState(false);
+  const [showEditProduct, setShowEditProduct] = useState(false);
+  const [selectedProduct, setSelectedProduct] = useState<any>(null);
 
   // Dashboard stats
   const { data: stats } = useQuery({
