@@ -36,7 +36,7 @@ export default function CartModal() {
         onClick={handleBackdropClick}
       />
       <div 
-        className={`absolute bottom-0 left-0 right-0 glassmorphism border-t border-white/20 rounded-t-3xl transition-all duration-500 max-h-[85vh] overflow-hidden ${
+        className={`absolute bottom-0 left-0 right-0 glassmorphism border-t border-white/20 rounded-t-3xl transition-all duration-500 max-h-[90vh] overflow-hidden ${
           isVisible ? 'animate-slide-up' : 'translate-y-full'
         }`}
       >
@@ -71,7 +71,7 @@ export default function CartModal() {
         </div>
 
         {/* Content */}
-        <div className="flex-1 overflow-y-auto p-6">
+        <div className="flex-1 overflow-y-auto p-6 pb-4">
           {isLoading ? (
             <div className="space-y-4">
               {[...Array(3)].map((_, index) => (

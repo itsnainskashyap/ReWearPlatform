@@ -96,7 +96,7 @@ export default function Wishlist() {
             <Button
               variant="ghost"
               size="icon"
-              onClick={() => navigate(-1)}
+              onClick={() => navigate("/")}
               className="hover-lift rounded-2xl"
             >
               <ArrowLeft className="w-6 h-6" />
@@ -134,6 +134,7 @@ export default function Wishlist() {
             <Button 
               onClick={() => navigate("/shop")}
               className="bg-gradient-to-r from-accent to-accent/90 text-accent-foreground hover:from-accent/90 hover:to-accent rounded-2xl button-glow hover-lift"
+              data-testid="button-start-shopping"
             >
               Start Shopping
             </Button>

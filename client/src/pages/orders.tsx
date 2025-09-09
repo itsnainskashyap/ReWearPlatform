@@ -102,6 +102,7 @@ export default function Orders() {
             <Button 
               onClick={() => navigate("/shop")}
               className="bg-gradient-to-r from-accent to-accent/90 text-accent-foreground rounded-2xl button-glow hover-lift"
+              data-testid="button-start-shopping"
             >
               Start Shopping
             </Button>
