@@ -2,9 +2,11 @@ import type { Express } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
 import { setupAuth, isAuthenticated } from "./replitAuth";
-import { insertProductSchema, insertCategorySchema, insertBrandSchema } from "@shared/schema";
+import { insertProductSchema, insertCategorySchema, insertBrandSchema, coupons, banners } from "@shared/schema";
 import { GoogleGenerativeAI } from "@google/generative-ai";
 import { setupAdminRoutes } from "./adminRoutes";
+import { db } from "./db";
+import { eq, and, or, gte, isNull, asc } from "drizzle-orm";
 import multer from "multer";
 import fs from "fs";
 import path from "path";
@@ -367,6 +369,97 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error("Error updating product:", error);
       res.status(500).json({ message: "Failed to update product" });
+    }
+  });
+
+  // Get active coupons for checkout
+  app.get('/api/coupons/active', async (req, res) => {
+    try {
+      const now = new Date();
+      const activeCoupons = await db
+        .select()
+        .from(coupons)
+        .where(
+          and(
+            eq(coupons.isActive, true),
+            or(
+              isNull(coupons.expiresAt),
+              gte(coupons.expiresAt, now)
+            )
+          )
+        );
+      
+      res.json(activeCoupons);
+    } catch (error) {
+      console.error("Error fetching active coupons:", error);
+      res.status(500).json({ message: "Failed to fetch coupons" });
+    }
+  });
+
+  // Validate coupon code
+  app.post('/api/coupons/validate', async (req, res) => {
+    try {
+      const { code, total } = req.body;
+      const now = new Date();
+      
+      const [coupon] = await db
+        .select()
+        .from(coupons)
+        .where(
+          and(
+            eq(coupons.code, code.toUpperCase()),
+            eq(coupons.isActive, true),
+            or(
+              isNull(coupons.expiresAt),
+              gte(coupons.expiresAt, now)
+            )
+          )
+        );
+      
+      if (!coupon) {
+        return res.status(404).json({ message: "Invalid or expired coupon code" });
+      }
+      
+      if (coupon.minPurchaseAmount && Number(total) < Number(coupon.minPurchaseAmount)) {
+        return res.status(400).json({ 
+          message: `Minimum purchase amount of $${coupon.minPurchaseAmount} required` 
+        });
+      }
+      
+      let discount = 0;
+      if (coupon.type === 'percentage') {
+        discount = (Number(total) * Number(coupon.value)) / 100;
+        if (coupon.maxDiscountAmount) {
+          discount = Math.min(discount, Number(coupon.maxDiscountAmount));
+        }
+      } else {
+        discount = Number(coupon.value);
+      }
+      
+      res.json({
+        valid: true,
+        coupon,
+        discount: discount.toFixed(2)
+      });
+    } catch (error) {
+      console.error("Error validating coupon:", error);
+      res.status(500).json({ message: "Failed to validate coupon" });
+    }
+  });
+
+  // Get active banners for frontend
+  app.get('/api/banners/active', async (req, res) => {
+    try {
+      const activeBanners = await db
+        .select()
+        .from(banners)
+        .where(eq(banners.isActive, true))
+        .orderBy(asc(banners.position));
+      
+      res.json(activeBanners);
+    } catch (error) {
+      console.error("Error fetching banners:", error);
+      res.status(500).json({ message: "Failed to fetch banners" });
     }
   });
 
