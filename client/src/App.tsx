@@ -12,31 +12,72 @@ import BottomNavigation from "@/components/layout/bottom-navigation";
 import Drawer from "@/components/layout/drawer";
 import FloatingCartButton from "@/components/ui/floating-cart-button";
 import CartModal from "@/components/ui/cart-modal";
+import { useState, useEffect } from "react";
 
 function Router() {
   const { isAuthenticated, isLoading } = useAuth();
+  const [isTransitioning, setIsTransitioning] = useState(false);
+
+  useEffect(() => {
+    if (isAuthenticated !== undefined) {
+      setIsTransitioning(true);
+      const timer = setTimeout(() => setIsTransitioning(false), 300);
+      return () => clearTimeout(timer);
+    }
+  }, [isAuthenticated]);
 
   return (
-    <Switch>
-      {isLoading || !isAuthenticated ? (
-        <Route path="/" component={Landing} />
-      ) : (
-        <>
-          <Route path="/" component={Home} />
-        </>
-      )}
-      <Route component={NotFound} />
-    </Switch>
+    <div className={`transition-all duration-500 ${isTransitioning ? 'opacity-0 transform scale-95' : 'opacity-100 transform scale-100'}`}>
+      <Switch>
+        {isLoading || !isAuthenticated ? (
+          <Route path="/" component={Landing} />
+        ) : (
+          <>
+            <Route path="/" component={Home} />
+          </>
+        )}
+        <Route component={NotFound} />
+      </Switch>
+    </div>
   );
 }
 
 function AppContent() {
   const { isAuthenticated, isLoading } = useAuth();
+  const [appReady, setAppReady] = useState(false);
+
+  useEffect(() => {
+    if (!isLoading) {
+      const timer = setTimeout(() => setAppReady(true), 100);
+      return () => clearTimeout(timer);
+    }
+  }, [isLoading]);
 
   return (
-    <div className="min-h-screen bg-background text-foreground font-sans">
-      {!isLoading && (
-        <>
+    <div className="min-h-screen bg-gradient-to-br from-background via-background to-primary/5 text-foreground font-sans">
+      {/* Loading Screen */}
+      {isLoading && (
+        <div className="fixed inset-0 bg-gradient-to-br from-primary/10 via-background to-accent/10 flex items-center justify-center z-50">
+          <div className="text-center space-y-4 animate-fadeInUp">
+            <div className="w-16 h-16 bg-gradient-to-br from-primary to-primary/80 rounded-3xl flex items-center justify-center mx-auto animate-pulse-glow">
+              <span className="text-primary-foreground font-bold text-2xl">R</span>
+            </div>
+            <div className="gradient-text font-bold text-xl">ReWeara</div>
+            <div className="flex space-x-2 justify-center">
+              {[...Array(3)].map((_, i) => (
+                <div
+                  key={i}
+                  className="w-2 h-2 bg-primary rounded-full animate-bounce"
+                  style={{ animationDelay: `${i * 0.1}s` }}
+                />
+              ))}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {!isLoading && appReady && (
+        <div className="animate-fadeInUp">
           <Drawer />
           <Header />
           <main className={isAuthenticated ? "pb-20" : ""}>
@@ -49,7 +90,7 @@ function AppContent() {
               <CartModal />
             </>
           )}
-        </>
+        </div>
       )}
     </div>
   );

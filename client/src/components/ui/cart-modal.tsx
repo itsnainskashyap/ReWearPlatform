@@ -1,109 +1,242 @@
-import { X, Minus, Plus } from "lucide-react";
+import { X, Minus, Plus, ShoppingBag, Sparkles, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useCartStore } from "@/store/cart-store";
 import { useQuery } from "@tanstack/react-query";
+import { useState, useEffect } from "react";
 
 export default function CartModal() {
   const { isOpen, closeCart } = useCartStore();
+  const [isVisible, setIsVisible] = useState(false);
 
   const { data: cart, isLoading } = useQuery<{ items: any[] } | null>({
     queryKey: ["/api/cart"],
     enabled: isOpen,
   });
 
+  useEffect(() => {
+    if (isOpen) {
+      setIsVisible(true);
+    } else {
+      setIsVisible(false);
+    }
+  }, [isOpen]);
+
   if (!isOpen) return null;
 
+  const handleBackdropClick = (e: React.MouseEvent) => {
+    if (e.target === e.currentTarget) {
+      closeCart();
+    }
+  };
+
   return (
-    <div className="fixed inset-0 z-50">
-      <div className="absolute inset-0 bg-black/50 backdrop-blur-sm" onClick={closeCart}></div>
-      <div className="absolute bottom-0 left-0 right-0 bg-card rounded-t-2xl p-6 animate-slide-up max-h-[80vh] overflow-y-auto">
-        <div className="flex items-center justify-between mb-6">
-          <h2 className="text-xl font-bold" data-testid="text-cart-title">Shopping Cart</h2>
-          <Button 
-            variant="ghost" 
-            size="icon"
-            onClick={closeCart}
-            className="hover-elevate"
-            data-testid="button-close-cart"
-          >
-            <X className="w-5 h-5" />
-          </Button>
+    <div className={`fixed inset-0 z-50 transition-opacity duration-300 ${isVisible ? 'opacity-100' : 'opacity-0'}`}>
+      <div 
+        className="absolute inset-0 drawer-overlay"
+        onClick={handleBackdropClick}
+      />
+      <div 
+        className={`absolute bottom-0 left-0 right-0 glassmorphism border-t border-white/20 rounded-t-3xl transition-all duration-500 max-h-[85vh] overflow-hidden ${
+          isVisible ? 'animate-slide-up' : 'translate-y-full'
+        }`}
+      >
+        {/* Header */}
+        <div className="p-6 border-b border-white/10">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center space-x-3">
+              <div className="w-10 h-10 bg-gradient-to-r from-accent to-accent/80 rounded-2xl flex items-center justify-center">
+                <ShoppingBag className="w-5 h-5 text-accent-foreground" />
+              </div>
+              <div>
+                <h2 className="text-2xl font-bold gradient-text" data-testid="text-cart-title">
+                  Shopping Cart
+                </h2>
+                {cart?.items && cart.items.length > 0 && (
+                  <p className="text-sm text-muted-foreground">
+                    {cart.items.length} {cart.items.length === 1 ? 'item' : 'items'}
+                  </p>
+                )}
+              </div>
+            </div>
+            <Button 
+              variant="ghost" 
+              size="icon"
+              onClick={closeCart}
+              className="hover-lift rounded-2xl h-12 w-12"
+              data-testid="button-close-cart"
+            >
+              <X className="w-6 h-6" />
+            </Button>
+          </div>
         </div>
 
-        {isLoading ? (
-          <div className="text-center py-8">
-            <div className="text-muted-foreground">Loading cart...</div>
-          </div>
-        ) : !cart || !cart?.items || cart.items.length === 0 ? (
-          <div className="text-center py-8">
-            <div className="text-muted-foreground mb-4">Your cart is empty</div>
-            <Button onClick={closeCart}>Continue Shopping</Button>
-          </div>
-        ) : (
-          <>
-            <div className="space-y-4 mb-6">
-              {cart?.items?.map((item: any) => (
-                <div key={item.id} className="flex items-center space-x-4 py-4 border-b border-border">
-                  <img 
-                    src={item.product.images?.[0] || "https://images.unsplash.com/photo-1434389677669-e08b4cac3105?ixlib=rb-4.0.3&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=100&h=100"}
-                    alt={item.product.name}
-                    className="w-16 h-16 object-cover rounded-lg"
-                    data-testid={`img-cart-item-${item.id}`}
-                  />
-                  <div className="flex-1">
-                    <h3 className="font-semibold" data-testid={`text-product-name-${item.id}`}>
-                      {item.product.name}
-                    </h3>
-                    {item.product.size && (
-                      <p className="text-sm text-muted-foreground">Size: {item.product.size}</p>
-                    )}
-                    <p className="font-bold text-primary" data-testid={`text-product-price-${item.id}`}>
-                      ₹{item.product.price}
-                    </p>
+        {/* Content */}
+        <div className="flex-1 overflow-y-auto p-6">
+          {isLoading ? (
+            <div className="space-y-4">
+              {[...Array(3)].map((_, index) => (
+                <div key={index} className="flex items-center space-x-4 p-4 card-premium rounded-2xl">
+                  <div className="w-16 h-16 skeleton rounded-xl" />
+                  <div className="flex-1 space-y-2">
+                    <div className="h-5 skeleton rounded-full w-3/4" />
+                    <div className="h-4 skeleton rounded-full w-1/2" />
+                    <div className="h-4 skeleton rounded-full w-1/3" />
                   </div>
                   <div className="flex items-center space-x-2">
-                    <Button
-                      variant="outline"
-                      size="icon"
-                      className="w-8 h-8 rounded-full"
-                      data-testid={`button-decrease-quantity-${item.id}`}
-                    >
-                      <Minus className="w-4 h-4" />
-                    </Button>
-                    <span className="w-8 text-center font-semibold" data-testid={`text-quantity-${item.id}`}>
-                      {item.quantity}
-                    </span>
-                    <Button
-                      variant="outline"
-                      size="icon"
-                      className="w-8 h-8 rounded-full"
-                      data-testid={`button-increase-quantity-${item.id}`}
-                    >
-                      <Plus className="w-4 h-4" />
-                    </Button>
+                    <div className="w-8 h-8 skeleton rounded-full" />
+                    <div className="w-8 h-4 skeleton rounded-full" />
+                    <div className="w-8 h-8 skeleton rounded-full" />
                   </div>
                 </div>
               ))}
             </div>
-
-            <div className="pt-6 space-y-4">
-              <div className="flex justify-between text-lg font-bold">
-                <span>Total:</span>
-                <span className="text-primary" data-testid="text-cart-total">
-                  ₹{cart?.items?.reduce((total: number, item: any) => 
-                    total + (parseFloat(item.product.price) * item.quantity), 0
-                  ).toFixed(2) || "0.00"}
-                </span>
+          ) : !cart || !cart?.items || cart.items.length === 0 ? (
+            <div className="text-center py-16 animate-fadeInUp">
+              <div className="w-24 h-24 bg-gradient-to-br from-muted to-muted/50 rounded-3xl flex items-center justify-center mx-auto mb-6">
+                <ShoppingBag className="w-12 h-12 text-muted-foreground" />
               </div>
+              <h3 className="text-xl font-bold mb-3">Your cart is empty</h3>
+              <p className="text-muted-foreground mb-6">Add some items to get started</p>
               <Button 
-                className="w-full bg-accent text-accent-foreground py-4 rounded-xl font-semibold hover:bg-accent/90 transition-colors"
-                data-testid="button-checkout"
+                onClick={closeCart}
+                className="bg-gradient-to-r from-accent to-accent/90 text-accent-foreground hover:from-accent/90 hover:to-accent rounded-2xl px-8 py-3 font-semibold button-glow hover-lift"
               >
-                Proceed to Checkout
+                Continue Shopping
               </Button>
             </div>
-          </>
-        )}
+          ) : (
+            <>
+              {/* Cart Items */}
+              <div className="space-y-4 mb-6">
+                {cart?.items?.map((item: any, index: number) => (
+                  <div 
+                    key={item.id} 
+                    className={`card-premium p-4 rounded-2xl hover-lift group transition-all duration-500 ${isVisible ? 'animate-fadeInUp' : 'opacity-0'}`}
+                    style={{ animationDelay: `${index * 100}ms` }}
+                  >
+                    <div className="flex items-center space-x-4">
+                      {/* Product Image */}
+                      <div className="relative overflow-hidden rounded-xl">
+                        {item.product.images?.[0] ? (
+                          <img 
+                            src={item.product.images[0]}
+                            alt={item.product.name}
+                            className="w-16 h-16 object-cover group-hover:scale-110 transition-transform duration-300"
+                            data-testid={`img-cart-item-${item.id}`}
+                          />
+                        ) : (
+                          <div className="w-16 h-16 skeleton rounded-xl" />
+                        )}
+                      </div>
+                      
+                      {/* Product Info */}
+                      <div className="flex-1 min-w-0">
+                        <h3 className="font-bold text-base mb-1 truncate" data-testid={`text-product-name-${item.id}`}>
+                          {item.product.name}
+                        </h3>
+                        {item.product.size && (
+                          <p className="text-sm text-muted-foreground mb-1">Size: {item.product.size}</p>
+                        )}
+                        <div className="flex items-center space-x-2">
+                          <span className="font-bold text-lg text-primary" data-testid={`text-product-price-${item.id}`}>
+                            ₹{item.product.price}
+                          </span>
+                          {item.product.originalPrice && parseFloat(item.product.originalPrice) > parseFloat(item.product.price) && (
+                            <span className="text-sm text-muted-foreground line-through">
+                              ₹{item.product.originalPrice}
+                            </span>
+                          )}
+                        </div>
+                      </div>
+                      
+                      {/* Quantity Controls */}
+                      <div className="flex items-center space-x-3">
+                        <div className="flex items-center space-x-2 bg-background/50 rounded-2xl p-1">
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="w-8 h-8 rounded-xl hover-lift"
+                            data-testid={`button-decrease-quantity-${item.id}`}
+                          >
+                            <Minus className="w-4 h-4" />
+                          </Button>
+                          <span className="w-8 text-center font-bold text-sm" data-testid={`text-quantity-${item.id}`}>
+                            {item.quantity}
+                          </span>
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="w-8 h-8 rounded-xl hover-lift"
+                            data-testid={`button-increase-quantity-${item.id}`}
+                          >
+                            <Plus className="w-4 h-4" />
+                          </Button>
+                        </div>
+                        
+                        {/* Remove Button */}
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="w-10 h-10 rounded-2xl text-destructive hover:bg-destructive/10 hover-lift"
+                          data-testid={`button-remove-item-${item.id}`}
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </Button>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+
+              {/* Summary */}
+              <div className="border-t border-white/10 pt-6 space-y-4">
+                {/* Subtotal */}
+                <div className="flex justify-between items-center text-base">
+                  <span className="text-muted-foreground">Subtotal</span>
+                  <span className="font-semibold">
+                    ₹{cart?.items?.reduce((total: number, item: any) => 
+                      total + (parseFloat(item.product.price) * item.quantity), 0
+                    ).toFixed(2) || "0.00"}
+                  </span>
+                </div>
+
+                {/* Savings */}
+                {cart?.items?.some((item: any) => item.product.originalPrice && parseFloat(item.product.originalPrice) > parseFloat(item.product.price)) && (
+                  <div className="flex justify-between items-center text-sm">
+                    <span className="text-green-600">You Save</span>
+                    <span className="font-semibold text-green-600">
+                      -₹{cart?.items?.reduce((total: number, item: any) => {
+                        const originalPrice = parseFloat(item.product.originalPrice || item.product.price);
+                        const currentPrice = parseFloat(item.product.price);
+                        return total + ((originalPrice - currentPrice) * item.quantity);
+                      }, 0).toFixed(2) || "0.00"}
+                    </span>
+                  </div>
+                )}
+
+                {/* Total */}
+                <div className="border-t border-white/10 pt-4">
+                  <div className="flex justify-between items-center text-xl font-bold mb-6">
+                    <span>Total</span>
+                    <span className="gradient-text text-2xl" data-testid="text-cart-total">
+                      ₹{cart?.items?.reduce((total: number, item: any) => 
+                        total + (parseFloat(item.product.price) * item.quantity), 0
+                      ).toFixed(2) || "0.00"}
+                    </span>
+                  </div>
+                  
+                  <Button 
+                    className="w-full h-14 bg-gradient-to-r from-accent to-accent/90 text-accent-foreground hover:from-accent/90 hover:to-accent text-lg font-bold rounded-2xl button-glow hover-lift transition-all duration-300"
+                    data-testid="button-checkout"
+                  >
+                    <Sparkles className="w-5 h-5 mr-2" />
+                    Proceed to Checkout
+                  </Button>
+                </div>
+              </div>
+            </>
+          )}
+        </div>
       </div>
     </div>
   );

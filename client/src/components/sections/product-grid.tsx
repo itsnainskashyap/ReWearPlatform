@@ -79,12 +79,15 @@ export default function ProductGrid() {
       {isLoading ? (
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
           {Array.from({ length: 4 }).map((_, index) => (
-            <div key={index} className="bg-card rounded-2xl shadow-md overflow-hidden animate-pulse">
-              <div className="w-full h-48 bg-muted"></div>
-              <div className="p-4 space-y-2">
-                <div className="h-4 bg-muted rounded w-3/4"></div>
-                <div className="h-3 bg-muted rounded w-1/2"></div>
-                <div className="h-4 bg-muted rounded w-1/3"></div>
+            <div key={index} className="card-premium rounded-3xl overflow-hidden">
+              <div className="w-full h-48 skeleton rounded-t-3xl"></div>
+              <div className="p-5 space-y-3">
+                <div className="h-4 skeleton rounded-full w-3/4"></div>
+                <div className="h-3 skeleton rounded-full w-1/2"></div>
+                <div className="flex items-center justify-between pt-2">
+                  <div className="h-6 skeleton rounded-full w-1/3"></div>
+                  <div className="h-11 skeleton rounded-2xl w-24"></div>
+                </div>
               </div>
             </div>
           ))}
@@ -95,12 +98,13 @@ export default function ProductGrid() {
         </div>
       ) : (
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4" data-testid="grid-hot-selling-products">
-          {Array.isArray(products) && products.map((product: Product) => (
+          {Array.isArray(products) && products.map((product: Product, index: number) => (
             <ProductCard
               key={product.id}
               product={product}
               onAddToCart={handleAddToCart}
               onAddToWishlist={handleAddToWishlist}
+              index={index}
             />
           ))}
         </div>
