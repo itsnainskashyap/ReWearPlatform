@@ -54,7 +54,7 @@ export default function BottomNavigation() {
                     <span className="absolute inset-0 w-3 h-3 bg-destructive rounded-full animate-ping opacity-75"></span>
                   </span>
                 )}
-                {item.count && item.count > 0 && (
+                {item.count !== undefined && item.count > 0 && (
                   <span className="absolute -top-2 -right-2 min-w-[20px] h-5 bg-gradient-to-r from-primary to-primary/90 text-primary-foreground text-xs rounded-full flex items-center justify-center font-bold px-1.5 animate-pulse-glow">
                     {item.count > 99 ? '99+' : item.count}
                   </span>
