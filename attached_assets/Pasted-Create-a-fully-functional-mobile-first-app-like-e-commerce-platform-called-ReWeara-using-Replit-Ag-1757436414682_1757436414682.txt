@@ -1,0 +1,106 @@
+Create a fully functional, mobile-first, app-like e-commerce platform called ReWeara using Replit Agent. Build this iteratively: Start by setting up the project with the specified tech stack, create an MVP with core pages (Home, Shop, Product Detail, Cart, Checkout), then add advanced features (admin panel, AI integrations, PWA), using checkpoints after each major step for safe experimentation. Provide clear, concise prompts for each iteration, including code snippets or examples where needed, and specify outputs like file structures. Use positive, direct language, curate context by referencing previous steps, and refine as needed. Ensure the app is professional, error-free, with an easy-to-use interface, no fake data (start empty, populate via admin), and full admin control over everything via API-driven real-time updates.
+The platform is both a Thrift Store and a ReWeara Originals Clothing Brand, with clean, modern UI. Optimize for Replit: Use Replit Database for initial storage (switch to MongoDB Atlas later), handle deployments with Replit's built-in hosting, and integrate secrets for API keys (e.g., Gemini key). Break down: Checkpoint 1: Project setup and auth. Checkpoint 2: User pages. Checkpoint 3: Admin panel. Checkpoint 4: AI and extras.
+🎨 Visuals & Theme
+Theme colors: Dark Green (#0B5A3A) primary, White (#FFFFFF) secondary, light beige/grey (#F5F5F0) background neutral. Accents: Soft gold (#D4AF37) for CTAs, red (#FF0000) for errors/warnings.
+Typography: Modern sans-serif (Inter or Roboto); bold headlines (700 weight), clean body (400 weight, 1.5 line-height). Sizes: H1 32px mobile/48px desktop, body 16px. High contrast for readability.
+Product cards: Border-radius 16px, box-shadow 0 4px 12px rgba(0,0,0,0.1), hover/tap scale 1.05 (0.3s ease).
+Animations: Swipe transitions (cubic-bezier), fade-ins (0.5s), parallax cards, flying add-to-cart (bezier), bottom nav slide-up.
+Icons: Feather Icons (scalable, tappable, e.g., heart wishlist, bag cart).
+Mobile-first: Full modals, 48px tap areas, gestures (pull-to-refresh). Loaders: Skeletons, spinners (#0B5A3A). Errors: Red toasts with retries.
+PWA: Manifest.json (icon/name), service workers (offline cart/wishlist), Firebase push, haptics on actions.
+Interface: Intuitive (one-tap, progress bars in flows), tooltips, onboarding tour.
+Admin Controls: Edit colors/fonts/icons/animations/PWA settings/interface elements (e.g., tooltip texts) via dedicated theme section.
+📱 Mobile UX Requirements
+Bottom Nav: Fixed, icons/labels (Home house, Shop grid, Wishlist heart, Cart bag, Profile user). Active: bold green.
+Drawer: Left slide-in for links (About, Policies, Careers, Blog, Contact). Hamburger trigger, swipe-close.
+Swipes: Horizontal for Thrift/Originals toggle (momentum, snap).
+Product Cards: Curved, dual CTAs (Buy Now outlined green lightning; small Add to Cart bag icon beside—click adds instantly with fly/toast).
+Micros: Ripples, haptics, scroll-to-top, first-use highlights.
+Admin Controls: Customize nav/drawer/swipes/CTAs/micros.
+🏠 Pages & Features (User Side + Admin Access)
+1. Home Page
+Hero: Full-screen AI-generated cartoon background (whimsical eco-fashion scenes, changeable via admin/AI). Headline/Sub: As specified. Cards: Thrift/Originals. Shop CTA.
+Banner: Carousel (5s auto, dots, pause).
+Toggle: Swipeable.
+Brand Icons: Scrollable row.
+Hot Selling: 4-6 grid ("View All").
+Featured: Carousels.
+Recently Viewed: Scroll (localStorage sync).
+AI Recs: "For You".
+Admin Controls: Hero (AI-generate/upload cartoon bg, text), banner/toggle/brands/hot/featured. Analytics for viewed.
+2. Shop Page (Thrift / Originals)
+Grid: 2 mobile/4 desktop, infinite scroll/load more.
+Card: Image (lazy, alt), Title/Brand, Badge, Price (strike), Heart, CTAs (small Add icon).
+Filters: Drawer/sidebar (Category drop, Brand multi, Size chips, Color swatches, Condition slider, Price inputs). Apply/clear.
+Sorting: Drop (Newest, Prices, Trending).
+Search: Autocomplete fuzzy.
+Trending: Top section.
+Brand Logos: Horizontal scrollable row at top/filters (logos with icons, tap filters brand; admin uploads PNG/SVG, alt, grayscale/color toggle, featured highlight).
+Admin Controls: Product CRUD (bulk CSV), filters/sorting, brands (CRUD, reorder drag-drop, visibility, analytics clicks).
+3. Product Detail Page
+Carousel: Swipe/zoom/thumbnails.
+Details: Title/Brand/Size/Condition/Price, Rich desc, Accordion (Fabric/Measurements/Care).
+Size Guide: Modal table/image.
+Reviews: Stars, submissions (photos), queue.
+Related: AI carousel.
+Viewed: Bottom.
+Buttons: Add (fly), Buy, small Add icon.
+Try-On: Upload photo, AI overlay.
+Admin Controls: Edit details/reviews/size/related.
+4. Cart Page
+List: Thumb/title/qty (inc/dec, stock), remove.
+Subtotal/coupon/delivery.
+Checkout: Green, disable empty.
+Abandoned: Save/email 30min.
+Admin Controls: Coupon CRUD, abandoned view/recovery.
+5. Checkout Page
+Guest: Email req.
+Address: Fields, saved dropdown. Step validation.
+Payments: UPI (QR/ID, "Paid" pending), COD.
+Summary: Items/total/taxes.
+Confirm: Modal ID.
+Admin Controls: UPI edit, COD/taxes toggle, pendings.
+6. Orders Page
+List: Status filter/date.
+Detail: Items/tracking/invoice PDF.
+Admin Controls: Search/approve/update/invoices.
+7. Wishlist Page
+Grid, remove sync.
+Admin Controls: Analytics.
+8. Profile Page
+Edit info/password/addresses.
+Links: Wishlist/Orders/Logout.
+Admin Controls: User CRUD/ban.
+9-14. Static Pages
+About/Contact/FAQs/Policies/Careers/Blog: As specified.
+Admin Controls: Edit/manage/submissions/CRUD.
+15. Notifications
+In-App: Bell list.
+Push/Emails: Updates.
+Admin Controls: Send/templates.
+⚙ Admin Panel
+Login: Bcrypt, 2FA OTP.
+Dashboard: Charts/activity/search.
+Sections: All management, bulk/export/logs/responsive.
+Admin Controls: Full, empty start.
+💳 Payment Workflow
+Manual UPI/COD/shipping, auto IDs.
+✉ Emails & Notifications
+User/Admin: Logged.
+📊 Extra Features
+Auth: OTP/social/guest.
+Security: HTTPS/CAPTCHA/validation/GDPR.
+Advanced: Fuzzy search/multi-currency/loyalty/inventory.
+Content: Cloudinary UGC.
+Sustainability: Badges/calculator.
+AI: Gemini key AIzaSyA29aikGQLeapUbRrNOavMJVakYNhUK-sU – Recs (embeddings), Try-On (Nano Banana 2.5 Flash: realistic overlay prompts, error handling, delete uploads), Hero gen (cartoon prompts).
+Perf: Lazy/WebP/WCAG/SEO/multi-lang (EN/HI/RTL).
+Easy: Tour/help.
+Admin Controls: Toggle/AI settings/prompts.
+🛠 Technical Stack
+Frontend: React/Next.js/Tailwind/Framer.
+Backend: Node/Express/Mongo (Atlas).
+API: REST/JWT.
+Auth: Firebase.
+AI: Gemini SDK.
+Deploy: Replit host, then Vercel/AWS
