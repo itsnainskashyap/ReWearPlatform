@@ -47,6 +47,7 @@ export default function Admin() {
   }, [isAuthenticated, isAdmin, navigate, toast]);
 
   const [selectedTab, setSelectedTab] = useState("dashboard");
+  const [showAddProduct, setShowAddProduct] = useState(false);
 
   // Dashboard stats
   const { data: stats } = useQuery({
@@ -266,7 +267,11 @@ export default function Admin() {
           <TabsContent value="products" className="space-y-6">
             <div className="flex items-center justify-between">
               <h2 className="text-xl font-bold">Product Management</h2>
-              <Button className="bg-gradient-to-r from-primary to-primary/80 text-primary-foreground rounded-2xl">
+              <Button 
+                onClick={() => setShowAddProduct(true)}
+                className="bg-gradient-to-r from-primary to-primary/80 text-primary-foreground rounded-2xl"
+                data-testid="button-add-product"
+              >
                 <Plus className="w-4 h-4 mr-2" />
                 Add Product
               </Button>
@@ -274,28 +279,60 @@ export default function Admin() {
 
             <Card className="card-premium rounded-3xl">
               <CardContent className="p-6">
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                  {[1, 2, 3, 4, 5, 6].map((_, index) => (
-                    <div key={index} className="border rounded-2xl overflow-hidden hover:shadow-lg transition-shadow">
-                      <div className="aspect-square bg-muted"></div>
-                      <div className="p-4">
-                        <h3 className="font-semibold mb-2">Sample Product {index + 1}</h3>
-                        <p className="text-sm text-muted-foreground mb-2">Vintage Denim Jacket</p>
-                        <div className="flex items-center justify-between">
-                          <span className="font-bold text-primary">₹{(Math.random() * 2000 + 500).toFixed(0)}</span>
-                          <div className="flex space-x-2">
-                            <Button variant="ghost" size="icon" className="rounded-xl">
-                              <Edit className="w-4 h-4" />
-                            </Button>
-                            <Button variant="ghost" size="icon" className="rounded-xl text-red-600">
-                              <Trash2 className="w-4 h-4" />
-                            </Button>
+                {productsLoading ? (
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                    {[...Array(6)].map((_, index) => (
+                      <div key={index} className="border rounded-2xl overflow-hidden">
+                        <div className="aspect-square skeleton"></div>
+                        <div className="p-4 space-y-2">
+                          <div className="h-4 skeleton w-3/4"></div>
+                          <div className="h-3 skeleton w-1/2"></div>
+                          <div className="h-4 skeleton w-1/3"></div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                    {products && products.length > 0 ? products.map((product: any) => (
+                      <div key={product.id} className="border rounded-2xl overflow-hidden hover:shadow-lg transition-shadow">
+                        <div className="aspect-square bg-muted">
+                          {product.images?.[0] ? (
+                            <img 
+                              src={product.images[0]} 
+                              alt={product.name}
+                              className="w-full h-full object-cover"
+                            />
+                          ) : (
+                            <div className="w-full h-full bg-muted flex items-center justify-center">
+                              <Package className="w-12 h-12 text-muted-foreground" />
+                            </div>
+                          )}
+                        </div>
+                        <div className="p-4">
+                          <h3 className="font-semibold mb-2">{product.name}</h3>
+                          <p className="text-sm text-muted-foreground mb-2 truncate">{product.description}</p>
+                          <div className="flex items-center justify-between">
+                            <span className="font-bold text-primary">₹{product.price}</span>
+                            <div className="flex space-x-2">
+                              <Button variant="ghost" size="icon" className="rounded-xl">
+                                <Edit className="w-4 h-4" />
+                              </Button>
+                              <Button variant="ghost" size="icon" className="rounded-xl text-red-600">
+                                <Trash2 className="w-4 h-4" />
+                              </Button>
+                            </div>
                           </div>
                         </div>
                       </div>
-                    </div>
-                  ))}
-                </div>
+                    )) : (
+                      <div className="col-span-full text-center py-8">
+                        <Package className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
+                        <p className="text-muted-foreground">No products found. Add your first product!</p>
+                      </div>
+                    )}
+                  </div>
+                )}
               </CardContent>
             </Card>
           </TabsContent>

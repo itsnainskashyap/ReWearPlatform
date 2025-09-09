@@ -103,7 +103,7 @@ export default function Checkout() {
             <div className="space-y-3">
               <Button
                 onClick={() => navigate("/orders")}
-                className="w-full bg-gradient-to-r from-accent to-accent/90 text-accent-foreground rounded-2xl"
+                className="w-full bg-gradient-to-r from-primary to-primary/80 text-primary-foreground rounded-2xl hover:from-primary/90 hover:to-primary/70"
               >
                 View Orders
               </Button>
@@ -292,7 +292,7 @@ export default function Checkout() {
                   
                   <Button
                     onClick={() => setStep(2)}
-                    className="w-full bg-gradient-to-r from-accent to-accent/90 text-accent-foreground rounded-2xl"
+                    className="w-full bg-gradient-to-r from-primary to-primary/80 text-primary-foreground rounded-2xl hover:from-primary/90 hover:to-primary/70"
                   >
                     Continue to Payment
                     <ChevronRight className="w-4 h-4 ml-2" />
@@ -360,7 +360,7 @@ export default function Checkout() {
                     </Button>
                     <Button
                       onClick={() => setStep(3)}
-                      className="flex-1 bg-gradient-to-r from-accent to-accent/90 text-accent-foreground rounded-2xl"
+                      className="flex-1 bg-gradient-to-r from-primary to-primary/80 text-primary-foreground rounded-2xl hover:from-primary/90 hover:to-primary/70"
                     >
                       Review Order
                       <ChevronRight className="w-4 h-4 ml-2" />

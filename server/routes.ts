@@ -300,6 +300,39 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Add new product (Admin only)
+  app.post('/api/admin/products', isAuthenticated, async (req: any, res) => {
+    try {
+      const userEmail = req.user?.claims?.email;
+      
+      if (userEmail !== "itsnainskashyap@gmail.com") {
+        return res.status(403).json({ message: "Access denied" });
+      }
+
+      const productData = req.body;
+      
+      // Generate a slug from the name
+      const slug = productData.name.toLowerCase()
+        .replace(/[^a-z0-9 -]/g, '')
+        .replace(/\s+/g, '-')
+        .replace(/-+/g, '-');
+
+      const newProduct = await storage.createProduct({
+        ...productData,
+        slug,
+        images: productData.images || [],
+        sizes: productData.sizes || [],
+        isActive: true,
+        viewCount: 0
+      });
+
+      res.json(newProduct);
+    } catch (error) {
+      console.error("Error creating product:", error);
+      res.status(500).json({ message: "Failed to create product" });
+    }
+  });
+
   // Initialize Gemini AI
   const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY || '');
 
