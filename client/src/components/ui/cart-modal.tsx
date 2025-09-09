@@ -36,7 +36,7 @@ export default function CartModal() {
         onClick={handleBackdropClick}
       />
       <div 
-        className={`absolute bottom-0 left-0 right-0 glassmorphism border-t border-white/20 rounded-t-3xl transition-all duration-500 max-h-[80vh] overflow-hidden pb-20 ${
+        className={`absolute bottom-0 left-0 right-0 glassmorphism border-t border-white/20 rounded-t-3xl transition-all duration-500 h-[85vh] flex flex-col ${
           isVisible ? 'animate-slide-up' : 'translate-y-full'
         }`}
       >
@@ -71,7 +71,7 @@ export default function CartModal() {
         </div>
 
         {/* Content */}
-        <div className="flex-1 overflow-y-auto p-6 pb-24">
+        <div className="flex-1 overflow-y-auto p-6 pb-6">
           {isLoading ? (
             <div className="space-y-4">
               {[...Array(3)].map((_, index) => (
@@ -215,8 +215,8 @@ export default function CartModal() {
                 )}
 
                 {/* Total */}
-                <div className="border-t border-white/10 pt-4">
-                  <div className="flex justify-between items-center text-xl font-bold mb-6">
+                <div className="border-t border-white/10 pt-4 sticky bottom-0 bg-background/95 backdrop-blur-sm rounded-b-3xl p-4 -mx-6 -mb-6">
+                  <div className="flex justify-between items-center text-xl font-bold mb-4">
                     <span>Total</span>
                     <span className="gradient-text text-2xl" data-testid="text-cart-total">
                       ₹{cart?.items?.reduce((total: number, item: any) => 
