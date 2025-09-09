@@ -9,6 +9,8 @@ import { useState, useEffect } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
 import { useCartStore } from "@/store/cart-store";
+import VirtualTryOn from "@/components/ai/virtual-tryon";
+import AIRecommendations from "@/components/ai/recommendations";
 
 export default function ProductDetail() {
   const [, params] = useRoute("/product/:id");
@@ -197,14 +199,13 @@ export default function ProductDetail() {
         </div>
 
         {/* Try On Button */}
-        <Button
-          onClick={() => setShowTryOn(true)}
-          className="absolute top-4 right-4 glassmorphism rounded-2xl"
-          variant="ghost"
-        >
-          <Camera className="w-4 h-4 mr-2" />
-          Try On
-        </Button>
+        <div className="absolute top-4 right-4">
+          <VirtualTryOn 
+            productId={params?.id || ''} 
+            productName={product?.name || ''} 
+            productImage={product?.images?.[0] || ''} 
+          />
+        </div>
       </div>
 
       {/* Product Info */}
@@ -321,23 +322,31 @@ export default function ProductDetail() {
         </div>
 
         {/* Action Buttons */}
-        <div className="flex space-x-3 pt-4">
-          <Button
-            onClick={() => addToCartMutation.mutate()}
-            className="flex-1 h-14 rounded-2xl glassmorphism border border-primary text-primary hover:bg-primary/10"
-            data-testid="button-add-to-cart"
-          >
-            <ShoppingBag className="w-5 h-5 mr-2" />
-            Add to Cart
-          </Button>
-          <Button
-            onClick={buyNowHandler}
-            className="flex-1 h-14 bg-gradient-to-r from-accent to-accent/90 text-accent-foreground rounded-2xl button-glow hover-lift"
-            data-testid="button-buy-now"
-          >
-            <Sparkles className="w-5 h-5 mr-2" />
-            Buy Now
-          </Button>
+        <div className="space-y-3 pt-4">
+          <div className="flex space-x-3">
+            <Button
+              onClick={() => addToCartMutation.mutate()}
+              className="flex-1 h-14 rounded-2xl glassmorphism border border-primary text-primary hover:bg-primary/10"
+              data-testid="button-add-to-cart"
+            >
+              <ShoppingBag className="w-5 h-5 mr-2" />
+              Add to Cart
+            </Button>
+            <Button
+              onClick={buyNowHandler}
+              className="flex-1 h-14 bg-gradient-to-r from-accent to-accent/90 text-accent-foreground rounded-2xl button-glow hover-lift"
+              data-testid="button-buy-now"
+            >
+              <Sparkles className="w-5 h-5 mr-2" />
+              Buy Now
+            </Button>
+          </div>
+          {/* Virtual Try-On */}
+          <VirtualTryOn 
+            productId={params?.id || ''} 
+            productName={product?.name || ''} 
+            productImage={product?.images?.[0] || ''} 
+          />
         </div>
 
         {/* Features */}
@@ -427,6 +436,15 @@ export default function ProductDetail() {
             </Card>
           </TabsContent>
         </Tabs>
+
+        {/* AI Recommendations */}
+        <div className="pt-6">
+          <AIRecommendations 
+            productId={params?.id} 
+            title="AI Recommended Similar Items" 
+            maxItems={6}
+          />
+        </div>
 
         {/* Related Products */}
         {related && related.length > 0 && (

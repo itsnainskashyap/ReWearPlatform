@@ -332,7 +332,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       // Get user's browsing history from session or use featured products
       let recommendations = products
-        .filter(p => p.featured === true)
+        .filter(p => p.isFeatured === true)
         .slice(0, 6);
 
       // If we have a specific product ID, find similar products
@@ -368,7 +368,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       console.error("Error fetching AI recommendations:", error);
       // Fallback to featured products
       const products = await storage.getProducts();
-      const fallback = products?.filter(p => p.featured === true).slice(0, 6) || [];
+      const fallback = products?.filter(p => p.isFeatured === true).slice(0, 6) || [];
       res.json(fallback);
     }
   });
@@ -387,7 +387,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const { productId, prompt = 'Overlay product realistically on user' } = req.body;
       
       // Get product details
-      const product = await storage.getProduct(productId);
+      const products = await storage.getProducts();
+      const product = products?.find(p => p.id === productId);
       if (!product) {
         // Clean up uploaded file
         fs.unlinkSync(req.file.path);
@@ -446,7 +447,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // AI Background Generation API - for hero section
   app.post('/api/ai/background', isAuthenticated, async (req, res) => {
     try {
-      const userEmail = req.user?.claims?.email;
+      const userEmail = req.user && typeof req.user === 'object' && 'claims' in req.user 
+        ? (req.user as any).claims?.email 
+        : null;
       
       // Only admin can generate backgrounds
       if (userEmail !== "itsnainskashyap@gmail.com") {

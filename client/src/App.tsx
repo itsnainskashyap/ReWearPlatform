@@ -25,6 +25,7 @@ import BottomNavigation from "@/components/layout/bottom-navigation";
 import Drawer from "@/components/layout/drawer";
 import FloatingCartButton from "@/components/ui/floating-cart-button";
 import CartModal from "@/components/ui/cart-modal";
+import AIChatAssistant from "@/components/ai/chat-assistant";
 import { useState, useEffect } from "react";
 
 function Router() {
@@ -114,6 +115,7 @@ function AppContent() {
               <FloatingCartButton />
               <BottomNavigation />
               <CartModal />
+              <AIChatAssistant />
             </>
           )}
         </div>
