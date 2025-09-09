@@ -104,21 +104,24 @@ function AppContent() {
       )}
 
       {!isLoading && appReady && (
-        <div className="animate-fadeInUp">
-          <Drawer />
-          <Header />
-          <main className={isAuthenticated ? "pb-20" : ""}>
-            <Router />
-          </main>
-          {isAuthenticated && (
-            <>
-              <FloatingCartButton />
-              <BottomNavigation />
-              <CartModal />
-              <AIChatAssistant />
-            </>
-          )}
-        </div>
+        <>
+          <div className="animate-fadeInUp">
+            <Drawer />
+            <Header />
+            <main className={isAuthenticated ? "pb-24" : ""}>
+              <Router />
+            </main>
+            {isAuthenticated && (
+              <>
+                <FloatingCartButton />
+                <CartModal />
+                <AIChatAssistant />
+              </>
+            )}
+          </div>
+          {/* Bottom Navigation - outside animated container for proper fixed positioning */}
+          {isAuthenticated && <BottomNavigation />}
+        </>
       )}
     </div>
   );
