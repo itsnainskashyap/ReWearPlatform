@@ -307,6 +307,17 @@
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
+  /* Fallback for better visibility */
+  color: hsl(var(--primary));
+  display: inline-block;
+}
+
+/* Fix for browsers that don't support background-clip: text */
+@supports not (-webkit-background-clip: text) {
+  .gradient-text {
+    color: hsl(var(--primary));
+    background: none;
+  }
 }
 
 .hover-lift {
@@ -508,15 +519,6 @@
   left: 0 !important;
   right: 0 !important;
   z-index: 9999 !important;
-}
-
-/* Green text visibility fix */
-.gradient-text {
-  background: linear-gradient(135deg, hsl(var(--primary)) 0%, hsl(var(--accent)) 100%);
-  background-clip: text;
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  font-weight: 700;
 }
 
 /* ReWeara logo text fix */
