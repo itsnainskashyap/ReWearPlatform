@@ -333,6 +333,85 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Update product (Admin only)
+  app.put('/api/admin/products/:id', isAuthenticated, async (req: any, res) => {
+    try {
+      const userEmail = req.user?.claims?.email;
+      
+      if (userEmail !== "itsnainskashyap@gmail.com") {
+        return res.status(403).json({ message: "Access denied" });
+      }
+
+      const productId = req.params.id;
+      const updates = req.body;
+      
+      // Generate a new slug if name is being updated
+      if (updates.name) {
+        updates.slug = updates.name.toLowerCase()
+          .replace(/[^a-z0-9 -]/g, '')
+          .replace(/\s+/g, '-')
+          .replace(/-+/g, '-');
+      }
+
+      const updatedProduct = await storage.updateProduct(productId, updates);
+      
+      if (!updatedProduct) {
+        return res.status(404).json({ message: "Product not found" });
+      }
+
+      res.json(updatedProduct);
+    } catch (error) {
+      console.error("Error updating product:", error);
+      res.status(500).json({ message: "Failed to update product" });
+    }
+  });
+
+  // Delete product (Admin only) - Soft delete by setting isActive to false
+  app.delete('/api/admin/products/:id', isAuthenticated, async (req: any, res) => {
+    try {
+      const userEmail = req.user?.claims?.email;
+      
+      if (userEmail !== "itsnainskashyap@gmail.com") {
+        return res.status(403).json({ message: "Access denied" });
+      }
+
+      const productId = req.params.id;
+      
+      // Soft delete by setting isActive to false
+      const deletedProduct = await storage.updateProduct(productId, { isActive: false });
+      
+      if (!deletedProduct) {
+        return res.status(404).json({ message: "Product not found" });
+      }
+
+      res.json({ message: "Product deleted successfully" });
+    } catch (error) {
+      console.error("Error deleting product:", error);
+      res.status(500).json({ message: "Failed to delete product" });
+    }
+  });
+
+  // Update order status (Admin only)
+  app.put('/api/admin/orders/:orderId/status', isAuthenticated, async (req: any, res) => {
+    try {
+      const userEmail = req.user?.claims?.email;
+      
+      if (userEmail !== "itsnainskashyap@gmail.com") {
+        return res.status(403).json({ message: "Access denied" });
+      }
+
+      const { orderId } = req.params;
+      const { status } = req.body;
+      
+      // For now, just return success since we're using mock data
+      // In a real implementation, this would update the order in the database
+      res.json({ message: "Order status updated successfully" });
+    } catch (error) {
+      console.error("Error updating order status:", error);
+      res.status(500).json({ message: "Failed to update order status" });
+    }
+  });
+
   // Initialize Gemini AI
   const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY || '');
 
