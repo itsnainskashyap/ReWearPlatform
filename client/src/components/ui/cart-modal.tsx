@@ -71,7 +71,7 @@ export default function CartModal() {
         </div>
 
         {/* Content */}
-        <div className="flex-1 overflow-y-auto p-4 pb-4">
+        <div className="flex-1 p-4 pb-4">
           {isLoading ? (
             <div className="space-y-4">
               {[...Array(3)].map((_, index) => (
