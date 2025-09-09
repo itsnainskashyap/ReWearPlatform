@@ -5,7 +5,7 @@ import { useState, useEffect } from "react";
 import { useLocation } from "wouter";
 
 export default function BottomNavigation() {
-  const { itemCount, openCart } = useCartStore();
+  const { itemCount } = useCartStore();
   const [isVisible, setIsVisible] = useState(false);
   const [location, navigate] = useLocation();
 
@@ -17,7 +17,7 @@ export default function BottomNavigation() {
     { icon: Home, label: "Home", path: "/", testId: "nav-home" },
     { icon: Grid, label: "Shop", path: "/shop", testId: "nav-shop" },
     { icon: Heart, label: "Wishlist", path: "/wishlist", testId: "nav-wishlist", hasNotification: true },
-    { icon: ShoppingBag, label: "Cart", action: openCart, testId: "nav-cart", count: itemCount },
+    { icon: ShoppingBag, label: "Cart", path: "/cart", testId: "nav-cart", count: itemCount },
     { icon: User, label: "Profile", path: "/profile", testId: "nav-profile" },
   ];
 
@@ -33,7 +33,7 @@ export default function BottomNavigation() {
     <nav className={`bottom-nav-fixed glassmorphism border-t border-white/10 bottom-nav-shadow transition-all duration-500 ${isVisible ? 'animate-slide-up' : 'translate-y-full'}`}>
       <div className="flex items-center justify-around py-3 px-2">
         {navItems.map((item, index) => {
-          const isActive = item.path ? location === item.path : false;
+          const isActive = item.path ? location === item.path : (item.path === "/cart" && location === "/cart");
           return (
             <Button
               key={item.label}

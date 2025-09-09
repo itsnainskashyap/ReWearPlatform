@@ -11,6 +11,7 @@ import Shop from "@/pages/shop";
 import ProductDetail from "@/pages/product-detail";
 import Wishlist from "@/pages/wishlist";
 import Profile from "@/pages/profile";
+import Cart from "@/pages/cart";
 import Checkout from "@/pages/checkout";
 import Orders from "@/pages/orders";
 import About from "@/pages/about";
@@ -24,7 +25,6 @@ import Header from "@/components/layout/header";
 import BottomNavigation from "@/components/layout/bottom-navigation";
 import Drawer from "@/components/layout/drawer";
 import FloatingCartButton from "@/components/ui/floating-cart-button";
-import CartModal from "@/components/ui/cart-modal";
 import AIChatAssistant from "@/components/ai/chat-assistant";
 import { useState, useEffect } from "react";
 
@@ -52,6 +52,7 @@ function Router() {
             <Route path="/product/:id" component={ProductDetail} />
             <Route path="/wishlist" component={Wishlist} />
             <Route path="/profile" component={Profile} />
+            <Route path="/cart" component={Cart} />
             <Route path="/checkout" component={Checkout} />
             <Route path="/orders" component={Orders} />
             <Route path="/about" component={About} />
@@ -114,7 +115,6 @@ function AppContent() {
             {isAuthenticated && (
               <>
                 <FloatingCartButton />
-                <CartModal />
                 <AIChatAssistant />
               </>
             )}

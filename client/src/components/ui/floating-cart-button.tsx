@@ -1,13 +1,15 @@
 import { ShoppingCart } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useCartStore } from "@/store/cart-store";
+import { useLocation } from "wouter";
 
 export default function FloatingCartButton() {
-  const { itemCount, toggleCart } = useCartStore();
+  const { itemCount } = useCartStore();
+  const [, navigate] = useLocation();
 
   return (
     <Button
-      onClick={toggleCart}
+      onClick={() => navigate("/cart")}
       className="fixed left-4 bottom-28 bg-primary text-primary-foreground p-4 rounded-full shadow-lg hover:bg-primary/90 transition-all z-40 w-14 h-14 border-2 border-white/20"
       data-testid="button-floating-cart"
     >
