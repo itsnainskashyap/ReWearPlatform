@@ -7,6 +7,7 @@ import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
+import { AddProductModal } from "@/components/ui/add-product-modal";
 import { 
   BarChart3, 
   Users, 
@@ -406,6 +407,12 @@ export default function Admin() {
           </TabsContent>
         </Tabs>
       </div>
+
+      {/* Add Product Modal */}
+      <AddProductModal 
+        open={showAddProduct} 
+        onOpenChange={setShowAddProduct} 
+      />
     </div>
   );
 }
