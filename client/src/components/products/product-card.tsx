@@ -3,6 +3,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import type { Product } from "@shared/schema";
 import { useState, useEffect } from "react";
+import { useLocation } from "wouter";
 
 interface ProductCardProps {
   product: Product;
@@ -14,6 +15,7 @@ interface ProductCardProps {
 export default function ProductCard({ product, onAddToCart, onAddToWishlist, index = 0 }: ProductCardProps) {
   const [isVisible, setIsVisible] = useState(false);
   const [isLiked, setIsLiked] = useState(false);
+  const [, navigate] = useLocation();
 
   useEffect(() => {
     const timer = setTimeout(() => setIsVisible(true), index * 100);
@@ -29,6 +31,10 @@ export default function ProductCard({ product, onAddToCart, onAddToWishlist, ind
     onAddToWishlist?.(product.id);
   };
 
+  const handleProductClick = () => {
+    navigate(`/product/${product.id}`);
+  };
+
   const getConditionColor = (condition: string) => {
     switch(condition?.toLowerCase()) {
       case 'new': return 'bg-green-100 text-green-800 border-green-200';
@@ -40,8 +46,9 @@ export default function ProductCard({ product, onAddToCart, onAddToWishlist, ind
 
   return (
     <div 
-      className={`card-premium hover-lift hover-zoom rounded-3xl overflow-hidden group transition-all duration-500 ${isVisible ? 'animate-fadeInUp opacity-100' : 'opacity-0'}`}
+      className={`card-premium hover-lift hover-zoom rounded-3xl overflow-hidden group transition-all duration-500 cursor-pointer ${isVisible ? 'animate-fadeInUp opacity-100' : 'opacity-0'}`}
       style={{ animationDelay: `${index * 50}ms` }}
+      onClick={handleProductClick}
       data-testid={`card-product-${product.id}`}
     >
       {/* Image Container with Overlay */}
@@ -65,7 +72,10 @@ export default function ProductCard({ product, onAddToCart, onAddToWishlist, ind
           <Button 
             variant="ghost" 
             size="icon"
-            onClick={handleAddToWishlist}
+            onClick={(e) => {
+              e.stopPropagation();
+              handleAddToWishlist();
+            }}
             className={`h-10 w-10 rounded-full glassmorphism transition-all duration-300 ${isLiked ? 'scale-110' : ''}`}
             data-testid={`button-wishlist-${product.id}`}
           >
@@ -134,7 +144,10 @@ export default function ProductCard({ product, onAddToCart, onAddToWishlist, ind
           </div>
           
           <Button 
-            onClick={handleAddToCart}
+            onClick={(e) => {
+              e.stopPropagation();
+              handleAddToCart();
+            }}
             className="h-11 px-4 bg-gradient-to-r from-accent to-accent/90 text-accent-foreground hover:from-accent/90 hover:to-accent rounded-2xl button-glow font-semibold transition-all duration-300 hover:scale-105"
             data-testid={`button-add-to-cart-${product.id}`}
           >

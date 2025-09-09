@@ -18,6 +18,8 @@ import Contact from "@/pages/contact";
 import FAQs from "@/pages/faqs";
 import Policies from "@/pages/policies";
 import Careers from "@/pages/careers";
+import Admin from "@/pages/admin";
+import Blog from "@/pages/blog";
 import Header from "@/components/layout/header";
 import BottomNavigation from "@/components/layout/bottom-navigation";
 import Drawer from "@/components/layout/drawer";
@@ -56,6 +58,8 @@ function Router() {
             <Route path="/faqs" component={FAQs} />
             <Route path="/policies" component={Policies} />
             <Route path="/careers" component={Careers} />
+            <Route path="/admin" component={Admin} />
+            <Route path="/blog" component={Blog} />
           </>
         )}
         <Route component={NotFound} />
