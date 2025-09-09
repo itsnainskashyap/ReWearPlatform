@@ -16,7 +16,7 @@ export default function Policies() {
           <Button
             variant="ghost"
             size="icon"
-            onClick={() => navigate(-1)}
+            onClick={() => window.history.back()}
             className="hover-lift rounded-2xl"
           >
             <ArrowLeft className="w-6 h-6" />

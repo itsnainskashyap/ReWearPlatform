@@ -33,7 +33,7 @@ export default function Admin() {
   const { toast } = useToast();
   
   // Check if user is admin (based on the requirements, admin email is itsnainskashyap@gmail.com)
-  const isAdmin = user?.email === "itsnainskashyap@gmail.com";
+  const isAdmin = user && typeof user === 'object' && 'email' in user ? user.email === "itsnainskashyap@gmail.com" : false;
 
   useEffect(() => {
     if (!isAuthenticated || !isAdmin) {
@@ -133,7 +133,7 @@ export default function Admin() {
             <p className="text-sm text-muted-foreground">Manage your ReWeara store</p>
           </div>
           <Badge className="bg-primary/10 text-primary border-primary/20">
-            {user?.email}
+            {user && typeof user === 'object' && 'email' in user ? user.email : 'Admin'}
           </Badge>
         </div>
       </div>
