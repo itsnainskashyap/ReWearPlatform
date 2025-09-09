@@ -30,7 +30,7 @@ export default function BottomNavigation() {
   };
 
   return (
-    <nav className={`fixed bottom-0 left-0 right-0 glassmorphism border-t border-white/10 bottom-nav-shadow z-50 transition-all duration-500 ${isVisible ? 'animate-slide-up' : 'translate-y-full'}`}>
+    <nav className={`bottom-nav-fixed glassmorphism border-t border-white/10 bottom-nav-shadow transition-all duration-500 ${isVisible ? 'animate-slide-up' : 'translate-y-full'}`}>
       <div className="flex items-center justify-around py-3 px-2">
         {navItems.map((item, index) => {
           const isActive = item.path ? location === item.path : false;

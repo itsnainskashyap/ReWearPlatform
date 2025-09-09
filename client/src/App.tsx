@@ -13,6 +13,11 @@ import Wishlist from "@/pages/wishlist";
 import Profile from "@/pages/profile";
 import Checkout from "@/pages/checkout";
 import Orders from "@/pages/orders";
+import About from "@/pages/about";
+import Contact from "@/pages/contact";
+import FAQs from "@/pages/faqs";
+import Policies from "@/pages/policies";
+import Careers from "@/pages/careers";
 import Header from "@/components/layout/header";
 import BottomNavigation from "@/components/layout/bottom-navigation";
 import Drawer from "@/components/layout/drawer";
@@ -46,6 +51,11 @@ function Router() {
             <Route path="/profile" component={Profile} />
             <Route path="/checkout" component={Checkout} />
             <Route path="/orders" component={Orders} />
+            <Route path="/about" component={About} />
+            <Route path="/contact" component={Contact} />
+            <Route path="/faqs" component={FAQs} />
+            <Route path="/policies" component={Policies} />
+            <Route path="/careers" component={Careers} />
           </>
         )}
         <Route component={NotFound} />

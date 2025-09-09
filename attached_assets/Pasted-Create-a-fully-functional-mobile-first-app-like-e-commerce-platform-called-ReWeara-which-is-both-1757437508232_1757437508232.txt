@@ -1,0 +1,257 @@
+Create a fully functional, mobile-first, app-like e-commerce platform called *ReWeara, which is both a **Thrift Store* and a *ReWeara Originals Clothing Brand*, built with a clean, modern UI and a complete Admin Panel to control every aspect of the site.  
+
+---
+
+## 🎨 Visuals & Theme
+- Theme colors: *Dark Green (#0B5A3A)* as the primary, *White (#FFFFFF)* as the secondary, with light beige/grey as background neutral.  
+- Typography: modern sans-serif (bold headlines, clean body).  
+- Product cards: *rounded/curved corners*, drop shadows, subtle hover/tap effects.  
+- Animations: *smooth swipe transitions, **fade-ins, **parallax product cards, **flying add-to-cart effect, **bottom navigation sliding animation*.  
+- Mobile must feel like a *native shopping app (PWA support)*.  
+
+---
+
+## 📱 Mobile UX Requirements
+- *Bottom Navigation Bar*:  
+  - Home  
+  - Shop  
+  - Wishlist  
+  - Cart  
+  - Profile  
+- *Sidebar/Drawer Navigation* for secondary links (About Us, Policies, Careers, Blog, Contact).  
+- *Swipe animations* for toggling between *Thrift* and *Originals* shops.  
+- *Curved product cards* with *Add to Cart* and *Buy Now* buttons placed *side by side*.  
+
+---
+
+## 🏠 Pages & Features (User Side + Admin Access)
+
+### 1. Home Page
+- Hero Section:  
+  - Large immersive background (image/video).  
+  - Headline: “ReWeara — Curated Thrift. Crafted Originals.”  
+  - Subheadline: “Sustainable, verified, ready-to-wear fashion.”  
+  - Two cards: *Browse Thrift* | *Explore Originals*.  
+  - *Shop Now* CTA button.  
+- Top Banner Frame: *Admin-controlled carousel* (images, video, text).  
+- Toggle Switch (Thrift | Originals): *swipeable with fluid slide animation*.  
+- Brand Icons Row: Scrollable brand logos (admin adds/removes).  
+- Hot Selling Products section (admin controlled).  
+- Featured Collections section (admin controlled).  
+
+*Admin Controls:* Manage hero content, banners, toggle logic, brand icons, hot selling products, featured collections.  
+
+---
+
+### 2. Shop Page (Thrift / Originals)
+- Product grid: 2 cards per row (mobile + desktop).  
+- Product Card (rounded):  
+  - Product image  
+  - Title + Brand  
+  - Size/Condition badge  
+  - Price (with discount if applied)  
+  - Wishlist heart  
+  - Buttons: *Add to Cart* + *Buy Now*  
+- Filters: Category, Brand, Size, Color, Condition, Price Range.  
+- Sorting: Newest, Price Low → High, Price High → Low, Trending.  
+
+*Admin Controls:* CRUD for products, categories, filters, stock, pricing, images, discounts.  
+
+---
+
+### 3. Product Detail Page
+- Image carousel with zoom/pinch.  
+- Title, brand, size, condition, price.  
+- Product description, fabric, measurements, wash care.  
+- Size Guide modal (admin editable).  
+- Reviews & Ratings (admin moderated).  
+- Related products carousel.  
+- Buttons: Add to Cart, Buy Now.  
+
+*Admin Controls:* Manage product details, reviews, size guide, related items.  
+
+---
+
+### 4. Cart Page
+- Items list with quantity adjust.  
+- Subtotal, coupon input, estimated delivery.  
+- Checkout button.  
+
+*Admin Controls:* Manage coupons, view abandoned carts analytics.  
+
+---
+
+### 5. Checkout Page
+- Guest checkout allowed.  
+- Address form.  
+- Payment Options:  
+  - *UPI QR Payment:* Show admin-controlled QR code & UPI ID. After scan, user clicks “I have paid” → Order status = Payment Pending → Admin verifies → Approves → Status = Placed.  
+  - *Cash on Delivery (COD):* Order created as COD Pending.  
+- Order summary before confirmation.  
+
+*Admin Controls:* Manage UPI QR + ID, enable/disable COD.  
+
+---
+
+### 6. Orders Page (User Side)
+- User can view all orders with statuses: Pending, Payment Pending, Placed, Shipped, Delivered, Cancelled.  
+- Order detail includes tracking ID and items.  
+
+*Admin Controls:* Search/filter orders, approve UPI payments, update order status, generate invoices.  
+
+---
+
+### 7. Wishlist Page
+- Saved products.  
+
+*Admin Controls:* N/A.  
+
+---
+
+### 8. Profile Page
+- User info, saved addresses, wishlist, order history.  
+
+*Admin Controls:* View/manage users, reset accounts.  
+
+---
+
+### 9. About Us Page
+- Story of ReWeara + Founder Nains.  
+
+*Admin Controls:* Edit text, images.  
+
+---
+
+### 10. Contact Page
+- Contact Form (Name, Email, Message).  
+- Info:  
+  - Phone: +91 6200613195  
+  - Email: rewearahelps@gmail.com  
+
+*Admin Controls:* Edit info, view/manage form submissions.  
+
+---
+
+### 11. FAQs Page
+- Expandable questions & answers.  
+
+*Admin Controls:* Add/edit/remove FAQs.  
+
+---
+
+### 12. Policy Pages
+- Shipping & Returns  
+- Privacy Policy  
+- Terms & Conditions  
+
+*Admin Controls:* Edit content.  
+
+---
+
+### 13. Careers Page
+- Job openings.  
+
+*Admin Controls:* Add/edit/remove listings.  
+
+---
+
+### 14. Blog/Journal Page
+- Articles (admin-driven).  
+
+*Admin Controls:* Full blog management (add, edit, remove posts).  
+
+---
+
+### 15. Notifications
+- In-app notifications for order updates, offers.  
+- Push notifications (PWA support).  
+
+*Admin Controls:* Send notifications & offers.  
+
+---
+
+---
+
+## ⚙ Admin Panel (Secure, API-Driven)
+
+*Login (Encrypted):*  
+- Email: itsnainskashyap@gmail.com  
+- Password: nains@1357  
+
+### Admin Features
+1. *Dashboard:* Overview of sales, orders, traffic.  
+2. *Product Management:* CRUD products, categories, stock, discounts.  
+3. *Banner Management:* Hero banners, top frame carousel.  
+4. *Brand Management:* Add/remove brand icons.  
+5. *Order Management:* Verify UPI, update status, generate invoices.  
+6. *Coupons:* Create/manage discount codes.  
+7. *Pages Management:* About, FAQs, Policies, Careers, Blog.  
+8. *UPI Settings:* Upload QR, update UPI ID.  
+9. *Analytics:* Revenue, hot products, abandoned carts.  
+10. *User Management:* View customers, reset accounts.  
+11. *Notifications:* Send promotions/updates to users.  
+
+---
+
+## 💳 Payment Workflow
+1. User places order → selects UPI or COD.  
+2. *UPI Flow:*  
+   - Shows QR + UPI ID (admin managed).  
+   - User scans externally.  
+   - User clicks “I have paid”.  
+   - Order = Payment Pending.  
+   - Admin verifies & approves.  
+   - Status = Placed → Email sent.  
+3. *COD Flow:*  
+   - Order = Pending COD.  
+   - Admin updates status as shipped/delivered.  
+4. Auto-generated product IDs & order IDs.  
+
+---
+
+## ✉ Emails & Notifications
+- User Emails: Order Received, Payment Approved, Shipped, Delivered.  
+- Admin Emails: New Order, “I have paid” trigger.  
+
+---
+
+## 📊 Extra Features
+- Curved product cards with dual CTA (Add to Cart + Buy Now).  
+- Recently viewed products.  
+- Trending & Hot Selling sections.  
+- Reviews & Ratings with moderation.  
+- Size Guide modal.  
+- Coupons/discounts system.  
+- Wishlist synced with account.  
+- Push notifications.  
+- Multi-language ready.  
+- SEO friendly with meta tags, sitemap.  
+- Accessibility (WCAG AA).  
+
+---
+
+## ⚡ Performance
+- Mobile-first, app-like (PWA).  
+- Lazy loading images.  
+- Optimized responsive images.  
+- Fast Core Web Vitals.  
+
+---
+
+## 📦 Deliverables
+1. High-fidelity mockups (mobile + desktop).  
+2. Clickable prototype with full flows.  
+3. Frontend implementation (React/Next.js preferred).  
+4. Admin Panel UI.  
+5. API contract (Products, Orders, Payments, Pages, Users).  
+6. Documentation for workflows.  
+
+---
+
+## 📇 Contact & Branding
+Founder: *Nains (Founder of ReWeara)*  
+Phone: *+91 6200613195*  
+Email: *rewearahelps@gmail.com*  
+
+Meta Title: ReWeara — Thrift & Originals Clothing | Sustainable Fashion  
+Meta Description: Shop thrift finds & ReWeara Originals. Mobile-app UX, UPI + COD, admin-controlled, API-driven.

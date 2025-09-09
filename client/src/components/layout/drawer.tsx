@@ -1,7 +1,10 @@
-import { Info, Shield, Briefcase, BookOpen, Mail, X } from "lucide-react";
+import { Info, Shield, Briefcase, BookOpen, Mail, X, HelpCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { useLocation } from "wouter";
 
 export default function Drawer() {
+  const [, navigate] = useLocation();
+  
   const closeDrawer = () => {
     const drawer = document.getElementById('drawer');
     const drawerContent = document.getElementById('drawer-content');
@@ -14,12 +17,17 @@ export default function Drawer() {
     }
   };
 
+  const handleNavigation = (path: string) => {
+    navigate(path);
+    closeDrawer();
+  };
+
   const menuItems = [
-    { icon: Info, label: "About", href: "#" },
-    { icon: Shield, label: "Policies", href: "#" },
-    { icon: Briefcase, label: "Careers", href: "#" },
-    { icon: BookOpen, label: "Blog", href: "#" },
-    { icon: Mail, label: "Contact", href: "#" },
+    { icon: Info, label: "About", path: "/about" },
+    { icon: Mail, label: "Contact", path: "/contact" },
+    { icon: HelpCircle, label: "FAQs", path: "/faqs" },
+    { icon: Shield, label: "Policies", path: "/policies" },
+    { icon: Briefcase, label: "Careers", path: "/careers" },
   ];
 
   return (
@@ -45,15 +53,15 @@ export default function Drawer() {
           
           <nav className="space-y-4">
             {menuItems.map((item) => (
-              <a
+              <button
                 key={item.label}
-                href={item.href}
-                className="flex items-center space-x-3 p-3 hover-elevate rounded-lg transition-colors"
+                onClick={() => handleNavigation(item.path)}
+                className="flex items-center space-x-3 p-3 hover-elevate rounded-lg transition-colors w-full text-left"
                 data-testid={`link-${item.label.toLowerCase()}`}
               >
                 <item.icon className="w-5 h-5 text-muted-foreground" />
                 <span className="font-medium">{item.label}</span>
-              </a>
+              </button>
             ))}
           </nav>
         </div>
