@@ -255,81 +255,42 @@ export function setupAdminRoutes(app: Express) {
     }
   });
 
-  // Orders management
+  // Orders management using storage interface
   app.get("/api/admin/orders", isAdminAuthenticated, async (req: AdminRequest, res) => {
     try {
-      const { status, search, startDate, endDate, page = 1, limit = 10 } = req.query;
-      
-      const conditions = [];
-      
-      if (status) {
-        conditions.push(eq(orders.status, status as string));
-      }
-      
-      if (search) {
-        conditions.push(
-          or(
-            like(orders.id, `%${search}%`),
-            like(orders.guestEmail, `%${search}%`)
-          )
-        );
-      }
-      
-      if (startDate) {
-        conditions.push(gte(orders.createdAt, new Date(startDate as string)));
-      }
-      
-      if (endDate) {
-        conditions.push(lte(orders.createdAt, new Date(endDate as string)));
-      }
-
+      const { status, search, page = 1, limit = 10 } = req.query;
       const offset = (Number(page) - 1) * Number(limit);
       
-      const ordersList = await db
-        .select({
-          order: orders,
-          user: users
-        })
-        .from(orders)
-        .leftJoin(users, eq(orders.userId, users.id))
-        .where(conditions.length > 0 ? and(...conditions) : undefined)
-        .orderBy(desc(orders.createdAt))
-        .limit(Number(limit))
-        .offset(offset);
+      // Get orders using storage interface
+      const ordersList = await storage.getAllOrders({
+        status: status as string,
+        search: search as string,
+        limit: Number(limit),
+        offset
+      });
 
       // Get order items for each order
       const ordersWithItems = await Promise.all(
-        ordersList.map(async ({ order, user }) => {
-          const items = await db
-            .select({
-              orderItem: orderItems,
-              product: products
-            })
-            .from(orderItems)
-            .leftJoin(products, eq(orderItems.productId, products.id))
-            .where(eq(orderItems.orderId, order.id));
-
+        ordersList.map(async (order) => {
+          const orderDetails = await storage.getOrderById(order.id);
           return {
             ...order,
-            user,
-            items: items.map(({ orderItem, product }) => ({
-              ...orderItem,
-              product
-            }))
+            items: orderDetails?.items || []
           };
         })
       );
 
-      const [totalCount] = await db
-        .select({ count: sql<number>`count(*)` })
-        .from(orders)
-        .where(conditions.length > 0 ? and(...conditions) : undefined);
+      // Get total count for pagination
+      const allOrders = await storage.getAllOrders({
+        status: status as string,
+        search: search as string
+      });
 
       res.json({
         orders: ordersWithItems,
-        totalCount: totalCount?.count || 0,
+        totalCount: allOrders.length,
         currentPage: Number(page),
-        totalPages: Math.ceil((totalCount?.count || 0) / Number(limit))
+        totalPages: Math.ceil(allOrders.length / Number(limit))
       });
     } catch (error) {
       console.error("Orders fetch error:", error);
@@ -518,6 +479,211 @@ export function setupAdminRoutes(app: Express) {
     } catch (error) {
       console.error("Coupon delete error:", error);
       res.status(500).json({ message: "Failed to delete coupon" });
+    }
+  });
+
+  // Product management using storage interface
+  app.get("/api/admin/products", isAdminAuthenticated, async (req: AdminRequest, res) => {
+    try {
+      const { search, categoryId, brandId, page = 1, limit = 20 } = req.query;
+      
+      const products = await storage.getProducts({
+        search: search as string,
+        categoryId: categoryId as string,
+        brandId: brandId as string,
+        limit: Number(limit),
+        offset: (Number(page) - 1) * Number(limit)
+      });
+
+      res.json(products);
+    } catch (error) {
+      console.error("Products fetch error:", error);
+      res.status(500).json({ message: "Failed to fetch products" });
+    }
+  });
+
+  // Create product
+  app.post("/api/admin/products", isAdminAuthenticated, async (req: AdminRequest, res) => {
+    try {
+      const productData = req.body;
+      
+      // Generate slug from name
+      const slug = productData.name.toLowerCase()
+        .replace(/[^a-z0-9 -]/g, '')
+        .replace(/\s+/g, '-')
+        .replace(/-+/g, '-');
+
+      const newProduct = await storage.createProduct({
+        ...productData,
+        slug,
+        images: productData.images || [],
+        sizes: productData.sizes || [],
+        isActive: true,
+        viewCount: 0
+      });
+
+      await logAuditAction(
+        req.admin!.id,
+        "CREATE_PRODUCT",
+        "product",
+        newProduct.id,
+        productData,
+        req.ip,
+        req.headers["user-agent"]
+      );
+
+      res.json(newProduct);
+    } catch (error) {
+      console.error("Product create error:", error);
+      res.status(500).json({ message: "Failed to create product" });
+    }
+  });
+
+  // Update product
+  app.put("/api/admin/products/:productId", isAdminAuthenticated, async (req: AdminRequest, res) => {
+    try {
+      const { productId } = req.params;
+      const updates = req.body;
+      
+      // Generate new slug if name is updated
+      if (updates.name) {
+        updates.slug = updates.name.toLowerCase()
+          .replace(/[^a-z0-9 -]/g, '')
+          .replace(/\s+/g, '-')
+          .replace(/-+/g, '-');
+      }
+
+      const updatedProduct = await storage.updateProduct(productId, updates);
+      
+      if (!updatedProduct) {
+        return res.status(404).json({ message: "Product not found" });
+      }
+
+      await logAuditAction(
+        req.admin!.id,
+        "UPDATE_PRODUCT",
+        "product",
+        productId,
+        updates,
+        req.ip,
+        req.headers["user-agent"]
+      );
+
+      res.json(updatedProduct);
+    } catch (error) {
+      console.error("Product update error:", error);
+      res.status(500).json({ message: "Failed to update product" });
+    }
+  });
+
+  // Delete product
+  app.delete("/api/admin/products/:productId", isAdminAuthenticated, async (req: AdminRequest, res) => {
+    try {
+      const { productId } = req.params;
+
+      // Soft delete by marking as inactive
+      await storage.updateProduct(productId, { isActive: false });
+
+      await logAuditAction(
+        req.admin!.id,
+        "DELETE_PRODUCT",
+        "product",
+        productId,
+        null,
+        req.ip,
+        req.headers["user-agent"]
+      );
+
+      res.json({ message: "Product deleted successfully" });
+    } catch (error) {
+      console.error("Product delete error:", error);
+      res.status(500).json({ message: "Failed to delete product" });
+    }
+  });
+
+  // Categories management
+  app.get("/api/admin/categories", isAdminAuthenticated, async (req: AdminRequest, res) => {
+    try {
+      const categories = await storage.getCategories();
+      res.json(categories);
+    } catch (error) {
+      console.error("Categories fetch error:", error);
+      res.status(500).json({ message: "Failed to fetch categories" });
+    }
+  });
+
+  // Create category
+  app.post("/api/admin/categories", isAdminAuthenticated, async (req: AdminRequest, res) => {
+    try {
+      const categoryData = req.body;
+      
+      const slug = categoryData.name.toLowerCase()
+        .replace(/[^a-z0-9 -]/g, '')
+        .replace(/\s+/g, '-')
+        .replace(/-+/g, '-');
+
+      const newCategory = await storage.createCategory({
+        ...categoryData,
+        slug
+      });
+
+      await logAuditAction(
+        req.admin!.id,
+        "CREATE_CATEGORY",
+        "category",
+        newCategory.id,
+        categoryData,
+        req.ip,
+        req.headers["user-agent"]
+      );
+
+      res.json(newCategory);
+    } catch (error) {
+      console.error("Category create error:", error);
+      res.status(500).json({ message: "Failed to create category" });
+    }
+  });
+
+  // Brands management
+  app.get("/api/admin/brands", isAdminAuthenticated, async (req: AdminRequest, res) => {
+    try {
+      const brands = await storage.getBrands();
+      res.json(brands);
+    } catch (error) {
+      console.error("Brands fetch error:", error);
+      res.status(500).json({ message: "Failed to fetch brands" });
+    }
+  });
+
+  // Create brand
+  app.post("/api/admin/brands", isAdminAuthenticated, async (req: AdminRequest, res) => {
+    try {
+      const brandData = req.body;
+      
+      const slug = brandData.name.toLowerCase()
+        .replace(/[^a-z0-9 -]/g, '')
+        .replace(/\s+/g, '-')
+        .replace(/-+/g, '-');
+
+      const newBrand = await storage.createBrand({
+        ...brandData,
+        slug
+      });
+
+      await logAuditAction(
+        req.admin!.id,
+        "CREATE_BRAND",
+        "brand",
+        newBrand.id,
+        brandData,
+        req.ip,
+        req.headers["user-agent"]
+      );
+
+      res.json(newBrand);
+    } catch (error) {
+      console.error("Brand create error:", error);
+      res.status(500).json({ message: "Failed to create brand" });
     }
   });
 

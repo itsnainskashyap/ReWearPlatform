@@ -28,7 +28,7 @@ import {
   type InsertOrderItem,
 } from "@shared/schema";
 import { db } from "./db";
-import { eq, desc, and, sql, like, inArray } from "drizzle-orm";
+import { eq, desc, and, sql, like, inArray, or } from "drizzle-orm";
 
 export interface IStorage {
   // User operations (required for Replit Auth)
@@ -78,6 +78,12 @@ export interface IStorage {
   // Order operations
   createOrder(order: InsertOrder): Promise<Order>;
   getOrders(userId?: string): Promise<Order[]>;
+  getAllOrders(options?: {
+    status?: string;
+    search?: string;
+    limit?: number;
+    offset?: number;
+  }): Promise<(Order & { user?: User })[]>;
   getOrderById(id: string): Promise<(Order & { items: (OrderItem & { product: Product })[] }) | undefined>;
   updateOrderStatus(id: string, status: string): Promise<Order | undefined>;
 }
@@ -416,6 +422,58 @@ export class DatabaseStorage implements IStorage {
       .from(orders)
       .where(eq(orders.userId, userId))
       .orderBy(desc(orders.createdAt));
+  }
+
+  async getAllOrders(options: {
+    status?: string;
+    search?: string;
+    limit?: number;
+    offset?: number;
+  } = {}): Promise<(Order & { user?: User })[]> {
+    const conditions = [];
+    
+    if (options.status) {
+      conditions.push(eq(orders.status, options.status));
+    }
+    
+    if (options.search) {
+      conditions.push(
+        or(
+          like(orders.id, `%${options.search}%`),
+          like(orders.guestEmail, `%${options.search}%`)
+        )
+      );
+    }
+
+    let query = db
+      .select({
+        order: orders,
+        user: users
+      })
+      .from(orders)
+      .leftJoin(users, eq(orders.userId, users.id))
+      .$dynamic();
+
+    if (conditions.length > 0) {
+      query = query.where(and(...conditions)) as any;
+    }
+
+    query = query.orderBy(desc(orders.createdAt)) as any;
+
+    if (options.limit) {
+      query = query.limit(options.limit) as any;
+    }
+
+    if (options.offset) {
+      query = query.offset(options.offset) as any;
+    }
+
+    const results = await query;
+    
+    return results.map(({ order, user }) => ({
+      ...order,
+      user: user || undefined
+    }));
   }
 
   async getOrderById(id: string): Promise<(Order & { items: (OrderItem & { product: Product })[] }) | undefined> {
