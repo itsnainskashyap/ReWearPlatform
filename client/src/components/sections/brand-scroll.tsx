@@ -19,7 +19,7 @@ export default function BrandScroll() {
         <div className="px-4 mb-6">
           <div className="flex items-center space-x-2">
             <Sparkles className="w-6 h-6 text-accent animate-pulse" />
-            <h2 className="text-2xl font-bold gradient-text">Featured Brands</h2>
+            <h2 className="text-2xl font-bold text-primary">Featured Brands</h2>
           </div>
         </div>
         <div className="flex space-x-4 px-4 overflow-x-auto scroll-container" data-testid="container-brand-scroll">
@@ -40,7 +40,7 @@ export default function BrandScroll() {
       <div className="px-4 mb-6">
         <div className="flex items-center space-x-2">
           <Sparkles className="w-6 h-6 text-accent animate-pulse" />
-          <h2 className="text-2xl font-bold gradient-text" data-testid="text-featured-brands-title">
+          <h2 className="text-2xl font-bold text-primary" data-testid="text-featured-brands-title">
             Featured Brands
           </h2>
         </div>

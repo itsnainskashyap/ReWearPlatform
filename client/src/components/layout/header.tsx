@@ -48,16 +48,13 @@ export default function Header() {
           <Menu className="w-6 h-6 transition-transform duration-200 hover:scale-110" />
         </Button>
         
-        <div className="flex items-center space-x-3 animate-pulse-glow">
+        <div className="flex items-center space-x-3">
           <div className="relative">
             <div className="w-10 h-10 rounded-2xl flex items-center justify-center shadow-lg overflow-hidden bg-white">
               <img src={logoImage} alt="ReWeara Logo" className="w-8 h-8 object-contain" />
             </div>
-            <div className="absolute -top-1 -right-1">
-              <Sparkles className="w-4 h-4 text-accent animate-pulse" />
-            </div>
           </div>
-          <span className="font-bold text-xl gradient-text">ReWeara</span>
+          <span className="font-bold text-xl text-primary">ReWeara</span>
         </div>
         
         <Button 
