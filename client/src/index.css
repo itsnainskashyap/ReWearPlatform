@@ -382,9 +382,15 @@
   backdrop-filter: blur(20px);
 }
 
+/* Enhanced backdrop blur for all dialog overlays */
+.dialog-overlay {
+  backdrop-filter: blur(40px) !important;
+  background: rgba(0,0,0,0.8) !important;
+}
+
 .drawer-overlay {
-  backdrop-filter: blur(24px);
-  background: rgba(0,0,0,0.7);
+  backdrop-filter: blur(40px);
+  background: rgba(0,0,0,0.8);
 }
 
 .card-premium {
