@@ -65,7 +65,7 @@ export default function Orders() {
           <Button
             variant="ghost"
             size="icon"
-            onClick={() => navigate(-1)}
+            onClick={() => navigate("/")}
             className="hover-lift rounded-2xl"
           >
             <ArrowLeft className="w-6 h-6" />
@@ -108,7 +108,7 @@ export default function Orders() {
           </div>
         ) : (
           <div className="space-y-4">
-            {filteredOrders.map((order) => (
+            {filteredOrders.map((order: any) => (
               <Card key={order.id} className="card-premium rounded-2xl hover-lift">
                 <CardHeader className="pb-3">
                   <div className="flex items-center justify-between">
@@ -128,7 +128,7 @@ export default function Orders() {
                 <CardContent className="space-y-4">
                   {/* Order Items */}
                   <div className="space-y-3">
-                    {order.items.map((item, index) => (
+                    {order.items.map((item: any, index: number) => (
                       <div key={index} className="flex items-center space-x-3">
                         <img
                           src={item.image}

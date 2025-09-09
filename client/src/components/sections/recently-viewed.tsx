@@ -31,7 +31,7 @@ export default function RecentlyViewed() {
     );
   }
 
-  if (!recentlyViewed || recentlyViewed.length === 0) {
+  if (!recentlyViewed || !Array.isArray(recentlyViewed) || recentlyViewed.length === 0) {
     return null; // Don't show section if no recently viewed items
   }
 

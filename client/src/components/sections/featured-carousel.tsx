@@ -23,7 +23,7 @@ export default function FeaturedCarousel() {
     );
   }
 
-  if (!featuredCollections || featuredCollections.length === 0) {
+  if (!featuredCollections || !Array.isArray(featuredCollections) || featuredCollections.length === 0) {
     return null; // Don't show section if no collections
   }
 
@@ -33,7 +33,7 @@ export default function FeaturedCarousel() {
         <h2 className="text-xl font-bold" data-testid="text-featured-collections-title">Featured Collections</h2>
       </div>
       <div className="flex space-x-4 px-4 overflow-x-auto scroll-container" data-testid="container-featured-carousel">
-        {featuredCollections.map((collection) => (
+        {featuredCollections.map((collection: any) => (
           <div 
             key={collection.id}
             className="flex-shrink-0 w-72 bg-card rounded-2xl shadow-md overflow-hidden hover-elevate cursor-pointer"

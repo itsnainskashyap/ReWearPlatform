@@ -83,32 +83,32 @@ export default function Admin() {
     return null;
   }
 
-  const dashboardCards = stats ? [
+  const dashboardCards = stats && typeof stats === 'object' ? [
     {
       title: "Total Revenue",
-      value: `₹${stats.totalRevenue || '0'}`,
-      change: `${stats.revenueChange || '+0'}%`,
+      value: `₹${(stats as any).totalRevenue || '0'}`,
+      change: `${(stats as any).revenueChange || '+0'}%`,
       icon: DollarSign,
       color: "text-green-600"
     },
     {
       title: "Total Orders",
-      value: stats.totalOrders || '0',
-      change: `${stats.ordersChange || '+0'}%`,
+      value: (stats as any).totalOrders || '0',
+      change: `${(stats as any).ordersChange || '+0'}%`,
       icon: ShoppingCart,
       color: "text-blue-600"
     },
     {
       title: "Active Products",
-      value: stats.activeProducts || '0',
-      change: `${stats.productsChange || '+0'}%`,
+      value: (stats as any).activeProducts || '0',
+      change: `${(stats as any).productsChange || '+0'}%`,
       icon: Package,
       color: "text-purple-600"
     },
     {
       title: "Total Users",
-      value: stats.totalUsers || '0',
-      change: `${stats.usersChange || '+0'}%`,
+      value: (stats as any).totalUsers || '0',
+      change: `${(stats as any).usersChange || '+0'}%`,
       icon: Users,
       color: "text-orange-600"
     }
