@@ -294,7 +294,7 @@ export default function Admin() {
                   </div>
                 ) : (
                   <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                    {products && products.length > 0 ? products.map((product: any) => (
+                    {products && Array.isArray(products) && products.length > 0 ? products.map((product: any) => (
                       <div key={product.id} className="border rounded-2xl overflow-hidden hover:shadow-lg transition-shadow">
                         <div className="aspect-square bg-muted">
                           {product.images?.[0] ? (

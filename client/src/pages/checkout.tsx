@@ -22,8 +22,10 @@ export default function Checkout() {
   const [orderPlaced, setOrderPlaced] = useState(false);
   
   const [shippingInfo, setShippingInfo] = useState({
-    fullName: `${user?.firstName || ''} ${user?.lastName || ''}`.trim(),
-    email: user?.email || "",
+    fullName: user && typeof user === 'object' && 'firstName' in user && 'lastName' in user 
+      ? `${user.firstName || ''} ${user.lastName || ''}`.trim() 
+      : "",
+    email: user && typeof user === 'object' && 'email' in user ? user.email || "" : "",
     phone: "",
     address: "",
     city: "",
@@ -49,11 +51,11 @@ export default function Checkout() {
       
       return await apiRequest("POST", "/api/orders", orderData);
     },
-    onSuccess: (data) => {
+    onSuccess: (data: any) => {
       setOrderPlaced(true);
       toast({
         title: "Order Placed Successfully!",
-        description: `Your order #${data.id.slice(0, 8).toUpperCase()} has been placed`,
+        description: data?.id ? `Your order #${data.id.slice(0, 8).toUpperCase()} has been placed` : "Your order has been placed successfully",
       });
     },
     onError: () => {
@@ -66,8 +68,8 @@ export default function Checkout() {
   });
 
   const calculateTotal = () => {
-    if (!cart?.items) return "0.00";
-    const subtotal = cart.items.reduce((total: number, item: any) => 
+    if (!cart || !Array.isArray((cart as any)?.items)) return "0.00";
+    const subtotal = (cart as any).items.reduce((total: number, item: any) => 
       total + (parseFloat(item.product.price) * item.quantity), 0
     );
     const shipping = subtotal > 500 ? 0 : 50;
@@ -76,8 +78,8 @@ export default function Checkout() {
   };
 
   const calculateSubtotal = () => {
-    if (!cart?.items) return "0.00";
-    return cart.items.reduce((total: number, item: any) => 
+    if (!cart || !Array.isArray((cart as any)?.items)) return "0.00";
+    return (cart as any).items.reduce((total: number, item: any) => 
       total + (parseFloat(item.product.price) * item.quantity), 0
     ).toFixed(2);
   };
@@ -418,7 +420,7 @@ export default function Checkout() {
                     {/* Order Items */}
                     <div className="space-y-3">
                       <span className="font-medium">Order Items</span>
-                      {cart?.items?.map((item: any) => (
+                      {cart && Array.isArray((cart as any)?.items) ? (cart as any).items.map((item: any) => (
                         <div key={item.id} className="flex items-center space-x-3 p-3 bg-muted/30 rounded-xl">
                           <img
                             src={item.product.images?.[0] || '/api/placeholder/60/60'}
@@ -431,7 +433,7 @@ export default function Checkout() {
                           </div>
                           <p className="font-bold">₹{(parseFloat(item.product.price) * item.quantity).toFixed(2)}</p>
                         </div>
-                      ))}
+                      )) : null}
                     </div>
                   </CardContent>
                 </Card>
