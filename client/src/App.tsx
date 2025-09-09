@@ -20,6 +20,7 @@ import FAQs from "@/pages/faqs";
 import Policies from "@/pages/policies";
 import Careers from "@/pages/careers";
 import Admin from "@/pages/admin";
+import AdminPanel from "@/pages/admin-panel";
 import Blog from "@/pages/blog";
 import Header from "@/components/layout/header";
 import BottomNavigation from "@/components/layout/bottom-navigation";
@@ -61,6 +62,7 @@ function Router() {
             <Route path="/policies" component={Policies} />
             <Route path="/careers" component={Careers} />
             <Route path="/admin" component={Admin} />
+            <Route path="/admin-panel" component={AdminPanel} />
             <Route path="/blog" component={Blog} />
           </>
         )}
