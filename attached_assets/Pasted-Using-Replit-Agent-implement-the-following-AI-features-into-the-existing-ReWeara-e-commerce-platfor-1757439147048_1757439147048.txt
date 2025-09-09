@@ -1,0 +1,64 @@
+Using Replit Agent, implement the following AI features into the existing ReWeara e-commerce platform via iterative checkpoints (e.g., Checkpoint 4: AI Integration). Use the Google Gemini SDK (npm install @google/generative-ai) with the provided API key as a Replit secret (AIzaSyA29aikGQLeapUbRrNOavMJVakYNhUK-sU). Ensure all AI calls are async, error-handled (e.g., fallback to static content on API failure), privacy-compliant (auto-delete user uploads post-processing, no biometric storage), and admin-controlled (toggle features, customize prompts, monitor usage/costs in analytics). No fake data—AI outputs populate dynamically based on real user/product data. Focus on Gemini 2.5 Flash Image (aka Nano Banana) for image tasks (top-rated for editing/try-on as of 2025b8f319645caf19f0c8983b77), and Gemini's semantic embeddings for recommendations (ideal for e-commerce personalization via user history/product descriptionsb839e03cad1378e55f). Add SynthID watermarking to all generated images for transparency5c0f00e02a19.
+1. AI-Powered Recommendations (Semantic Search & Personalization)
+Implementation: On Home/Shop/Product Detail pages, fetch "For You" or "Related Products" carousel. Use Gemini embeddings API to generate vectors for product descriptions/images (e.g., prompt: "Embed this product: [title, desc, category, thrift/originals] for semantic similarity"). Compare user history (browsed/viewed items from DB/localStorage) via cosine similarity (implement simple JS vector math or server-side Node.js). Return top 4-6 similar products (e.g., "Similar sustainable thrift tops"). Fallback: Manual admin-linked items.
+UX: Carousel with fade-in animation; personalize based on session (e.g., "Based on your thrift views"). Limit API calls to 1 per session for cost (free tier ~100/day2854d6).
+Admin Controls: Toggle on/off, set similarity threshold (0.7-0.9), customize embedding prompt (e.g., "Focus on eco-fabric for ReWeara"), view usage logs (calls/success rate).
+Code Snippet (in /api/recommendations.js, Express route):
+const { GoogleGenerativeAI } = require('@google/generative-ai');
+const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY); // Replit secret
+
+app.get('/api/recommendations/:productId', async (req, res) => {
+  try {
+    const model = genAI.getGenerativeModel({ model: 'gemini-2.5-flash' });
+    const product = await getProduct(req.params.productId); // From DB
+    const embedPrompt = Embed for semantic search: ${product.title} - ${product.desc} - Category: ${product.category};
+    const embedding = await model.embedContent(embedPrompt); // Vector output
+    // Compute similarity with other products (e.g., via simple loop or vector lib)
+    const similar = await findSimilarProducts(embedding.embedding); // Custom func
+    res.json(similar.slice(0, 6));
+  } catch (error) {
+    res.status(500).json({ error: 'AI unavailable, showing manual recs' }); // Fallback
+  }
+});
+Replit Optimization: Test in checkpoint: Run API call with mock product; verify vectors (console.log length ~768 dims).
+2. Virtual Try-On (Nano Banana for Realistic Overlays)
+Implementation: On Product Detail page, add "Try It On" button (green, icon: user silhouette). User uploads full-body photo (via multer for temp storage). Send to Gemini 2.5 Flash Image API: Prompt like "Overlay this [product image] clothing realistically on the user's body from [user photo], preserve face/pose/lighting, add wrinkles/drape for thrift authenticity, high fidelity, 1024x1024". Use multi-turn for refinements (e.g., "Adjust fit for size M"). Display in modal (before/after split-view, zoomable). Auto-delete upload after 5min. Watermark with SynthID + visible Gemini logo (bottom-right, as per 2025 standards35dc0de183b7). Handle errors: "Upload upright full-body photo" toast; fallback to static size guide.
+UX: Modal with loading spinner (skeleton overlay); success: Download/share buttons. Limit 3 tries/session for free tier.
+Admin Controls: Toggle feature, edit base prompts (e.g., "Emphasize sustainable fabric texture"), set resolution (512x512 for speed), monitor API costs/usage (e.g., integrate billing logs).
+Code Snippet (in /components/TryOnModal.jsx & /api/tryon.js):
+// api/tryon.js
+const { GoogleGenerativeAI } = require('@google/generative-ai');
+const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
+const fs = require('fs');
+
+app.post('/api/tryon', async (req, res) => {
+  try {
+    const { userImage, productImage, prompt } = req.body; // Base64 or file paths
+    const model = genAI.getGenerativeModel({ model: 'gemini-2.5-flash-image-preview' });
+    const result = await model.generateContent([
+      Overlay product realistically: ${prompt},
+      { inlineData: { data: userImage.toString('base64'), mimeType: 'image/jpeg' } },
+      { inlineData: { data: productImage.toString('base64'), mimeType: 'image/jpeg' } }
+    ]);
+    const generatedImage = result.response.candidates[0].content.parts[0].inlineData.data; // Base64
+    // Auto-delete temp files
+    fs.unlinkSync(req.files.userImage.path);
+    res.json({ image: data:image/jpeg;base64,${generatedImage} }); // With watermark auto-applied
+  } catch (error) {
+    res.status(500).json({ error: 'Try-on failed; check photo quality' });
+  }
+});
+Replit Optimization: Checkpoint: Upload mock images, test endpoint (curl POST with base64), verify output has watermark; handle distortions (multi-turn refinement prompt).
+3. AI Hero Background Generation (Cartoon-Style for Appeal)
+Implementation: In Hero Section (Home Page), admin/AI-generate whimsical cartoon backgrounds (e.g., "Eco-fashion thrift scene with ReWeara originals, cartoon style, vibrant greens, sustainable vibes"). Use Gemini 2.5 Flash Image for text-to-image (prompt: "Generate cartoon background: [admin text], 1920x1080, parallax-ready"). Cache generated image in Cloudinary/DB; refresh on admin edit. Fallback: Admin-uploaded static image.
+UX: Full-screen with parallax scroll; auto-optimize for mobile (WebP, lazy-load).
+Admin Controls: Dedicated "AI Backgrounds" tool—input prompt, generate/preview (live modal), save as default/seasonal (e.g., "Summer Thrift Cartoon"). Track generations (cost per image ~$0.001a4495a537137).
+Code Snippet (in /api/backgrounds.js):
+// Similar to try-on, but text-to-image
+const result = await model.generateContent('Generate cartoon eco-fashion background: Curated thrift and originals in sustainable style, vibrant, 1920x1080');
+// Save to Cloudinary, return URL
+Replit Optimization: Checkpoint: Generate sample bg, integrate into Hero component; test parallax with Framer Motion.
+Integration Notes
+Security/Privacy: Validate uploads (size <5MB, JPEG/PNG), GDPR consent modal before try-on ("AI processes photo temporarily"). Rate-limit API (e.g., 10 calls/user/day).
+Performance: Async loading, error fallbacks; use Replit secrets for key. Monitor via admin dashboard (e.g., "AI Usage: 50 calls, $0.05").
+Testing in Replit: After checkpoint, preview: Simulate user flow (upload photo → try-on → recs carousel). Ensure mobile PWA compatibility (offline fallback: "AI unavailable offline"). (Optimise codes and prompt according to you)
