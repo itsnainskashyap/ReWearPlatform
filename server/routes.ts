@@ -234,6 +234,68 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Admin API endpoints
+  app.get('/api/admin/stats', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user?.claims?.sub;
+      const userEmail = req.user?.claims?.email;
+      
+      // Check if user is admin
+      if (userEmail !== "itsnainskashyap@gmail.com") {
+        return res.status(403).json({ message: "Access denied" });
+      }
+
+      const stats = {
+        totalRevenue: 124589,
+        totalOrders: 1234,
+        activeProducts: 456,
+        totalUsers: 2890
+      };
+      
+      res.json(stats);
+    } catch (error) {
+      console.error("Error fetching admin stats:", error);
+      res.status(500).json({ message: "Failed to fetch stats" });
+    }
+  });
+
+  app.get('/api/admin/orders', isAuthenticated, async (req: any, res) => {
+    try {
+      const userEmail = req.user?.claims?.email;
+      
+      if (userEmail !== "itsnainskashyap@gmail.com") {
+        return res.status(403).json({ message: "Access denied" });
+      }
+
+      const orders = [
+        { id: "REW1001", customer: "John Doe", amount: 1299, status: "payment_pending" },
+        { id: "REW1002", customer: "Jane Smith", amount: 2199, status: "placed" },
+        { id: "REW1003", customer: "Mike Johnson", amount: 899, status: "shipped" },
+      ];
+      
+      res.json(orders);
+    } catch (error) {
+      console.error("Error fetching admin orders:", error);
+      res.status(500).json({ message: "Failed to fetch orders" });
+    }
+  });
+
+  app.get('/api/admin/products', isAuthenticated, async (req: any, res) => {
+    try {
+      const userEmail = req.user?.claims?.email;
+      
+      if (userEmail !== "itsnainskashyap@gmail.com") {
+        return res.status(403).json({ message: "Access denied" });
+      }
+
+      const products = await storage.getAllProducts();
+      res.json(products);
+    } catch (error) {
+      console.error("Error fetching admin products:", error);
+      res.status(500).json({ message: "Failed to fetch products" });
+    }
+  });
+
   const httpServer = createServer(app);
   return httpServer;
 }
