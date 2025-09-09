@@ -520,6 +520,8 @@
   right: 0 !important;
   z-index: 9999 !important;
   width: 100% !important;
+  transform: translateZ(0) !important;
+  will-change: transform !important;
 }
 
 /* Additional bottom navigation shadows and styles */

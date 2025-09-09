@@ -8,7 +8,7 @@ export default function FloatingCartButton() {
   return (
     <Button
       onClick={toggleCart}
-      className="fixed right-4 bottom-24 bg-primary text-primary-foreground p-4 rounded-full shadow-lg hover:bg-primary/90 transition-all z-30 w-14 h-14"
+      className="fixed left-4 bottom-24 bg-primary text-primary-foreground p-4 rounded-full shadow-lg hover:bg-primary/90 transition-all z-30 w-14 h-14 border-2 border-white/20"
       data-testid="button-floating-cart"
     >
       <ShoppingCart className="w-6 h-6" />

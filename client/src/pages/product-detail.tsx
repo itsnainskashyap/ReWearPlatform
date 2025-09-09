@@ -22,6 +22,7 @@ export default function ProductDetail() {
   const [selectedImage, setSelectedImage] = useState(0);
   const [isVisible, setIsVisible] = useState(false);
   const [quantity, setQuantity] = useState(1);
+  const [selectedSize, setSelectedSize] = useState<string>("");
   const [showSizeGuide, setShowSizeGuide] = useState(false);
   const [showTryOn, setShowTryOn] = useState(false);
 
@@ -48,7 +49,8 @@ export default function ProductDetail() {
     mutationFn: async () => {
       await apiRequest("POST", "/api/cart/items", { 
         productId: params?.id, 
-        quantity 
+        quantity,
+        size: selectedSize 
       });
     },
     onSuccess: () => {
@@ -250,7 +252,7 @@ export default function ProductDetail() {
           </div>
         </div>
 
-        {/* Price */}
+        {/* Price and Stock */}
         <div className="space-y-1 animate-scaleIn" style={{ animationDelay: '0.2s' }}>
           <div className="flex items-baseline space-x-3">
             <span className="text-3xl font-bold text-primary">₹{product.price}</span>
@@ -263,6 +265,17 @@ export default function ProductDetail() {
                   {Math.round(((parseFloat(product.originalPrice) - parseFloat(product.price)) / parseFloat(product.originalPrice)) * 100)}% OFF
                 </Badge>
               </>
+            )}
+          </div>
+          {/* Stock Information */}
+          <div className="flex items-center space-x-2">
+            <Badge variant="secondary" className="text-xs">
+              {product.stock > 0 ? `${product.stock} pieces left` : 'Out of stock'}
+            </Badge>
+            {product.condition && (
+              <Badge variant="outline" className="text-xs bg-amber-50 text-amber-700 border-amber-200">
+                Condition: {product.condition}
+              </Badge>
             )}
           </div>
         </div>
@@ -286,8 +299,13 @@ export default function ProductDetail() {
               {['XS', 'S', 'M', 'L', 'XL', 'XXL'].map(size => (
                 <Button
                   key={size}
-                  variant="outline"
-                  className="w-12 h-12 rounded-xl hover-lift"
+                  variant={selectedSize === size ? "default" : "outline"}
+                  onClick={() => setSelectedSize(size)}
+                  className={`w-12 h-12 rounded-xl hover-lift ${
+                    selectedSize === size 
+                      ? "bg-primary text-primary-foreground border-primary" 
+                      : ""
+                  }`}
                   data-testid={`size-${size}`}
                 >
                   {size}

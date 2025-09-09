@@ -138,7 +138,7 @@ export default function AIChatAssistant() {
           <DialogTrigger asChild>
             <Button 
               size="icon"
-              className="w-14 h-14 rounded-full bg-gradient-to-r from-primary to-accent hover:from-primary/90 hover:to-accent/90 shadow-lg hover-lift"
+              className="w-14 h-14 rounded-full bg-gradient-to-r from-primary to-accent hover:from-primary/90 hover:to-accent/90 shadow-2xl hover-lift border-2 border-white/20 backdrop-blur-sm"
               data-testid="button-ai-chat"
             >
               <MessageCircle className="w-6 h-6 text-primary-foreground" />
