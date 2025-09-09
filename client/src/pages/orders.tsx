@@ -38,40 +38,9 @@ export default function Orders() {
     }
   };
 
-  const mockOrders = [
-    {
-      id: "ORD001",
-      date: new Date(2024, 0, 15),
-      status: "delivered",
-      total: "1299.00",
-      items: [
-        { name: "Vintage Denim Jacket", quantity: 1, price: "1299.00", image: "/api/placeholder/60/60" }
-      ]
-    },
-    {
-      id: "ORD002",
-      date: new Date(2024, 0, 20),
-      status: "shipped",
-      total: "2499.00",
-      items: [
-        { name: "Eco-Friendly Tote Bag", quantity: 1, price: "899.00", image: "/api/placeholder/60/60" },
-        { name: "Organic Cotton T-Shirt", quantity: 2, price: "800.00", image: "/api/placeholder/60/60" }
-      ]
-    },
-    {
-      id: "ORD003",
-      date: new Date(2024, 0, 25),
-      status: "pending",
-      total: "599.00",
-      items: [
-        { name: "Recycled Sneakers", quantity: 1, price: "599.00", image: "/api/placeholder/60/60" }
-      ]
-    }
-  ];
-
-  const filteredOrders = selectedStatus === 'all' 
-    ? mockOrders 
-    : mockOrders.filter(order => order.status === selectedStatus);
+  const filteredOrders = orders && Array.isArray(orders) 
+    ? (selectedStatus === 'all' ? orders : orders.filter((order: any) => order.status === selectedStatus))
+    : [];
 
   if (isLoading) {
     return (

@@ -2,21 +2,30 @@ import { useQuery } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 
 export default function FeaturedCarousel() {
-  // Fallback featured collections for design consistency
-  const featuredCollections = [
-    {
-      id: "summer",
-      title: "Summer Sustainability",
-      description: "Light, breathable, and earth-friendly pieces for the warmer months.",
-      image: "https://images.unsplash.com/photo-1441986300917-64674bd600d8?ixlib=rb-4.0.3&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=600&h=300"
-    },
-    {
-      id: "vintage",
-      title: "Vintage Denim",
-      description: "Timeless denim pieces with character and history.",
-      image: "https://images.unsplash.com/photo-1469334031218-e382a71b716b?ixlib=rb-4.0.3&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=600&h=300"
-    }
-  ];
+  const { data: featuredCollections, isLoading } = useQuery({
+    queryKey: ["/api/collections/featured"],
+    retry: 1,
+    staleTime: 5 * 60 * 1000, // Cache for 5 minutes
+  });
+
+  if (isLoading) {
+    return (
+      <section className="mb-8">
+        <div className="px-4 mb-4">
+          <div className="h-6 w-48 skeleton rounded-full"></div>
+        </div>
+        <div className="flex space-x-4 px-4 overflow-x-auto">
+          {[...Array(2)].map((_, index) => (
+            <div key={index} className="flex-shrink-0 w-72 h-64 skeleton rounded-2xl"></div>
+          ))}
+        </div>
+      </section>
+    );
+  }
+
+  if (!featuredCollections || featuredCollections.length === 0) {
+    return null; // Don't show section if no collections
+  }
 
   return (
     <section className="mb-8">

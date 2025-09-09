@@ -83,36 +83,36 @@ export default function Admin() {
     return null;
   }
 
-  const dashboardCards = [
+  const dashboardCards = stats ? [
     {
       title: "Total Revenue",
-      value: "₹12,45,890",
-      change: "+12.5%",
+      value: `₹${stats.totalRevenue || '0'}`,
+      change: `${stats.revenueChange || '+0'}%`,
       icon: DollarSign,
       color: "text-green-600"
     },
     {
       title: "Total Orders",
-      value: "1,234",
-      change: "+8.2%",
+      value: stats.totalOrders || '0',
+      change: `${stats.ordersChange || '+0'}%`,
       icon: ShoppingCart,
       color: "text-blue-600"
     },
     {
       title: "Active Products",
-      value: "456",
-      change: "+3.1%",
+      value: stats.activeProducts || '0',
+      change: `${stats.productsChange || '+0'}%`,
       icon: Package,
       color: "text-purple-600"
     },
     {
       title: "Total Users",
-      value: "2,890",
-      change: "+15.3%",
+      value: stats.totalUsers || '0',
+      change: `${stats.usersChange || '+0'}%`,
       icon: Users,
       color: "text-orange-600"
     }
-  ];
+  ] : [];
 
   const orderStatuses = [
     { value: "pending", label: "Pending", color: "bg-yellow-100 text-yellow-800" },

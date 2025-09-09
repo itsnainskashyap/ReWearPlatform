@@ -1,27 +1,39 @@
 import { Button } from "@/components/ui/button";
+import { useQuery } from "@tanstack/react-query";
+import { useLocation } from "wouter";
 
 export default function RecentlyViewed() {
-  // Placeholder recently viewed items for design consistency
-  const recentlyViewed = [
-    {
-      id: "sweater",
-      name: "Wool Sweater",
-      price: "₹1,499",
-      image: "https://images.unsplash.com/photo-1445205170230-053b83016050?ixlib=rb-4.0.3&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=300&h=300"
-    },
-    {
-      id: "sneakers",
-      name: "Eco Sneakers",
-      price: "₹2,299",
-      image: "https://images.unsplash.com/photo-1549298916-b41d501d3772?ixlib=rb-4.0.3&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=300&h=300"
-    },
-    {
-      id: "jacket",
-      name: "Leather Jacket",
-      price: "₹3,999",
-      image: "https://images.unsplash.com/photo-1551028719-00167b16eac5?ixlib=rb-4.0.3&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=300&h=300"
-    }
-  ];
+  const [, navigate] = useLocation();
+  
+  const { data: recentlyViewed, isLoading } = useQuery({
+    queryKey: ["/api/user/recently-viewed"],
+    retry: 1,
+    staleTime: 5 * 60 * 1000, // Cache for 5 minutes
+  });
+
+  if (isLoading) {
+    return (
+      <section className="px-4 mb-8">
+        <div className="flex items-center justify-between mb-4">
+          <div className="h-6 w-36 skeleton rounded-full"></div>
+          <div className="h-8 w-20 skeleton rounded-full"></div>
+        </div>
+        <div className="flex space-x-4 overflow-x-auto">
+          {[...Array(3)].map((_, index) => (
+            <div key={index} className="flex-shrink-0 w-32 space-y-2">
+              <div className="w-full h-32 skeleton rounded-xl"></div>
+              <div className="h-4 w-24 skeleton rounded-full"></div>
+              <div className="h-3 w-16 skeleton rounded-full"></div>
+            </div>
+          ))}
+        </div>
+      </section>
+    );
+  }
+
+  if (!recentlyViewed || recentlyViewed.length === 0) {
+    return null; // Don't show section if no recently viewed items
+  }
 
   return (
     <section className="px-4 mb-8">
@@ -36,14 +48,15 @@ export default function RecentlyViewed() {
         </Button>
       </div>
       <div className="flex space-x-4 overflow-x-auto scroll-container" data-testid="container-recently-viewed">
-        {recentlyViewed.map((item) => (
+        {recentlyViewed.map((item: any) => (
           <div 
             key={item.id}
+            onClick={() => navigate(`/product/${item.id}`)}
             className="flex-shrink-0 w-32 hover-elevate cursor-pointer"
             data-testid={`recently-viewed-${item.id}`}
           >
             <img 
-              src={item.image}
+              src={item.images?.[0] || '/api/placeholder/128/128'}
               alt={item.name}
               className="w-full h-32 object-cover rounded-xl mb-2"
               data-testid={`img-recently-viewed-${item.id}`}
@@ -52,7 +65,7 @@ export default function RecentlyViewed() {
               {item.name}
             </p>
             <p className="text-xs text-muted-foreground" data-testid={`text-recently-viewed-price-${item.id}`}>
-              {item.price}
+              ₹{item.price}
             </p>
           </div>
         ))}
