@@ -233,7 +233,7 @@ export default function Checkout() {
                     <Label>Email</Label>
                     <Input
                       type="email"
-                      value={shippingInfo.email}
+                      value={shippingInfo.email || ""}
                       onChange={(e) => setShippingInfo({...shippingInfo, email: e.target.value})}
                       className="rounded-xl"
                       placeholder="john@example.com"

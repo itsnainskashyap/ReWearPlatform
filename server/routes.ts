@@ -4,6 +4,7 @@ import { storage } from "./storage";
 import { setupAuth, isAuthenticated } from "./replitAuth";
 import { insertProductSchema, insertCategorySchema, insertBrandSchema } from "@shared/schema";
 import { GoogleGenerativeAI } from "@google/generative-ai";
+import { setupAdminRoutes } from "./adminRoutes";
 import multer from "multer";
 import fs from "fs";
 import path from "path";

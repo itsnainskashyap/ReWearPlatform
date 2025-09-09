@@ -273,6 +273,163 @@ export const insertOrderItemSchema = createInsertSchema(orderItems).omit({
   createdAt: true,
 });
 
+// Coupons table
+export const coupons = pgTable("coupons", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  code: varchar("code").notNull().unique(),
+  description: text("description"),
+  discountType: varchar("discount_type").notNull(), // percentage, fixed
+  discountValue: decimal("discount_value", { precision: 10, scale: 2 }).notNull(),
+  minPurchaseAmount: decimal("min_purchase_amount", { precision: 10, scale: 2 }),
+  maxDiscountAmount: decimal("max_discount_amount", { precision: 10, scale: 2 }),
+  usageLimit: integer("usage_limit"),
+  usageCount: integer("usage_count").default(0),
+  startDate: timestamp("start_date").defaultNow(),
+  endDate: timestamp("end_date"),
+  isActive: boolean("is_active").default(true),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
+// Admin users table (for separate admin authentication)
+export const adminUsers = pgTable("admin_users", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  email: varchar("email").notNull().unique(),
+  passwordHash: varchar("password_hash").notNull(),
+  totpSecret: varchar("totp_secret"), // For 2FA
+  totpEnabled: boolean("totp_enabled").default(false),
+  role: varchar("role").default("admin"),
+  lastLogin: timestamp("last_login"),
+  loginAttempts: integer("login_attempts").default(0),
+  lockedUntil: timestamp("locked_until"),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
+// Audit logs table
+export const auditLogs = pgTable("audit_logs", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  adminId: varchar("admin_id").references(() => adminUsers.id),
+  action: varchar("action").notNull(), // CREATE, UPDATE, DELETE, etc
+  entityType: varchar("entity_type").notNull(), // product, order, user, etc
+  entityId: varchar("entity_id"),
+  changes: jsonb("changes"),
+  ipAddress: varchar("ip_address"),
+  userAgent: text("user_agent"),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
+// Notifications table
+export const notifications = pgTable("notifications", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  userId: varchar("user_id").references(() => users.id),
+  title: varchar("title").notNull(),
+  message: text("message").notNull(),
+  type: varchar("type"), // order, promotion, system, etc
+  isRead: boolean("is_read").default(false),
+  metadata: jsonb("metadata"),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
+// Banner/Hero slides table
+export const banners = pgTable("banners", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  title: varchar("title"),
+  subtitle: text("subtitle"),
+  imageUrl: varchar("image_url").notNull(),
+  linkUrl: varchar("link_url"),
+  buttonText: varchar("button_text"),
+  position: varchar("position").default("hero"), // hero, sidebar, footer, etc
+  sortOrder: integer("sort_order").default(0),
+  isActive: boolean("is_active").default(true),
+  startDate: timestamp("start_date"),
+  endDate: timestamp("end_date"),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
+// Content pages table (for About, FAQs, etc)
+export const contentPages = pgTable("content_pages", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  slug: varchar("slug").notNull().unique(),
+  title: varchar("title").notNull(),
+  content: text("content"),
+  metaDescription: text("meta_description"),
+  isPublished: boolean("is_published").default(true),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
+// AI Configuration table
+export const aiConfig = pgTable("ai_config", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  feature: varchar("feature").notNull().unique(), // recommendations, try-on, background-gen, etc
+  isEnabled: boolean("is_enabled").default(true),
+  apiKey: varchar("api_key"),
+  prompt: text("prompt"),
+  thresholds: jsonb("thresholds"),
+  usage: jsonb("usage"), // track API calls, costs, etc
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
+// Store settings table
+export const storeSettings = pgTable("store_settings", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  key: varchar("key").notNull().unique(),
+  value: jsonb("value"),
+  description: text("description"),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
+// Insert schemas for new tables
+export const insertCouponSchema = createInsertSchema(coupons).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
+export const insertAdminUserSchema = createInsertSchema(adminUsers).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
+export const insertAuditLogSchema = createInsertSchema(auditLogs).omit({
+  id: true,
+  createdAt: true,
+});
+
+export const insertNotificationSchema = createInsertSchema(notifications).omit({
+  id: true,
+  createdAt: true,
+});
+
+export const insertBannerSchema = createInsertSchema(banners).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
+export const insertContentPageSchema = createInsertSchema(contentPages).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
+export const insertAiConfigSchema = createInsertSchema(aiConfig).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
+export const insertStoreSettingSchema = createInsertSchema(storeSettings).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
 // Types
 export type UpsertUser = z.infer<typeof insertUserSchema>;
 export type User = typeof users.$inferSelect;
@@ -284,6 +441,14 @@ export type CartItem = typeof cartItems.$inferSelect;
 export type Wishlist = typeof wishlists.$inferSelect;
 export type Order = typeof orders.$inferSelect;
 export type OrderItem = typeof orderItems.$inferSelect;
+export type Coupon = typeof coupons.$inferSelect;
+export type AdminUser = typeof adminUsers.$inferSelect;
+export type AuditLog = typeof auditLogs.$inferSelect;
+export type Notification = typeof notifications.$inferSelect;
+export type Banner = typeof banners.$inferSelect;
+export type ContentPage = typeof contentPages.$inferSelect;
+export type AiConfig = typeof aiConfig.$inferSelect;
+export type StoreSetting = typeof storeSettings.$inferSelect;
 
 export type InsertCategory = z.infer<typeof insertCategorySchema>;
 export type InsertBrand = z.infer<typeof insertBrandSchema>;
