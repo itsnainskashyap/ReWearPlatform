@@ -383,8 +383,8 @@
 }
 
 .drawer-overlay {
-  backdrop-filter: blur(16px);
-  background: rgba(0,0,0,0.6);
+  backdrop-filter: blur(24px);
+  background: rgba(0,0,0,0.7);
 }
 
 .card-premium {

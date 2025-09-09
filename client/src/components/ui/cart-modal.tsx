@@ -36,7 +36,7 @@ export default function CartModal() {
         onClick={handleBackdropClick}
       />
       <div 
-        className={`fixed bottom-20 left-0 right-0 glassmorphism border-t border-white/20 rounded-t-3xl transition-all duration-500 h-[75vh] flex flex-col ${
+        className={`fixed bottom-20 left-4 right-4 glassmorphism border border-white/20 rounded-3xl transition-all duration-500 max-h-[60vh] flex flex-col shadow-2xl ${
           isVisible ? 'animate-slide-up' : 'translate-y-full'
         }`}
       >
@@ -215,7 +215,7 @@ export default function CartModal() {
                 )}
 
                 {/* Total */}
-                <div className="border-t border-white/10 pt-3 sticky bottom-0 bg-background/95 backdrop-blur-sm rounded-b-3xl p-4 -mx-4 -mb-4">
+                <div className="border-t border-white/10 pt-3 mt-4 bg-background/95 backdrop-blur-sm rounded-b-3xl p-4 -mx-4 -mb-4">
                   <div className="flex justify-between items-center text-lg font-bold mb-3">
                     <span>Total</span>
                     <span className="gradient-text text-2xl" data-testid="text-cart-total">
