@@ -7,6 +7,12 @@ import { useAuth } from "@/hooks/useAuth";
 import NotFound from "@/pages/not-found";
 import Landing from "@/pages/landing";
 import Home from "@/pages/home";
+import Shop from "@/pages/shop";
+import ProductDetail from "@/pages/product-detail";
+import Wishlist from "@/pages/wishlist";
+import Profile from "@/pages/profile";
+import Checkout from "@/pages/checkout";
+import Orders from "@/pages/orders";
 import Header from "@/components/layout/header";
 import BottomNavigation from "@/components/layout/bottom-navigation";
 import Drawer from "@/components/layout/drawer";
@@ -34,6 +40,12 @@ function Router() {
         ) : (
           <>
             <Route path="/" component={Home} />
+            <Route path="/shop" component={Shop} />
+            <Route path="/product/:id" component={ProductDetail} />
+            <Route path="/wishlist" component={Wishlist} />
+            <Route path="/profile" component={Profile} />
+            <Route path="/checkout" component={Checkout} />
+            <Route path="/orders" component={Orders} />
           </>
         )}
         <Route component={NotFound} />

@@ -82,8 +82,10 @@ export const products = pgTable("products", {
   isActive: boolean("is_active").default(true),
   isFeatured: boolean("is_featured").default(false),
   isHotSelling: boolean("is_hot_selling").default(false),
+  isOriginal: boolean("is_original").default(false), // For ReWeara Originals
   stock: integer("stock").default(1),
   viewCount: integer("view_count").default(0),
+  sizes: text("sizes").array().default([]), // Available sizes
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
 });
