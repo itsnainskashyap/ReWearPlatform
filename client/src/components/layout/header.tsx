@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { Bell, Menu, Sparkles } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/hooks/useAuth";
+import logoImage from "@assets/ffffffffff_1757438501881.png";
 
 export default function Header() {
   const { isAuthenticated } = useAuth();
@@ -49,8 +50,8 @@ export default function Header() {
         
         <div className="flex items-center space-x-3 animate-pulse-glow">
           <div className="relative">
-            <div className="w-10 h-10 bg-gradient-to-br from-primary to-primary/80 rounded-2xl flex items-center justify-center shadow-lg">
-              <span className="text-primary-foreground font-bold text-lg">R</span>
+            <div className="w-10 h-10 rounded-2xl flex items-center justify-center shadow-lg overflow-hidden bg-white">
+              <img src={logoImage} alt="ReWeara Logo" className="w-8 h-8 object-contain" />
             </div>
             <div className="absolute -top-1 -right-1">
               <Sparkles className="w-4 h-4 text-accent animate-pulse" />

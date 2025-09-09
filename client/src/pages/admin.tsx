@@ -133,7 +133,7 @@ export default function Admin() {
             <p className="text-sm text-muted-foreground">Manage your ReWeara store</p>
           </div>
           <Badge className="bg-primary/10 text-primary border-primary/20">
-            {user && typeof user === 'object' && 'email' in user ? user.email : 'Admin'}
+            {user && typeof user === 'object' && 'email' in user ? String(user.email) : 'Admin'}
           </Badge>
         </div>
       </div>
