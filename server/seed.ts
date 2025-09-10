@@ -1,17 +1,32 @@
 import { db } from "./db";
 import { categories, brands, products } from "@shared/schema";
 import { eq } from "drizzle-orm";
+import fs from "fs";
+import path from "path";
+
+// Load snapshot data for consistent seeding
+function loadSnapshot() {
+  const snapshotPath = path.resolve(import.meta.dirname, 'snapshot.json');
+  if (!fs.existsSync(snapshotPath)) {
+    throw new Error(`Snapshot file not found: ${snapshotPath}`);
+  }
+  return JSON.parse(fs.readFileSync(snapshotPath, 'utf-8'));
+}
 
 // Seed data for production deployment
 export async function seedDatabase() {
   console.log('[SEED] Starting database seeding...');
   
-  // Wrap entire seeding in a transaction for robustness
-  return await db.transaction(async (tx: any) => {
-    try {
-      // Define category data with slug-based identification
-      console.log('[SEED] Seeding categories...');
-      const categoryData = [
+  // Load snapshot data for consistent deployment seeding
+  let snapshot;
+  try {
+    snapshot = loadSnapshot();
+    console.log(`[SEED] Loaded snapshot with ${snapshot.counts.categories} categories, ${snapshot.counts.brands} brands, ${snapshot.counts.products} products`);
+  } catch (error) {
+    console.error('[SEED ERROR] Failed to load snapshot, falling back to basic seed data:', error);
+    // Fallback to basic seed data if snapshot is not available
+    snapshot = {
+      categories: [
         {
           slug: "originals",
           name: "Originals",
@@ -26,7 +41,27 @@ export async function seedDatabase() {
           isActive: true,
           sortOrder: 2
         }
-      ];
+      ],
+      brands: [
+        {
+          slug: "zara",
+          name: "ZARA",
+          description: "International fashion retailer",
+          isActive: true,
+          isFeatured: true,
+          sortOrder: 1
+        }
+      ],
+      products: []
+    };
+  }
+  
+  // Wrap entire seeding in a transaction for robustness
+  return await db.transaction(async (tx: any) => {
+    try {
+      // Seed categories from snapshot
+      console.log('[SEED] Seeding categories...');
+      const categoryData = snapshot.categories;
 
       // Map to store slug -> id mappings for FK resolution
       const categoryMap = new Map<string, string>();
@@ -53,50 +88,9 @@ export async function seedDatabase() {
       
       console.log(`[SEED] ${categoryMap.size} categories mapped for FK resolution`)
 
-      // Insert brands with slug-based identification
+      // Seed brands from snapshot
       console.log('[SEED] Seeding brands...');
-      const brandData = [
-        {
-          slug: "zara",
-          name: "ZARA",
-          description: "International fashion retailer",
-          isActive: true,
-          isFeatured: true,
-          sortOrder: 1
-        },
-        {
-          slug: "h-and-m",
-          name: "H&M", 
-          description: "Swedish multinational clothing retailer",
-          isActive: true,
-          isFeatured: true,
-          sortOrder: 2
-        },
-        {
-          slug: "dior",
-          name: "DIOR",
-          description: "French luxury fashion house",
-          isActive: true,
-          isFeatured: true,
-          sortOrder: 3
-        },
-        {
-          slug: "calvin-klein",
-          name: "Calvin Klein",
-          description: "American fashion brand",
-          isActive: true,
-          isFeatured: true,
-          sortOrder: 4
-        },
-        {
-          slug: "louis-vuitton",
-          name: "Louis Vuitton",
-          description: "French luxury fashion house",
-          isActive: true,
-          isFeatured: true,
-          sortOrder: 5
-        }
-      ];
+      const brandData = snapshot.brands;
 
       // Map to store brand slug -> id mappings for FK resolution
       const brandMap = new Map<string, string>();
@@ -124,63 +118,9 @@ export async function seedDatabase() {
       
       console.log(`[SEED] ${brandMap.size} brands mapped for FK resolution`)
 
-      // Insert products with FK validation
+      // Seed products from snapshot
       console.log('[SEED] Seeding products...');
-      const productData = [
-        {
-          slug: "zara-striped-cotton-blouse",
-          name: "ZARA Striped Cotton Blouse", 
-          description: "Elegant striped cotton blouse perfect for casual and formal occasions",
-          categorySlug: "originals",
-          brandSlug: "zara",
-          price: "2999.00",
-          originalPrice: "3999.00",
-          condition: "Like New",
-          size: "M",
-          color: "Blue/White",
-          material: "Cotton",
-          images: ["/api/placeholder/400/500"],
-          isActive: true,
-          isFeatured: true,
-          isHotSelling: true,
-          isThrift: true,
-          stock: 1
-        },
-        {
-          slug: "zara-floral-mini-dress",
-          name: "ZARA Floral Mini Dress",
-          description: "Beautiful floral mini dress from ZARA sustainable collection",
-          categorySlug: "sustainable-dresses",
-          brandSlug: "zara",
-          price: "3999.00",
-          condition: "New",
-          size: "S",
-          color: "Floral",
-          material: "Organic Cotton",
-          images: ["/api/placeholder/400/500"],
-          isActive: true,
-          isFeatured: true,
-          isOriginal: true,
-          stock: 1
-        },
-        {
-          slug: "h-m-organic-cotton-t-shirt",
-          name: "H&M Organic Cotton T-Shirt",
-          description: "Comfortable organic cotton t-shirt from H&M",
-          categorySlug: "originals",
-          brandSlug: "h-and-m",
-          price: "1299.00",
-          condition: "Like New",
-          size: "M",
-          color: "White",
-          material: "Organic Cotton",
-          images: ["/api/placeholder/400/500"],
-          isActive: true,
-          isHotSelling: true,
-          isThrift: true,
-          stock: 1
-        }
-      ];
+      const productData = snapshot.products;
 
       let insertedProducts = 0;
       let skippedProducts = 0;

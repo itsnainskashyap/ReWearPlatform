@@ -1,0 +1,421 @@
+{
+  "categories": [
+    {
+      "slug": "originals",
+      "name": "Originals",
+      "description": "Original ReWeara brand products",
+      "isActive": true,
+      "sortOrder": 0
+    },
+    {
+      "slug": "sustainable-dresses",
+      "name": "Sustainable Dresses",
+      "description": "Eco-friendly dresses made from organic and recycled materials",
+      "isActive": true,
+      "sortOrder": 1
+    }
+  ],
+  "brands": [
+    {
+      "slug": "zara",
+      "name": "ZARA",
+      "description": "Spanish multinational clothing retailer known for trendy, fast fashion at affordable prices",
+      "isActive": true,
+      "isFeatured": true,
+      "sortOrder": 0
+    },
+    {
+      "slug": "hm",
+      "name": "H&M",
+      "description": "Swedish multinational clothing retailer known for affordable and sustainable fashion",
+      "isActive": true,
+      "isFeatured": true,
+      "sortOrder": 0
+    },
+    {
+      "slug": "dior",
+      "name": "DIOR",
+      "description": "French luxury fashion house known for haute couture, leather goods, and fashion accessories",
+      "isActive": true,
+      "isFeatured": true,
+      "sortOrder": 0
+    },
+    {
+      "slug": "calvin-klein",
+      "name": "Calvin Klein",
+      "description": "American fashion brand known for modern, sophisticated designs and contemporary fashion",
+      "isActive": true,
+      "isFeatured": true,
+      "sortOrder": 0
+    },
+    {
+      "slug": "louis-vuitton",
+      "name": "Louis Vuitton",
+      "description": "French luxury fashion house and company founded in 1854, renowned for luggage, leather goods, and fashion",
+      "isActive": true,
+      "isFeatured": true,
+      "sortOrder": 0
+    },
+    {
+      "slug": "h-and-m",
+      "name": "H&M",
+      "description": "Swedish multinational clothing retailer",
+      "isActive": true,
+      "isFeatured": true,
+      "sortOrder": 2
+    }
+  ],
+  "products": [
+    {
+      "slug": "calvin-klein-minimalist-logo-hoodie",
+      "name": "Calvin Klein Minimalist Logo Hoodie",
+      "description": "Contemporary minimalist hoodie featuring the iconic Calvin Klein logo. Made from premium cotton blend with a modern relaxed fit. Perfect for streetwear and casual comfort with sophisticated styling.",
+      "price": "8999.00",
+      "originalPrice": "11999.00",
+      "condition": "new",
+      "size": null,
+      "color": "Black",
+      "material": "Cotton Blend",
+      "images": [
+        "https://images.unsplash.com/photo-1556821840-3a63f95609a7?w=800&h=1000&fit=crop",
+        "https://images.unsplash.com/photo-1521572163474-6864f9cf17ab?w=800&h=1000&fit=crop"
+      ],
+      "isActive": true,
+      "isFeatured": true,
+      "isHotSelling": true,
+      "isOriginal": false,
+      "isThrift": false,
+      "stock": 5,
+      "categorySlug": "originals",
+      "brandSlug": "calvin-klein"
+    },
+    {
+      "slug": "calvin-klein-modern-blazer",
+      "name": "Calvin Klein Modern Blazer",
+      "description": "Sophisticated modern blazer with clean architectural lines. Tailored in premium wool blend with a contemporary fit. Perfect for professional settings and elevated casual wear. Embodies Calvin Klein minimalist aesthetic.",
+      "price": "24999.00",
+      "originalPrice": "32999.00",
+      "condition": "new",
+      "size": null,
+      "color": "Charcoal Grey",
+      "material": "Wool Blend",
+      "images": [
+        "https://images.unsplash.com/photo-1551028719-00167b16eac5?w=800&h=1000&fit=crop",
+        "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=800&h=1000&fit=crop"
+      ],
+      "isActive": true,
+      "isFeatured": true,
+      "isHotSelling": false,
+      "isOriginal": false,
+      "isThrift": false,
+      "stock": 5,
+      "categorySlug": "originals",
+      "brandSlug": "calvin-klein"
+    },
+    {
+      "slug": "calvin-klein-slim-fit-jeans",
+      "name": "Calvin Klein Slim Fit Jeans",
+      "description": "Classic slim fit jeans in premium denim with contemporary styling. Features clean lines and a modern silhouette that works for both casual and smart-casual occasions. Timeless American design.",
+      "price": "7499.00",
+      "originalPrice": "9999.00",
+      "condition": "new",
+      "size": null,
+      "color": "Dark Indigo",
+      "material": "Premium Denim",
+      "images": [
+        "https://images.unsplash.com/photo-1541099649105-f69ad21f3246?w=800&h=1000&fit=crop",
+        "https://images.unsplash.com/photo-1584370848010-d7fe6bc767ec?w=800&h=1000&fit=crop"
+      ],
+      "isActive": true,
+      "isFeatured": false,
+      "isHotSelling": true,
+      "isOriginal": false,
+      "isThrift": false,
+      "stock": 5,
+      "categorySlug": "originals",
+      "brandSlug": "calvin-klein"
+    },
+    {
+      "slug": "dior-bar-jacket",
+      "name": "DIOR Bar Jacket",
+      "description": "Timeless Bar jacket inspired by Christian Diors New Look silhouette. Tailored in luxurious wool gabardine with signature shaping. Features the iconic rounded shoulders and cinched waist that defined feminine elegance.",
+      "price": "320000.00",
+      "originalPrice": "380000.00",
+      "condition": "new",
+      "size": null,
+      "color": "Ivory",
+      "material": "Wool Gabardine",
+      "images": [
+        "https://images.unsplash.com/photo-1594633312681-425c7b97ccd1?w=800&h=1000&fit=crop",
+        "https://images.unsplash.com/photo-1551028719-00167b16eac5?w=800&h=1000&fit=crop"
+      ],
+      "isActive": true,
+      "isFeatured": true,
+      "isHotSelling": true,
+      "isOriginal": false,
+      "isThrift": false,
+      "stock": 5,
+      "categorySlug": "originals",
+      "brandSlug": "dior"
+    },
+    {
+      "slug": "dior-miss-dior-dress",
+      "name": "DIOR Miss Dior Dress",
+      "description": "Elegant midi dress in soft crepe featuring the Miss Dior silhouette. Adorned with subtle floral embroidery and finished with a feminine A-line cut. Represents the houses dedication to grace and sophistication.",
+      "price": "180000.00",
+      "originalPrice": "220000.00",
+      "condition": "new",
+      "size": null,
+      "color": "Powder Pink",
+      "material": "Silk Crepe",
+      "images": [
+        "https://images.unsplash.com/photo-1515372039744-b8f02a3ae446?w=800&h=1000&fit=crop",
+        "https://images.unsplash.com/photo-1469334031218-e382a71b716b?w=800&h=1000&fit=crop"
+      ],
+      "isActive": true,
+      "isFeatured": true,
+      "isHotSelling": false,
+      "isOriginal": true,
+      "isThrift": false,
+      "stock": 5,
+      "categorySlug": "sustainable-dresses",
+      "brandSlug": "dior"
+    },
+    {
+      "slug": "dior-oblique-silk-scarf",
+      "name": "DIOR Oblique Silk Scarf",
+      "description": "Luxurious silk scarf featuring the iconic Dior Oblique pattern. Made from 100% silk twill with hand-rolled edges. A timeless accessory that adds elegance to any outfit. Presented in signature Dior packaging.",
+      "price": "45000.00",
+      "originalPrice": "52000.00",
+      "condition": "new",
+      "size": null,
+      "color": "Navy Blue & Gold",
+      "material": "100% Silk",
+      "images": [
+        "https://images.unsplash.com/photo-1584370848010-d7fe6bc767ec?w=800&h=1000&fit=crop",
+        "https://images.unsplash.com/photo-1605733160314-4fc7dac4bb16?w=800&h=1000&fit=crop"
+      ],
+      "isActive": true,
+      "isFeatured": true,
+      "isHotSelling": false,
+      "isOriginal": false,
+      "isThrift": false,
+      "stock": 5,
+      "categorySlug": "originals",
+      "brandSlug": "dior"
+    },
+    {
+      "slug": "hm-high-waisted-mom-jeans",
+      "name": "H&M High-Waisted Mom Jeans",
+      "description": "Trendy high-waisted mom jeans in classic blue denim. Features a relaxed fit through the leg with tapered ankle. Made from sustainable cotton blend with a vintage-inspired look.",
+      "price": "2299.00",
+      "originalPrice": "2799.00",
+      "condition": "new",
+      "size": null,
+      "color": "Medium Blue Denim",
+      "material": "Cotton Denim",
+      "images": [
+        "https://images.unsplash.com/photo-1541099649105-f69ad21f3246?w=800&h=1000&fit=crop",
+        "https://images.unsplash.com/photo-1584370848010-d7fe6bc767ec?w=800&h=1000&fit=crop"
+      ],
+      "isActive": true,
+      "isFeatured": false,
+      "isHotSelling": true,
+      "isOriginal": false,
+      "isThrift": true,
+      "stock": 5,
+      "categorySlug": "originals",
+      "brandSlug": "hm"
+    },
+    {
+      "slug": "hm-knitted-cardigan",
+      "name": "H&M Knitted Cardigan",
+      "description": "Cozy knitted cardigan in soft acrylic blend. Features button closure and ribbed edges. Perfect layering piece for transitional weather. Available in a beautiful neutral tone that pairs with everything.",
+      "price": "1899.00",
+      "originalPrice": "2399.00",
+      "condition": "new",
+      "size": null,
+      "color": "Beige",
+      "material": "Acrylic Blend",
+      "images": [
+        "https://images.unsplash.com/photo-1544966503-7cc5ac882d5f?w=800&h=1000&fit=crop",
+        "https://images.unsplash.com/photo-1578662996442-48f60103fc96?w=800&h=1000&fit=crop"
+      ],
+      "isActive": true,
+      "isFeatured": true,
+      "isHotSelling": false,
+      "isOriginal": false,
+      "isThrift": true,
+      "stock": 5,
+      "categorySlug": "originals",
+      "brandSlug": "hm"
+    },
+    {
+      "slug": "hm-organic-cotton-t-shirt",
+      "name": "H&M Organic Cotton T-Shirt",
+      "description": "Soft and comfortable organic cotton t-shirt in classic fit. Made from 100% organic cotton as part of H&M Conscious collection. Perfect for everyday casual wear with sustainable practices.",
+      "price": "1299.00",
+      "originalPrice": "1599.00",
+      "condition": "new",
+      "size": null,
+      "color": "Forest Green",
+      "material": "Organic Cotton",
+      "images": [
+        "https://images.unsplash.com/photo-1521572163474-6864f9cf17ab?w=800&h=1000&fit=crop",
+        "https://images.unsplash.com/photo-1529374255404-311a2a4f1fd9?w=800&h=1000&fit=crop"
+      ],
+      "isActive": true,
+      "isFeatured": true,
+      "isHotSelling": false,
+      "isOriginal": false,
+      "isThrift": true,
+      "stock": 5,
+      "categorySlug": "originals",
+      "brandSlug": "hm"
+    },
+    {
+      "slug": "louis-vuitton-leather-bomber-jacket",
+      "name": "Louis Vuitton Leather Bomber Jacket",
+      "description": "Contemporary leather bomber jacket crafted from the finest lambskin leather. Features the signature LV hardware and subtle embossed monogram details. Combines streetwear aesthetics with Louis Vuittons luxury heritage and exceptional craftsmanship.",
+      "price": "580000.00",
+      "originalPrice": "650000.00",
+      "condition": "new",
+      "size": null,
+      "color": "Black",
+      "material": "Lambskin Leather",
+      "images": [
+        "https://images.unsplash.com/photo-1551028719-00167b16eac5?w=800&h=1000&fit=crop",
+        "https://images.unsplash.com/photo-1506629905607-4d0dc4e9a15c?w=800&h=1000&fit=crop"
+      ],
+      "isActive": true,
+      "isFeatured": true,
+      "isHotSelling": false,
+      "isOriginal": false,
+      "isThrift": false,
+      "stock": 5,
+      "categorySlug": "originals",
+      "brandSlug": "louis-vuitton"
+    },
+    {
+      "slug": "louis-vuitton-monogram-neverfull-mm",
+      "name": "Louis Vuitton Monogram Neverfull MM",
+      "description": "Iconic Monogram canvas tote bag crafted from coated canvas with natural cowhide leather trim. Features the timeless LV monogram pattern, brass hardware, and spacious interior. A symbol of luxury and craftsmanship that has been coveted for generations.",
+      "price": "145000.00",
+      "originalPrice": "165000.00",
+      "condition": "new",
+      "size": null,
+      "color": "Monogram Canvas",
+      "material": "Coated Canvas & Leather",
+      "images": [
+        "https://images.unsplash.com/photo-1553062407-98eeb64c6a62?w=800&h=1000&fit=crop",
+        "https://images.unsplash.com/photo-1584917865442-de89df76afd3?w=800&h=1000&fit=crop"
+      ],
+      "isActive": true,
+      "isFeatured": true,
+      "isHotSelling": true,
+      "isOriginal": false,
+      "isThrift": false,
+      "stock": 5,
+      "categorySlug": "originals",
+      "brandSlug": "louis-vuitton"
+    },
+    {
+      "slug": "louis-vuitton-silk-twill-dress",
+      "name": "Louis Vuitton Silk Twill Dress",
+      "description": "Exquisite silk twill dress showcasing Louis Vuittons savoir-faire in luxury ready-to-wear. Features an elegant A-line silhouette with subtle LV motifs woven throughout. Represents the pinnacle of French luxury fashion with impeccable tailoring.",
+      "price": "420000.00",
+      "originalPrice": "485000.00",
+      "condition": "new",
+      "size": null,
+      "color": "Midnight Blue",
+      "material": "100% Silk Twill",
+      "images": [
+        "https://images.unsplash.com/photo-1515372039744-b8f02a3ae446?w=800&h=1000&fit=crop",
+        "https://images.unsplash.com/photo-1599447421946-f946a4d75b4a?w=800&h=1000&fit=crop"
+      ],
+      "isActive": true,
+      "isFeatured": true,
+      "isHotSelling": false,
+      "isOriginal": true,
+      "isThrift": false,
+      "stock": 5,
+      "categorySlug": "sustainable-dresses",
+      "brandSlug": "louis-vuitton"
+    },
+    {
+      "slug": "zara-floral-mini-dress",
+      "name": "ZARA Floral Mini Dress",
+      "description": "Trendy floral mini dress with wrap-style front and tie waist. Features a flowing silhouette perfect for spring and summer occasions. The vibrant floral print adds a feminine touch to your wardrobe.",
+      "price": "3999.00",
+      "originalPrice": "4999.00",
+      "condition": "new",
+      "size": null,
+      "color": "Multicolor Floral",
+      "material": "Polyester",
+      "images": [
+        "https://images.unsplash.com/photo-1515372039744-b8f02a3ae446?w=800&h=1000&fit=crop",
+        "https://images.unsplash.com/photo-1469334031218-e382a71b716b?w=800&h=1000&fit=crop"
+      ],
+      "isActive": true,
+      "isFeatured": true,
+      "isHotSelling": false,
+      "isOriginal": true,
+      "isThrift": false,
+      "stock": 5,
+      "categorySlug": "sustainable-dresses",
+      "brandSlug": "zara"
+    },
+    {
+      "slug": "zara-leather-biker-jacket",
+      "name": "ZARA Leather Biker Jacket",
+      "description": "Classic black leather biker jacket with asymmetric zip closure and multiple pockets. Made from genuine leather with comfortable lining. A timeless piece that adds edge to any outfit.",
+      "price": "7999.00",
+      "originalPrice": "9999.00",
+      "condition": "new",
+      "size": null,
+      "color": "Black",
+      "material": "Genuine Leather",
+      "images": [
+        "https://images.unsplash.com/photo-1551028719-00167b16eac5?w=800&h=1000&fit=crop",
+        "https://images.unsplash.com/photo-1506629905607-4d0dc4e9a15c?w=800&h=1000&fit=crop"
+      ],
+      "isActive": true,
+      "isFeatured": false,
+      "isHotSelling": true,
+      "isOriginal": false,
+      "isThrift": true,
+      "stock": 5,
+      "categorySlug": "originals",
+      "brandSlug": "zara"
+    },
+    {
+      "slug": "zara-striped-cotton-blouse",
+      "name": "ZARA Striped Cotton Blouse",
+      "description": "Elegant striped cotton blouse with button-front closure and relaxed fit. Perfect for both office and casual wear. Made from premium cotton blend for comfort and durability.",
+      "price": "2999.00",
+      "originalPrice": "3499.00",
+      "condition": "new",
+      "size": null,
+      "color": "Navy Blue & White",
+      "material": "Cotton Blend",
+      "images": [
+        "https://images.unsplash.com/photo-1594633312681-425c7b97ccd1?w=800&h=1000&fit=crop",
+        "https://images.unsplash.com/photo-1596783074918-c2b5ab5a7cf3?w=800&h=1000&fit=crop"
+      ],
+      "isActive": true,
+      "isFeatured": true,
+      "isHotSelling": true,
+      "isOriginal": false,
+      "isThrift": true,
+      "stock": 5,
+      "categorySlug": "originals",
+      "brandSlug": "zara"
+    }
+  ],
+  "exported_at": "2025-09-10T21:53:59.742Z",
+  "counts": {
+    "categories": 2,
+    "brands": 6,
+    "products": 15
+  }
+}
