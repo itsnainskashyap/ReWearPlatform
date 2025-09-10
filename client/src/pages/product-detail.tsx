@@ -350,19 +350,21 @@ export default function ProductDetail() {
           <div className="flex space-x-3">
             <Button
               onClick={() => addToCartMutation.mutate()}
-              className="flex-1 h-14 rounded-2xl glassmorphism border border-primary text-primary hover:bg-primary/10"
+              disabled={!product.stock || product.stock <= 0}
+              className="flex-1 h-14 rounded-2xl glassmorphism border border-primary text-primary hover:bg-primary/10 disabled:opacity-50 disabled:cursor-not-allowed"
               data-testid="button-add-to-cart"
             >
               <ShoppingBag className="w-5 h-5 mr-2" />
-              Add to Cart
+              {!product.stock || product.stock <= 0 ? 'Out of Stock' : 'Add to Cart'}
             </Button>
             <Button
               onClick={buyNowHandler}
-              className="flex-1 h-14 bg-gradient-to-r from-accent to-accent/90 text-accent-foreground rounded-2xl button-glow hover-lift"
+              disabled={!product.stock || product.stock <= 0}
+              className="flex-1 h-14 bg-gradient-to-r from-accent to-accent/90 text-accent-foreground rounded-2xl button-glow hover-lift disabled:opacity-50 disabled:cursor-not-allowed"
               data-testid="button-buy-now"
             >
               <Sparkles className="w-5 h-5 mr-2" />
-              Buy Now
+              {!product.stock || product.stock <= 0 ? 'Out of Stock' : 'Buy Now'}
             </Button>
           </div>
           {/* Virtual Try-On */}

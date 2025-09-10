@@ -20,7 +20,8 @@ import {
   productMedia,
   orders,
   orderTracking,
-  orderItems
+  orderItems,
+  cartItems
 } from "@shared/schema";
 import { geminiService } from "./geminiService";
 import { z } from "zod";
@@ -898,12 +899,69 @@ export async function registerRoutes(app: Express): Promise<Server> {
         });
       }
 
-      // Create the order with validated data
-      const newOrder = await storage.createOrder(validatedOrderData);
+      // Get user's cart and items before creating order (handle both authenticated and guest users)
+      const sessionId = req.sessionID;
+      const cart = await storage.getOrCreateCart(userId, sessionId);
+      const userCart = await storage.getCartWithItems(cart.id);
+      if (!userCart || !userCart.items || userCart.items.length === 0) {
+        return res.status(400).json({ 
+          message: 'Cannot create order with empty cart' 
+        });
+      }
 
-      res.status(201).json(newOrder);
+      // Start database transaction for atomic operations
+      const result = await db.transaction(async (tx: any) => {
+        // Validate stock availability for all items before creating order
+        for (const cartItem of userCart.items) {
+          // Atomic stock check and update - only update if sufficient stock exists
+          const stockUpdate = await tx
+            .update(products)
+            .set({ 
+              stock: sql`${products.stock} - ${cartItem.quantity}`
+            })
+            .where(
+              and(
+                eq(products.id, cartItem.productId),
+                sql`${products.stock} >= ${cartItem.quantity}`
+              )
+            )
+            .returning();
+
+          // If no rows were affected, stock was insufficient
+          if (stockUpdate.length === 0) {
+            throw new Error(`Insufficient stock for product ${cartItem.product?.name || cartItem.productId}. Please reduce quantity or remove from cart.`);
+          }
+        }
+
+        // Create the order with validated data
+        const [newOrder] = await tx.insert(orders).values(validatedOrderData).returning();
+
+        // Create order items for each cart item
+        for (const cartItem of userCart.items) {
+          await tx.insert(orderItems).values({
+            orderId: newOrder.id,
+            productId: cartItem.productId,
+            quantity: cartItem.quantity,
+            price: cartItem.product?.price || '0'
+          });
+        }
+
+        // Clear the cart after successful order creation
+        await tx.delete(cartItems).where(eq(cartItems.cartId, userCart.id));
+
+        return newOrder;
+      });
+
+      res.status(201).json(result);
     } catch (error: any) {
       console.error('Error creating order:', error);
+      
+      // Handle insufficient stock errors with proper status code
+      if (error.message && error.message.includes('Insufficient stock')) {
+        return res.status(409).json({ 
+          message: error.message 
+        });
+      }
       
       // Handle Zod validation errors
       if (error instanceof z.ZodError) {

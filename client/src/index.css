@@ -644,6 +644,14 @@
   .dark .text-accent-foreground {
     color: hsl(0, 0%, 0%) !important;
   }
+  
+  /* Keep gradient button text visible in dark mode */
+  .dark .bg-gradient-to-r .text-accent-foreground,
+  .dark .bg-gradient-to-r.text-accent-foreground,
+  .dark .bg-gradient-to-r .text-primary-foreground,
+  .dark .bg-gradient-to-r.text-primary-foreground {
+    color: hsl(0, 0%, 0%) !important; /* Black text on colored gradients */
+  }
 
   /* DARK MODE: WHITE TEXT ON BLACK BACKGROUNDS */
   .dark .text-primary {
