@@ -7,7 +7,7 @@ export async function seedDatabase() {
   console.log('[SEED] Starting database seeding...');
   
   try {
-    // Insert categories
+    // Insert categories first and get their IDs
     console.log('[SEED] Seeding categories...');
     const categoryData = [
       {
@@ -28,13 +28,31 @@ export async function seedDatabase() {
       }
     ];
 
+    // Ensure categories are inserted with explicit transaction
     for (const category of categoryData) {
-      await db.insert(categories)
+      const result = await db.insert(categories)
         .values(category)
-        .onConflictDoNothing();
+        .onConflictDoUpdate({
+          target: categories.id,
+          set: {
+            name: category.name,
+            slug: category.slug,
+            description: category.description,
+            isActive: category.isActive,
+            sortOrder: category.sortOrder,
+            updatedAt: new Date()
+          }
+        })
+        .returning({ id: categories.id });
+      
+      console.log(`[SEED] Category "${category.name}" seeded with ID: ${category.id}`);
     }
+    
+    // Verify categories exist before proceeding
+    const existingCategories = await db.select({ id: categories.id, name: categories.name }).from(categories);
+    console.log(`[SEED] Verified ${existingCategories.length} categories exist:`, existingCategories.map((c: any) => c.id))
 
-    // Insert brands
+    // Insert brands with proper conflict handling
     console.log('[SEED] Seeding brands...');
     const brandData = [
       {
@@ -87,8 +105,25 @@ export async function seedDatabase() {
     for (const brand of brandData) {
       await db.insert(brands)
         .values(brand)
-        .onConflictDoNothing();
+        .onConflictDoUpdate({
+          target: brands.id,
+          set: {
+            name: brand.name,
+            slug: brand.slug,
+            description: brand.description,
+            isActive: brand.isActive,
+            isFeatured: brand.isFeatured,
+            sortOrder: brand.sortOrder,
+            updatedAt: new Date()
+          }
+        });
+      
+      console.log(`[SEED] Brand "${brand.name}" seeded with ID: ${brand.id}`);
     }
+    
+    // Verify brands exist before proceeding
+    const existingBrands = await db.select({ id: brands.id, name: brands.name }).from(brands);
+    console.log(`[SEED] Verified ${existingBrands.length} brands exist:`, existingBrands.map((b: any) => `${b.name} (${b.id})`).slice(0, 3))
 
     // Insert products
     console.log('[SEED] Seeding products...');
