@@ -29,8 +29,8 @@ export function LoginDialog({ open, onOpenChange, redirectAfterLogin }: LoginDia
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-md bg-white dark:bg-card border border-primary/20 rounded-3xl shadow-2xl">
-        <DialogHeader className="text-center space-y-6">
+      <DialogContent className="sm:max-w-md !bg-white dark:!bg-card border-2 border-primary/30 rounded-3xl shadow-2xl text-foreground z-[100] relative">
+        <DialogHeader className="text-center space-y-6 text-foreground">
           <div className="mx-auto">
             <img 
               src="/reweara-logo.png" 
@@ -39,11 +39,11 @@ export function LoginDialog({ open, onOpenChange, redirectAfterLogin }: LoginDia
             />
           </div>
           
-          <DialogTitle className="text-2xl font-bold text-primary">
+          <DialogTitle className="text-2xl font-bold text-primary dark:text-primary">
             Welcome to ReWeara
           </DialogTitle>
           
-          <DialogDescription className="text-primary/70 text-center">
+          <DialogDescription className="text-primary/70 dark:text-primary/70 text-center">
             Sustainable Fashion for a Better Tomorrow
           </DialogDescription>
         </DialogHeader>
@@ -64,7 +64,7 @@ export function LoginDialog({ open, onOpenChange, redirectAfterLogin }: LoginDia
           <Button 
             variant="outline" 
             onClick={() => onOpenChange(false)}
-            className="w-full h-12 border-2 border-primary/20 hover:bg-primary/5 rounded-2xl"
+            className="w-full h-12 border-2 border-primary/30 hover:bg-primary/5 text-primary rounded-2xl"
             data-testid="button-continue-guest"
           >
             Continue as Guest
