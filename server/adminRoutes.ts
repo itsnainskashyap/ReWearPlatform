@@ -493,7 +493,13 @@ export function setupAdminRoutes(app: Express) {
         offset: (Number(page) - 1) * Number(limit)
       });
 
-      res.json(products);
+      // Ensure consistent response format for frontend
+      res.json({
+        products: products,
+        total: products.length,
+        page: Number(page),
+        limit: Number(limit)
+      });
     } catch (error) {
       console.error("Products fetch error:", error);
       res.status(500).json({ message: "Failed to fetch products" });
