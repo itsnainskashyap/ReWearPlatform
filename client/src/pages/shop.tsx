@@ -29,6 +29,7 @@ export default function Shop() {
   const [shopType, setShopType] = useState<'all' | 'thrift' | 'originals'>('all');
   const [page, setPage] = useState(0);
   const [hasMore, setHasMore] = useState(true);
+  const [allProducts, setAllProducts] = useState<Product[]>([]);
 
   // Handle URL query parameters for brand filtering
   useEffect(() => {
@@ -63,6 +64,17 @@ export default function Shop() {
       if (!response.ok) throw new Error('Failed to fetch products');
       return response.json();
     },
+    onSuccess: (newProducts) => {
+      if (page === 0) {
+        // First page, replace all products
+        setAllProducts(newProducts);
+      } else {
+        // Subsequent pages, append to existing products
+        setAllProducts(prev => [...prev, ...newProducts]);
+      }
+      // Check if we have more products to load
+      setHasMore(newProducts.length === 12);
+    }
   });
 
   const addToCartMutation = useMutation({
@@ -101,9 +113,19 @@ export default function Shop() {
     setPriceRange([0, 10000]);
     setSearchQuery("");
     setSortBy("newest");
+    setPage(0);
+    setAllProducts([]);
+    setHasMore(true);
   };
 
-  const filteredProducts = Array.isArray(products) ? products.filter((p: Product) => {
+  // Reset pagination when filters change
+  useEffect(() => {
+    setPage(0);
+    setAllProducts([]);
+    setHasMore(true);
+  }, [selectedCategory, selectedBrand, searchQuery, shopType]);
+
+  const filteredProducts = Array.isArray(allProducts) ? allProducts.filter((p: Product) => {
     const price = parseFloat(p.price);
     return price >= priceRange[0] && price <= priceRange[1];
   }) : [];

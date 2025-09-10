@@ -785,25 +785,26 @@
   }
 
   /* Fix any remaining visibility issues */
-  .dark * {
+  .dark *:not(.bottom-nav-fixed):not(.bottom-nav-fixed *) {
     border-color: hsl(0, 0%, 15%) !important;
   }
 
-  /* REMOVE GREEN FROM BOTTOM BAR IN DARK MODE */
+  /* BOTTOM NAVIGATION DARK MODE - KEEP GREEN ACCENTS */
   .dark .bottom-nav-fixed {
     background-color: hsl(0, 0%, 0%) !important; /* Black background */
-    border-color: hsl(0, 0%, 20%) !important; /* Dark border */
+    border-top: 1px solid hsl(158, 82%, 30%) !important; /* Green border top */
   }
 
-  .dark .bottom-nav-fixed * {
-    color: hsl(0, 0%, 100%) !important; /* White text */
+  .dark .bottom-nav-fixed .text-muted-foreground {
+    color: hsl(0, 0%, 70%) !important; /* Gray for inactive items */
   }
 
-  /* Remove green colors from bottom navigation in dark mode */
-  .dark .bottom-nav-fixed .text-primary,
-  .dark .bottom-nav-fixed .bg-primary {
-    color: hsl(0, 0%, 100%) !important; /* White instead of green */
-    background-color: hsl(0, 0%, 20%) !important; /* Dark gray instead of green */
+  .dark .bottom-nav-fixed .text-primary {
+    color: hsl(158, 82%, 40%) !important; /* Keep green for active items */
+  }
+
+  .dark .bottom-nav-fixed .bg-primary\/10 {
+    background-color: hsl(158, 82%, 30%, 0.2) !important; /* Green background for active */
   }
 
   /* ALL TEXT WHITE IN DARK MODE */

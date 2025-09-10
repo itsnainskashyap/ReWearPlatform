@@ -4,8 +4,6 @@ import { Button } from "@/components/ui/button";
 import { ThemeToggle } from "@/components/ui/theme-toggle";
 import { useAuth } from "@/hooks/useAuth";
 import { useAuthModal } from "@/contexts/auth-modal-context";
-import logoImage from "@assets/ffffffffff_1757438501881.png";
-
 export default function Header() {
   const { isAuthenticated } = useAuth();
   const { openLogin } = useAuthModal();
@@ -48,12 +46,15 @@ export default function Header() {
         </Button>
         
         <div className="flex items-center space-x-3">
-          <div className="relative">
-            <div className="w-10 h-10 rounded-2xl flex items-center justify-center shadow-lg overflow-hidden bg-white">
-              <img src={logoImage} alt="ReWeara Logo" className="w-8 h-8 object-contain" />
-            </div>
+          <img 
+            src="/reweara-logo.png" 
+            alt="ReWeara" 
+            className="w-10 h-10"
+          />
+          <div>
+            <h1 className="text-xl font-bold gradient-text">ReWeara</h1>
+            <p className="text-xs text-muted-foreground hidden sm:block">Sustainable Fashion</p>
           </div>
-          <span className="font-bold text-xl text-primary">ReWeara</span>
         </div>
         
         <div className="flex items-center space-x-2">

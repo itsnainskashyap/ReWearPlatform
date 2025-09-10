@@ -30,9 +30,13 @@ export function LoginDialog({ open, onOpenChange, redirectAfterLogin }: LoginDia
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-md glassmorphism border border-primary/20 rounded-3xl">
-        <DialogHeader className="text-center space-y-4">
-          <div className="w-16 h-16 bg-gradient-to-br from-primary to-accent rounded-2xl flex items-center justify-center mx-auto animate-pulse-glow">
-            <span className="text-primary-foreground font-bold text-2xl">R</span>
+        <DialogHeader className="text-center space-y-6">
+          <div className="mx-auto">
+            <img 
+              src="/reweara-logo.png" 
+              alt="ReWeara" 
+              className="w-20 h-20 mx-auto"
+            />
           </div>
           
           <DialogTitle className="text-2xl font-bold gradient-text">
@@ -40,30 +44,12 @@ export function LoginDialog({ open, onOpenChange, redirectAfterLogin }: LoginDia
           </DialogTitle>
           
           <DialogDescription className="text-muted-foreground text-center">
-            Join our sustainable fashion community to unlock exclusive features and personalized shopping experience.
+            Sustainable Fashion for a Better Tomorrow
           </DialogDescription>
         </DialogHeader>
 
-        <div className="space-y-4 mt-6">
-          {/* Benefits */}
-          <div className="space-y-3">
-            <div className="flex items-center space-x-3 p-3 rounded-xl bg-primary/5 border border-primary/10">
-              <Heart className="w-5 h-5 text-primary" />
-              <span className="text-sm">Save items to your wishlist</span>
-            </div>
-            
-            <div className="flex items-center space-x-3 p-3 rounded-xl bg-accent/5 border border-accent/10">
-              <Sparkles className="w-5 h-5 text-accent" />
-              <span className="text-sm">Get personalized recommendations</span>
-            </div>
-            
-            <div className="flex items-center space-x-3 p-3 rounded-xl bg-green-500/5 border border-green-500/10">
-              <Shield className="w-5 h-5 text-green-600" />
-              <span className="text-sm">Secure checkout and order tracking</span>
-            </div>
-          </div>
-
-          {/* Login Button */}
+        <div className="space-y-4 mt-8">
+          {/* Login Options */}
           <Button 
             onClick={handleLogin}
             disabled={isLoading}
@@ -76,12 +62,12 @@ export function LoginDialog({ open, onOpenChange, redirectAfterLogin }: LoginDia
 
           {/* Continue as Guest */}
           <Button 
-            variant="ghost" 
+            variant="outline" 
             onClick={() => onOpenChange(false)}
-            className="w-full text-muted-foreground hover:text-foreground"
+            className="w-full h-12 border-2 border-primary/20 hover:bg-primary/5 rounded-2xl"
             data-testid="button-continue-guest"
           >
-            Continue browsing as guest
+            Continue as Guest
           </Button>
         </div>
       </DialogContent>

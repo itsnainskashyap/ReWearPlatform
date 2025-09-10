@@ -27,6 +27,7 @@ import { geminiService } from "./geminiService";
 import { z } from "zod";
 import { setupAdminRoutes } from "./adminRoutes";
 import { db } from "./db";
+import { sendEmail, getOrderConfirmationEmail, getStatusUpdateEmail } from "./email-service";
 import { eq, and, or, gte, isNull, asc, desc, sql } from "drizzle-orm";
 import multer from "multer";
 import fs from "fs";
@@ -864,6 +865,31 @@ export async function registerRoutes(app: Express): Promise<Server> {
         estimatedDelivery
       });
       
+      // Send status update email
+      try {
+        const orderWithUser = await db
+          .select({
+            order: orders,
+            user: users
+          })
+          .from(orders)
+          .leftJoin(users, eq(orders.userId, users.id))
+          .where(eq(orders.id, req.params.id));
+        
+        if (orderWithUser.length > 0) {
+          const { order: orderData, user } = orderWithUser[0];
+          const userEmail = user?.email || orderData.guestEmail;
+          
+          if (userEmail) {
+            const emailData = getStatusUpdateEmail(orderData, userEmail, status);
+            await sendEmail(emailData);
+          }
+        }
+      } catch (emailError) {
+        console.error('Error sending status update email:', emailError);
+        // Don't fail the status update if email fails
+      }
+      
       res.json(order);
     } catch (error) {
       console.error('Error updating order status:', error);
@@ -951,6 +977,24 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
         return newOrder;
       });
+
+      // Send order confirmation email
+      try {
+        const user = req.user?.claims;
+        const userEmail = user?.email || validatedOrderData.guestEmail;
+        
+        if (userEmail) {
+          // Get order with items for email
+          const orderWithItems = await storage.getOrderById(result.id);
+          if (orderWithItems) {
+            const emailData = getOrderConfirmationEmail(orderWithItems, userEmail);
+            await sendEmail(emailData);
+          }
+        }
+      } catch (emailError) {
+        console.error('Error sending order confirmation email:', emailError);
+        // Don't fail the order creation if email fails
+      }
 
       res.status(201).json(result);
     } catch (error: any) {

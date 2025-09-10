@@ -26,6 +26,7 @@ import Admin from "@/pages/admin";
 import AdminPanel from "@/pages/admin-panel";
 import Blog from "@/pages/blog";
 import Header from "@/components/layout/header";
+import Footer from "@/components/layout/footer";
 import BottomNavigation from "@/components/layout/bottom-navigation";
 import Drawer from "@/components/layout/drawer";
 import FloatingCartButton from "@/components/ui/floating-cart-button";
@@ -124,6 +125,7 @@ function AppContent() {
             <main className="pt-16 md:pt-20 pb-24">
               <Router />
             </main>
+            <Footer />
             <FloatingCartButton />
             <AIChatAssistant />
           </div>
