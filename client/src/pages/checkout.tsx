@@ -12,6 +12,7 @@ import { useLocation } from "wouter";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
 import { useAuth } from "@/hooks/useAuth";
+import type { PaymentSettings } from "@shared/schema";
 
 export default function Checkout() {
   const [, navigate] = useLocation();
@@ -46,7 +47,7 @@ export default function Checkout() {
     queryKey: ["/api/cart"],
   });
 
-  const { data: paymentSettings } = useQuery({
+  const { data: paymentSettings } = useQuery<PaymentSettings>({
     queryKey: ["/api/payment-settings"],
   });
 

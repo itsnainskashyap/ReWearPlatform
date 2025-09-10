@@ -645,6 +645,118 @@
     color: hsl(0, 0%, 0%) !important;
   }
 
+  /* Comprehensive dark mode text visibility fixes */
+  .dark .text-primary {
+    color: hsl(158, 82%, 40%) !important;
+  }
+
+  .dark .text-black {
+    color: hsl(0, 0%, 95%) !important;
+  }
+
+  .dark .text-gray-600,
+  .dark .text-gray-700,
+  .dark .text-gray-800,
+  .dark .text-gray-900 {
+    color: hsl(0, 0%, 80%) !important;
+  }
+
+  .dark .text-slate-600,
+  .dark .text-slate-700,
+  .dark .text-slate-800 {
+    color: hsl(0, 0%, 75%) !important;
+  }
+
+  /* Fix all potential invisible text scenarios */
+  .dark .text-foreground {
+    color: hsl(0, 0%, 95%) !important;
+  }
+
+  .dark .text-card-foreground {
+    color: hsl(0, 0%, 95%) !important;
+  }
+
+  /* Fix labels and form text */
+  .dark label {
+    color: hsl(0, 0%, 90%) !important;
+  }
+
+  .dark .font-medium {
+    color: hsl(0, 0%, 92%) !important;
+  }
+
+  .dark .font-bold {
+    color: hsl(0, 0%, 95%) !important;
+  }
+
+  /* Fix navigation and menu text */
+  .dark nav,
+  .dark .nav-item {
+    color: hsl(0, 0%, 90%) !important;
+  }
+
+  /* Fix table and list text */
+  .dark table,
+  .dark td,
+  .dark th,
+  .dark li {
+    color: hsl(0, 0%, 85%) !important;
+  }
+
+  /* Fix modal and dialog text */
+  .dark .dialog-content,
+  .dark .modal-content {
+    background-color: hsl(0, 0%, 3%) !important;
+    color: hsl(0, 0%, 95%) !important;
+  }
+
+  /* Fix any remaining paragraph text */
+  .dark p {
+    color: hsl(0, 0%, 85%) !important;
+  }
+
+  /* Fix span elements */
+  .dark span {
+    color: inherit !important;
+  }
+
+  /* Fix admin panel specific elements */
+  .dark .admin-panel {
+    background-color: hsl(0, 0%, 2%) !important;
+    color: hsl(0, 0%, 95%) !important;
+  }
+
+  .dark .admin-panel * {
+    color: hsl(0, 0%, 90%) !important;
+  }
+
+  /* Fix any hardcoded color that might be invisible */
+  .dark [style*="color: #"] {
+    color: hsl(0, 0%, 90%) !important;
+  }
+
+  /* Fix gradient text overlays */
+  .dark .gradient-text {
+    background: linear-gradient(135deg, hsl(158, 82%, 40%), hsl(47, 95%, 63%)) !important;
+    -webkit-background-clip: text !important;
+    -webkit-text-fill-color: transparent !important;
+    background-clip: text !important;
+  }
+
+  /* Ensure all children inherit proper colors */
+  .dark .text-inherit {
+    color: inherit !important;
+  }
+
+  /* Fix any remaining visibility issues */
+  .dark * {
+    border-color: hsl(0, 0%, 15%) !important;
+  }
+
+  .dark *:not([class*="bg-"]):not(button):not(input):not(select):not(textarea) {
+    color: hsl(0, 0%, 85%) !important;
+  }
+
   /* If there's a 1px border, adjust the inset so that it covers that parent's border */
   .border.hover-elevate:not(.no-hover-interaction-elevate)::after,
   .border.active-elevate:not(.no-active-interaction-elevate)::after,

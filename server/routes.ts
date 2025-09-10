@@ -10,6 +10,7 @@ import {
   insertProductMediaSchema,
   insertOrderTrackingSchema,
   insertPromotionalPopupSchema,
+  insertOrderSchema,
   coupons, 
   banners,
   taxRates,
@@ -315,26 +316,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.get('/api/admin/orders', isAuthenticated, async (req: any, res) => {
-    try {
-      const userEmail = req.user?.claims?.email;
-      
-      if (userEmail !== "itsnainskashyap@gmail.com") {
-        return res.status(403).json({ message: "Access denied" });
-      }
-
-      const orders = [
-        { id: "REW1001", customer: "John Doe", amount: 1299, status: "payment_pending" },
-        { id: "REW1002", customer: "Jane Smith", amount: 2199, status: "placed" },
-        { id: "REW1003", customer: "Mike Johnson", amount: 899, status: "shipped" },
-      ];
-      
-      res.json(orders);
-    } catch (error) {
-      console.error("Error fetching admin orders:", error);
-      res.status(500).json({ message: "Failed to fetch orders" });
-    }
-  });
+  // Admin orders endpoint moved to adminRoutes.ts to avoid conflicts
 
   app.get('/api/admin/products', isAuthenticated, async (req: any, res) => {
     try {
@@ -452,26 +434,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Delete product (Admin only) - Soft delete by setting isActive to false
   // Admin product delete moved to adminRoutes.ts
 
-  // Update order status (Admin only)
-  app.put('/api/admin/orders/:orderId/status', isAuthenticated, async (req: any, res) => {
-    try {
-      const userEmail = req.user?.claims?.email;
-      
-      if (userEmail !== "itsnainskashyap@gmail.com") {
-        return res.status(403).json({ message: "Access denied" });
-      }
-
-      const { orderId } = req.params;
-      const { status } = req.body;
-      
-      // For now, just return success since we're using mock data
-      // In a real implementation, this would update the order in the database
-      res.json({ message: "Order status updated successfully" });
-    } catch (error) {
-      console.error("Error updating order status:", error);
-      res.status(500).json({ message: "Failed to update order status" });
-    }
-  });
+  // Admin order status update moved to adminRoutes.ts to avoid conflicts
 
   // Payment settings for checkout (public endpoint)
   app.get('/api/payment-settings', async (req, res) => {
@@ -907,6 +870,90 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Create order (POST /api/orders)
+  app.post('/api/orders', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user?.claims?.sub;
+      
+      // Validate request body using Zod schema
+      const validatedOrderData = insertOrderSchema.parse({
+        ...req.body,
+        userId,
+        status: 'pending',
+        paymentStatus: 'pending',
+      });
+
+      // Ensure required fields are present
+      if (!validatedOrderData.subtotal || Number(validatedOrderData.subtotal) <= 0) {
+        return res.status(400).json({ 
+          message: 'Invalid order data', 
+          errors: [{ field: 'subtotal', message: 'Subtotal is required and must be greater than 0' }]
+        });
+      }
+
+      if (!validatedOrderData.totalAmount || Number(validatedOrderData.totalAmount) <= 0) {
+        return res.status(400).json({ 
+          message: 'Invalid order data', 
+          errors: [{ field: 'totalAmount', message: 'Total amount is required and must be greater than 0' }]
+        });
+      }
+
+      // Create the order with validated data
+      const newOrder = await storage.createOrder(validatedOrderData);
+
+      res.status(201).json(newOrder);
+    } catch (error: any) {
+      console.error('Error creating order:', error);
+      
+      // Handle Zod validation errors
+      if (error instanceof z.ZodError) {
+        return res.status(400).json({
+          message: 'Invalid order data',
+          errors: error.errors.map(err => ({
+            field: err.path.join('.'),
+            message: err.message
+          }))
+        });
+      }
+      
+      res.status(500).json({ message: 'Failed to create order' });
+    }
+  });
+
+  // Get user orders (GET /api/orders)
+  app.get('/api/orders', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user?.claims?.sub;
+      const orders = await storage.getOrders(userId);
+      res.json(orders);
+    } catch (error) {
+      console.error('Error fetching user orders:', error);
+      res.status(500).json({ message: 'Failed to fetch orders' });
+    }
+  });
+
+  // Get specific order with items (GET /api/orders/:id)
+  app.get('/api/orders/:id', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user?.claims?.sub;
+      const order = await storage.getOrderById(req.params.id);
+      
+      if (!order) {
+        return res.status(404).json({ message: 'Order not found' });
+      }
+
+      // Check if order belongs to the user (security check)
+      if (order.userId !== userId) {
+        return res.status(403).json({ message: 'Access denied' });
+      }
+
+      res.json(order);
+    } catch (error) {
+      console.error('Error fetching order:', error);
+      res.status(500).json({ message: 'Failed to fetch order' });
+    }
+  });
+
   // Get order tracking history
   app.get('/api/orders/:id/tracking', isAuthenticated, async (req, res) => {
     try {
@@ -922,39 +969,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Admin: Get all orders with filters
-  app.get('/api/admin/orders', isAuthenticated, async (req, res) => {
-    try {
-      const { status, from, to, limit = '20', offset = '0' } = req.query;
-      
-      let query = db.select().from(orders).$dynamic();
-      
-      if (status) {
-        query = query.where(eq(orders.status, status as string));
-      }
-      
-      const ordersList = await query
-        .orderBy(desc(orders.createdAt))
-        .limit(parseInt(limit as string))
-        .offset(parseInt(offset as string));
-      
-      // Get order items for each order
-      const ordersWithItems = await Promise.all(
-        ordersList.map(async (order) => {
-          const items = await db
-            .select()
-            .from(orderItems)
-            .where(eq(orderItems.orderId, order.id));
-          return { ...order, items };
-        })
-      );
-      
-      res.json(ordersWithItems);
-    } catch (error) {
-      console.error('Error fetching orders:', error);
-      res.status(500).json({ message: 'Failed to fetch orders' });
-    }
-  });
+  // Admin orders endpoint consolidated in adminRoutes.ts
 
   // ========================
   // PRODUCT SHARING
