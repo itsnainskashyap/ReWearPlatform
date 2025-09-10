@@ -13,7 +13,7 @@ export default function Orders() {
   const [selectedStatus, setSelectedStatus] = useState("all");
 
   const { data: orders, isLoading } = useQuery({
-    queryKey: ["/api/orders", selectedStatus],
+    queryKey: ["/api/orders"],
   });
 
   const getStatusIcon = (status: string) => {
@@ -116,7 +116,7 @@ export default function Orders() {
                     <div>
                       <p className="text-sm text-muted-foreground flex items-center">
                         <Calendar className="w-4 h-4 mr-1" />
-                        {format(order.date, 'dd MMM yyyy')}
+                        {format(new Date(order.createdAt), 'dd MMM yyyy')}
                       </p>
                       <p className="font-bold">Order #{order.id}</p>
                     </div>
@@ -127,29 +127,23 @@ export default function Orders() {
                   </div>
                 </CardHeader>
                 <CardContent className="space-y-4">
-                  {/* Order Items */}
+                  {/* Order Summary */}
                   <div className="space-y-3">
-                    {order.items.map((item: any, index: number) => (
-                      <div key={index} className="flex items-center space-x-3">
-                        <img
-                          src={item.image}
-                          alt={item.name}
-                          className="w-12 h-12 object-cover rounded-lg"
-                        />
-                        <div className="flex-1">
-                          <p className="font-medium text-sm">{item.name}</p>
-                          <p className="text-xs text-muted-foreground">Qty: {item.quantity}</p>
-                        </div>
-                        <p className="font-bold">₹{item.price}</p>
-                      </div>
-                    ))}
+                    <div className="flex items-center justify-between">
+                      <span className="text-sm text-muted-foreground">Payment Method:</span>
+                      <span className="text-sm font-medium uppercase">{order.paymentMethod}</span>
+                    </div>
+                    <div className="flex items-center justify-between">
+                      <span className="text-sm text-muted-foreground">Payment Status:</span>
+                      <Badge variant="outline" className="text-xs">{order.paymentStatus}</Badge>
+                    </div>
                   </div>
 
                   {/* Order Total and Actions */}
                   <div className="flex items-center justify-between pt-3 border-t">
                     <div>
                       <p className="text-sm text-muted-foreground">Total Amount</p>
-                      <p className="font-bold text-lg gradient-text">₹{order.total}</p>
+                      <p className="font-bold text-lg gradient-text">₹{order.totalAmount}</p>
                     </div>
                     <div className="flex space-x-2">
                       {order.status === 'delivered' && (
