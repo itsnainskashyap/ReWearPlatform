@@ -76,9 +76,9 @@ export default function ProductCard({ product, onAddToCart, onAddToWishlist, ind
               product={{
                 id: product.id,
                 name: product.name,
-                description: product.shortDescription || product.description,
+                description: product.shortDescription || product.description || '',
                 price: parseFloat(product.price),
-                images: product.images
+                images: product.images || []
               }}
               variant="icon"
               className="h-10 w-10 glassmorphism bg-white/80 backdrop-blur-md hover:bg-white/90"

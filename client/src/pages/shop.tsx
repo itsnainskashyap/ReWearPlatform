@@ -39,14 +39,21 @@ export default function Shop() {
   });
 
   const { data: products, isLoading, isFetching } = useQuery({
-    queryKey: ["/api/products", {
-      category: selectedCategory,
-      brand: selectedBrand,
-      search: searchQuery,
-      limit: 12,
-      offset: page * 12,
-      shopType
-    }],
+    queryKey: ["/api/products", selectedCategory, selectedBrand, searchQuery, page, shopType],
+    queryFn: async () => {
+      const params = new URLSearchParams();
+      if (selectedCategory) params.append('category', selectedCategory);
+      if (selectedBrand) params.append('brand', selectedBrand);
+      if (searchQuery) params.append('search', searchQuery);
+      params.append('limit', '12');
+      params.append('offset', (page * 12).toString());
+      if (shopType === 'thrift') params.append('hotSelling', 'true');
+      if (shopType === 'originals') params.append('featured', 'true');
+      
+      const response = await fetch(`/api/products?${params.toString()}`);
+      if (!response.ok) throw new Error('Failed to fetch products');
+      return response.json();
+    },
   });
 
   const addToCartMutation = useMutation({
@@ -87,10 +94,10 @@ export default function Shop() {
     setSortBy("newest");
   };
 
-  const filteredProducts = products?.filter((p: Product) => {
+  const filteredProducts = Array.isArray(products) ? products.filter((p: Product) => {
     const price = parseFloat(p.price);
     return price >= priceRange[0] && price <= priceRange[1];
-  }) || [];
+  }) : [];
 
   const sortedProducts = [...filteredProducts].sort((a: Product, b: Product) => {
     switch (sortBy) {
@@ -178,7 +185,7 @@ export default function Shop() {
                       </SelectTrigger>
                       <SelectContent>
                         <SelectItem value="">All Categories</SelectItem>
-                        {categories?.map((cat: any) => (
+                        {Array.isArray(categories) && categories.map((cat: any) => (
                           <SelectItem key={cat.id} value={cat.id}>
                             {cat.name}
                           </SelectItem>
@@ -196,7 +203,7 @@ export default function Shop() {
                       </SelectTrigger>
                       <SelectContent>
                         <SelectItem value="">All Brands</SelectItem>
-                        {brands?.map((brand: any) => (
+                        {Array.isArray(brands) && brands.map((brand: any) => (
                           <SelectItem key={brand.id} value={brand.id}>
                             {brand.name}
                           </SelectItem>
@@ -265,7 +272,7 @@ export default function Shop() {
             <div className="flex flex-wrap gap-2">
               {selectedCategory && (
                 <Badge className="rounded-full px-3 py-1">
-                  {categories?.find((c: any) => c.id === selectedCategory)?.name}
+                  {Array.isArray(categories) && categories.find((c: any) => c.id === selectedCategory)?.name}
                   <X 
                     className="w-3 h-3 ml-2 cursor-pointer" 
                     onClick={() => setSelectedCategory("")}
@@ -274,7 +281,7 @@ export default function Shop() {
               )}
               {selectedBrand && (
                 <Badge className="rounded-full px-3 py-1">
-                  {brands?.find((b: any) => b.id === selectedBrand)?.name}
+                  {Array.isArray(brands) && brands.find((b: any) => b.id === selectedBrand)?.name}
                   <X 
                     className="w-3 h-3 ml-2 cursor-pointer" 
                     onClick={() => setSelectedBrand("")}
