@@ -38,8 +38,10 @@ export default function AIRecommendations({
   }, []);
 
   const { data: recommendations, isLoading } = useQuery({
-    queryKey: ["/api/ai/recommendations", productId],
-    enabled: !!productId && typeof productId === 'string',
+    queryKey: productId && typeof productId === 'string' 
+      ? ["/api/ai/recommendations", productId]
+      : ["/api/ai/recommendations"],
+    enabled: true, // Always enable, but API will handle productId appropriately
     staleTime: 5 * 60 * 1000, // Cache for 5 minutes
     retry: 1,
   });
