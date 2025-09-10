@@ -58,7 +58,7 @@ export default function Profile() {
             </AvatarFallback>
           </Avatar>
           <div className="flex-1">
-            <h1 className="text-2xl font-bold">
+            <h1 className="text-2xl font-bold text-white">
               {user?.firstName} {user?.lastName}
             </h1>
             <p className="text-white">{user?.email}</p>

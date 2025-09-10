@@ -29,7 +29,7 @@ export function LoginDialog({ open, onOpenChange, redirectAfterLogin }: LoginDia
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-md glassmorphism border border-primary/20 rounded-3xl">
+      <DialogContent className="sm:max-w-md bg-white dark:bg-card border border-primary/20 rounded-3xl shadow-2xl">
         <DialogHeader className="text-center space-y-6">
           <div className="mx-auto">
             <img 
@@ -39,7 +39,7 @@ export function LoginDialog({ open, onOpenChange, redirectAfterLogin }: LoginDia
             />
           </div>
           
-          <DialogTitle className="text-2xl font-bold gradient-text">
+          <DialogTitle className="text-2xl font-bold text-primary">
             Welcome to ReWeara
           </DialogTitle>
           

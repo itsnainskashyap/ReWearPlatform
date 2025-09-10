@@ -19,11 +19,11 @@ export default function Footer() {
                 className="w-10 h-10"
               />
               <div>
-                <h1 className="text-xl font-bold gradient-text">ReWeara</h1>
-                <p className="text-sm text-muted-foreground">Sustainable Fashion</p>
+                <h1 className="text-xl font-bold text-primary">ReWeara</h1>
+                <p className="text-sm text-primary/70">Sustainable Fashion</p>
               </div>
             </div>
-            <p className="text-muted-foreground mb-4">
+            <p className="text-primary/70 mb-4">
               Sustainable fashion for a better tomorrow. Join our eco-friendly community and make a positive impact on the planet.
             </p>
           </div>
@@ -32,7 +32,7 @@ export default function Footer() {
           <div>
             <h3 className="font-semibold mb-4">Help & Support</h3>
             <div className="space-y-3">
-              <div className="flex items-center space-x-2 text-sm text-muted-foreground">
+              <div className="flex items-center space-x-2 text-sm text-primary/70">
                 <Phone className="w-4 h-4" />
                 <span>6200613195</span>
               </div>
@@ -53,15 +53,15 @@ export default function Footer() {
           <div>
             <h3 className="font-semibold mb-4">Quick Links</h3>
             <div className="space-y-2 text-sm">
-              <div className="text-muted-foreground hover:text-foreground cursor-pointer">Shop</div>
-              <div className="text-muted-foreground hover:text-foreground cursor-pointer">About</div>
-              <div className="text-muted-foreground hover:text-foreground cursor-pointer">Contact</div>
-              <div className="text-muted-foreground hover:text-foreground cursor-pointer">FAQs</div>
+              <div className="text-primary/70 hover:text-primary cursor-pointer">Shop</div>
+              <div className="text-primary/70 hover:text-primary cursor-pointer">About</div>
+              <div className="text-primary/70 hover:text-primary cursor-pointer">Contact</div>
+              <div className="text-primary/70 hover:text-primary cursor-pointer">FAQs</div>
             </div>
           </div>
         </div>
 
-        <div className="border-t border-border mt-8 pt-6 text-center text-sm text-muted-foreground">
+        <div className="border-t border-border mt-8 pt-6 text-center text-sm text-primary/70">
           <p>&copy; 2024 ReWeara. All rights reserved. • Sustainable Fashion for Everyone</p>
         </div>
       </div>
