@@ -28,6 +28,7 @@ interface ChatMessage {
 }
 
 export default function AIChatAssistant() {
+  // Position the AI assistant on the right side, fixed
   const [isOpen, setIsOpen] = useState(false);
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [currentMessage, setCurrentMessage] = useState("");
@@ -131,10 +132,9 @@ export default function AIChatAssistant() {
   };
 
   return (
-    <>
+    <div className="fixed right-4 bottom-20 z-50 space-y-2">
       {/* Floating Chat Button */}
-      <div className="fixed bottom-24 right-4 z-50">
-        <Dialog open={isOpen} onOpenChange={setIsOpen}>
+      <Dialog open={isOpen} onOpenChange={setIsOpen}>
           <DialogTrigger asChild>
             <Button 
               size="icon"
@@ -276,7 +276,6 @@ export default function AIChatAssistant() {
             </div>
           </DialogContent>
         </Dialog>
-      </div>
-    </>
+    </div>
   );
 }
