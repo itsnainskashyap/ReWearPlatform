@@ -47,6 +47,24 @@ export default function TaxManagement() {
     queryKey: ["/api/admin/tax-rates"]
   });
 
+  // Global tax settings
+  const [globalTaxEnabled, setGlobalTaxEnabled] = useState(false);
+  
+  // Update global tax setting
+  const updateGlobalTaxMutation = useMutation({
+    mutationFn: (enabled: boolean) => 
+      apiRequest("PUT", "/api/admin/settings/tax", { enabled }),
+    onSuccess: () => {
+      toast({ title: `Tax system ${globalTaxEnabled ? 'enabled' : 'disabled'} successfully` });
+    },
+    onError: () => {
+      toast({ 
+        title: "Failed to update tax settings", 
+        variant: "destructive" 
+      });
+    }
+  });
+
   // Create tax mutation
   const createTaxMutation = useMutation({
     mutationFn: (data: any) => apiRequest("POST", "/api/admin/tax-rates", data),
@@ -137,18 +155,52 @@ export default function TaxManagement() {
   };
 
   return (
-    <Card>
-      <CardHeader>
-        <div className="flex items-center justify-between">
-          <div>
-            <CardTitle className="flex items-center gap-2">
-              <Calculator className="w-5 h-5" />
-              Tax Management
-            </CardTitle>
-            <CardDescription>
-              Configure tax rates for different regions
-            </CardDescription>
+    <div className="space-y-6">
+      {/* Global Tax Toggle */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <Settings className="w-5 h-5" />
+            Global Tax Settings
+          </CardTitle>
+          <CardDescription>
+            Enable or disable tax calculations site-wide
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <div className="flex items-center justify-between">
+            <div className="space-y-0.5">
+              <Label htmlFor="global-tax">Tax System</Label>
+              <p className="text-sm text-muted-foreground">
+                {globalTaxEnabled ? "Tax calculations are active" : "Tax calculations are disabled"}
+              </p>
+            </div>
+            <Switch
+              id="global-tax"
+              checked={globalTaxEnabled}
+              onCheckedChange={(checked) => {
+                setGlobalTaxEnabled(checked);
+                updateGlobalTaxMutation.mutate(checked);
+              }}
+              data-testid="switch-global-tax"
+            />
           </div>
+        </CardContent>
+      </Card>
+
+      {/* Tax Rates Management */}
+      <Card>
+        <CardHeader>
+          <div className="flex items-center justify-between">
+            <div>
+              <CardTitle className="flex items-center gap-2">
+                <Calculator className="w-5 h-5" />
+                Tax Rates
+              </CardTitle>
+              <CardDescription>
+                Configure tax rates for different regions
+              </CardDescription>
+            </div>
           <Dialog open={showDialog} onOpenChange={setShowDialog}>
             <DialogTrigger asChild>
               <Button onClick={() => { setEditingTax(null); resetForm(); }}>
@@ -334,5 +386,6 @@ export default function TaxManagement() {
         )}
       </CardContent>
     </Card>
+    </div>
   );
 }
