@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { Bell, Menu, Sparkles } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { ThemeToggle } from "@/components/ui/theme-toggle";
 import { useAuth } from "@/hooks/useAuth";
 import logoImage from "@assets/ffffffffff_1757438501881.png";
 
@@ -57,17 +58,20 @@ export default function Header() {
           <span className="font-bold text-xl text-primary">ReWeara</span>
         </div>
         
-        <Button 
-          variant="ghost" 
-          size="icon"
-          className="hover-lift relative rounded-2xl"
-          data-testid="button-notifications"
-        >
-          <Bell className="w-6 h-6 transition-transform duration-200 hover:scale-110" />
-          <span className="absolute -top-1 -right-1 w-4 h-4 bg-gradient-to-r from-destructive to-destructive/80 rounded-full animate-pulse">
-            <span className="absolute inset-0 w-4 h-4 bg-destructive rounded-full animate-ping opacity-75"></span>
-          </span>
-        </Button>
+        <div className="flex items-center space-x-2">
+          <ThemeToggle />
+          <Button 
+            variant="ghost" 
+            size="icon"
+            className="hover-lift relative rounded-2xl"
+            data-testid="button-notifications"
+          >
+            <Bell className="w-6 h-6 transition-transform duration-200 hover:scale-110" />
+            <span className="absolute -top-1 -right-1 w-4 h-4 bg-gradient-to-r from-destructive to-destructive/80 rounded-full animate-pulse">
+              <span className="absolute inset-0 w-4 h-4 bg-destructive rounded-full animate-ping opacity-75"></span>
+            </span>
+          </Button>
+        </div>
       </div>
     </header>
   );
