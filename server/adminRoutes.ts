@@ -952,6 +952,83 @@ export function setupAdminRoutes(app: Express) {
     }
   });
 
+  // Payment verification endpoints
+  app.put("/api/admin/orders/:orderId/verify-payment", isAdminAuthenticated, async (req: AdminRequest, res) => {
+    try {
+      const { orderId } = req.params;
+      const adminId = req.admin!.id;
+
+      const [updatedOrder] = await db
+        .update(orders)
+        .set({
+          status: "payment_verified",
+          paymentStatus: "verified",
+          paymentVerifiedBy: adminId,
+          paymentVerifiedAt: new Date(),
+          updatedAt: new Date()
+        })
+        .where(eq(orders.id, orderId))
+        .returning();
+
+      if (!updatedOrder) {
+        return res.status(404).json({ message: "Order not found" });
+      }
+
+      await logAuditAction(
+        adminId,
+        "VERIFY_PAYMENT",
+        "order",
+        orderId,
+        { status: "payment_verified", paymentStatus: "verified" },
+        req.ip,
+        req.headers["user-agent"]
+      );
+
+      res.json(updatedOrder);
+    } catch (error) {
+      console.error("Payment verification error:", error);
+      res.status(500).json({ message: "Failed to verify payment" });
+    }
+  });
+
+  app.put("/api/admin/orders/:orderId/reject-payment", isAdminAuthenticated, async (req: AdminRequest, res) => {
+    try {
+      const { orderId } = req.params;
+      const adminId = req.admin!.id;
+
+      const [updatedOrder] = await db
+        .update(orders)
+        .set({
+          status: "payment_failed",
+          paymentStatus: "failed",
+          paymentVerifiedBy: adminId,
+          paymentVerifiedAt: new Date(),
+          updatedAt: new Date()
+        })
+        .where(eq(orders.id, orderId))
+        .returning();
+
+      if (!updatedOrder) {
+        return res.status(404).json({ message: "Order not found" });
+      }
+
+      await logAuditAction(
+        adminId,
+        "REJECT_PAYMENT",
+        "order",
+        orderId,
+        { status: "payment_failed", paymentStatus: "failed" },
+        req.ip,
+        req.headers["user-agent"]
+      );
+
+      res.json(updatedOrder);
+    } catch (error) {
+      console.error("Payment rejection error:", error);
+      res.status(500).json({ message: "Failed to reject payment" });
+    }
+  });
+
   // Audit logs
   app.get("/api/admin/audit-logs", isAdminAuthenticated, async (req: AdminRequest, res) => {
     try {
