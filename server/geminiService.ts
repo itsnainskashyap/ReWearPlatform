@@ -71,10 +71,23 @@ export class GeminiService {
     return this.generateContent(prompt);
   }
 
-  // Generate virtual try-on response
+  // Generate virtual try-on response with enhanced description
   async generateTryOnResponse(productName: string, userPrompt?: string): Promise<string> {
-    const prompt = userPrompt || `Show user wearing ${productName} in a realistic way for a sustainable fashion e-commerce platform ReWeara. Describe how the item would look on them.`;
-    return this.generateContent(prompt);
+    const prompt = userPrompt || `Create a realistic virtual try-on visualization of ${productName} from ReWeara sustainable fashion platform. Generate a detailed description of how this eco-friendly garment would look when worn, including fit, styling, and visual appeal. Focus on the sustainable materials and ethical production aspects.`;
+    
+    // Enhanced prompt for better visual description generation
+    const enhancedPrompt = `${prompt}
+
+Context: ReWeara is a sustainable fashion platform offering both thrift store finds and original eco-friendly designs. The virtual try-on should emphasize:
+- Realistic fit and drape of the garment
+- Sustainable material properties and how they look/feel
+- Color accuracy and texture representation
+- Styling suggestions for the piece
+- How the item complements different body types
+
+Please provide a detailed, encouraging description that helps the customer visualize wearing this sustainable fashion piece.`;
+
+    return this.generateContent(enhancedPrompt);
   }
 
   // Generate chat response

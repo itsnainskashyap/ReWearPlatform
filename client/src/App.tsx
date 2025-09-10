@@ -122,12 +122,8 @@ function AppContent() {
             <main className={isAuthenticated ? "pt-16 md:pt-20 pb-24" : ""}>
               <Router />
             </main>
-            {isAuthenticated && (
-              <>
-                <FloatingCartButton />
-                <AIChatAssistant />
-              </>
-            )}
+            {isAuthenticated && <FloatingCartButton />}
+            <AIChatAssistant />
           </div>
           {/* Bottom Navigation - outside animated container for proper fixed positioning */}
           {isAuthenticated && <BottomNavigation />}
