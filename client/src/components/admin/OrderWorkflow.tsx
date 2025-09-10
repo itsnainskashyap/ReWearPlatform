@@ -85,7 +85,7 @@ export default function OrderWorkflow() {
   // Update order status mutation
   const updateStatusMutation = useMutation({
     mutationFn: ({ id, ...data }: any) => 
-      apiRequest(`/api/admin/orders/${id}/status`, "PUT", data),
+      apiRequest("PUT", `/api/admin/orders/${id}/status`, data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/admin/orders"] });
       toast({ title: "Order status updated successfully" });

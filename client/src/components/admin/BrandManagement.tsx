@@ -47,7 +47,7 @@ export default function BrandManagement() {
 
   // Create brand mutation
   const createBrandMutation = useMutation({
-    mutationFn: (data: any) => apiRequest("/api/admin/brands", "POST", data),
+    mutationFn: (data: any) => apiRequest("POST", "/api/admin/brands", data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/brands"] });
       toast({ title: "Brand created successfully" });
@@ -65,7 +65,7 @@ export default function BrandManagement() {
   // Update brand mutation
   const updateBrandMutation = useMutation({
     mutationFn: ({ id, ...data }: any) => 
-      apiRequest(`/api/admin/brands/${id}`, "PUT", data),
+      apiRequest("PUT", `/api/admin/brands/${id}`, data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/brands"] });
       toast({ title: "Brand updated successfully" });
@@ -84,7 +84,7 @@ export default function BrandManagement() {
   // Delete brand mutation
   const deleteBrandMutation = useMutation({
     mutationFn: (id: string) => 
-      apiRequest(`/api/admin/brands/${id}`, "DELETE"),
+      apiRequest("DELETE", `/api/admin/brands/${id}`),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/brands"] });
       toast({ title: "Brand deleted successfully" });
@@ -100,7 +100,7 @@ export default function BrandManagement() {
   // Toggle featured mutation
   const toggleFeaturedMutation = useMutation({
     mutationFn: ({ id, isFeatured }: { id: string; isFeatured: boolean }) => 
-      apiRequest(`/api/admin/brands/${id}/featured`, "PATCH", { isFeatured }),
+      apiRequest("PATCH", `/api/admin/brands/${id}/featured`, { isFeatured }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/brands"] });
       toast({ title: "Brand featured status updated" });

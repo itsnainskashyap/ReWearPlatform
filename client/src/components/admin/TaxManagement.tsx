@@ -49,7 +49,7 @@ export default function TaxManagement() {
 
   // Create tax mutation
   const createTaxMutation = useMutation({
-    mutationFn: (data: any) => apiRequest("/api/admin/tax-rates", "POST", data),
+    mutationFn: (data: any) => apiRequest("POST", "/api/admin/tax-rates", data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/admin/tax-rates"] });
       toast({ title: "Tax rate created successfully" });
@@ -67,7 +67,7 @@ export default function TaxManagement() {
   // Update tax mutation
   const updateTaxMutation = useMutation({
     mutationFn: ({ id, ...data }: any) => 
-      apiRequest(`/api/admin/tax-rates/${id}`, "PUT", data),
+      apiRequest("PUT", `/api/admin/tax-rates/${id}`, data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/admin/tax-rates"] });
       toast({ title: "Tax rate updated successfully" });
@@ -86,7 +86,7 @@ export default function TaxManagement() {
   // Delete tax mutation
   const deleteTaxMutation = useMutation({
     mutationFn: (id: string) => 
-      apiRequest(`/api/admin/tax-rates/${id}`, "DELETE"),
+      apiRequest("DELETE", `/api/admin/tax-rates/${id}`),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/admin/tax-rates"] });
       toast({ title: "Tax rate deleted successfully" });
