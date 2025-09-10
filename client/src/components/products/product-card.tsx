@@ -5,6 +5,7 @@ import { ProductShare } from "@/components/ui/product-share";
 import type { Product } from "@shared/schema";
 import { useState, useEffect } from "react";
 import { useLocation } from "wouter";
+import { useCartStore } from "@/store/cart-store";
 
 interface ProductCardProps {
   product: Product;
@@ -17,6 +18,7 @@ export default function ProductCard({ product, onAddToCart, onAddToWishlist, ind
   const [isVisible, setIsVisible] = useState(false);
   const [isLiked, setIsLiked] = useState(false);
   const [, navigate] = useLocation();
+  const { addToCart } = useCartStore();
 
   useEffect(() => {
     const timer = setTimeout(() => setIsVisible(true), index * 100);
@@ -24,6 +26,16 @@ export default function ProductCard({ product, onAddToCart, onAddToWishlist, ind
   }, [index]);
 
   const handleAddToCart = () => {
+    // Add to local cart store for immediate UI feedback
+    addToCart({
+      id: product.id,
+      name: product.name,
+      price: parseFloat(product.price),
+      imageUrl: product.images?.[0] || '',
+      quantity: 1
+    });
+    
+    // Also call the parent callback if provided
     onAddToCart?.(product.id);
   };
 
@@ -147,17 +159,28 @@ export default function ProductCard({ product, onAddToCart, onAddToWishlist, ind
           </div>
           
           {/* Mobile Action Buttons */}
-          <Button 
-            onClick={(e) => {
-              e.stopPropagation();
-              handleAddToCart();
-            }}
-            className="w-full h-10 bg-gradient-to-r from-primary to-primary/90 text-primary-foreground hover:from-primary/90 hover:to-primary rounded-xl font-semibold transition-all duration-300"
-            data-testid={`button-add-to-cart-${product.id}`}
-          >
-            <ShoppingBag className="w-4 h-4 mr-2" />
-            Add to Cart
-          </Button>
+          {product.stock === 0 ? (
+            <Button 
+              disabled
+              className="w-full h-10 bg-gray-400 text-gray-600 cursor-not-allowed rounded-xl font-semibold"
+              data-testid={`button-out-of-stock-${product.id}`}
+            >
+              <ShoppingBag className="w-4 h-4 mr-2" />
+              Out of Stock
+            </Button>
+          ) : (
+            <Button 
+              onClick={(e) => {
+                e.stopPropagation();
+                handleAddToCart();
+              }}
+              className="w-full h-10 bg-gradient-to-r from-primary to-primary/90 text-primary-foreground hover:from-primary/90 hover:to-primary rounded-xl font-semibold transition-all duration-300"
+              data-testid={`button-add-to-cart-${product.id}`}
+            >
+              <ShoppingBag className="w-4 h-4 mr-2" />
+              Add to Cart
+            </Button>
+          )}
         </div>
       </div>
     </div>
