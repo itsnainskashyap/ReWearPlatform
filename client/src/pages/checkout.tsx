@@ -74,6 +74,7 @@ export default function Checkout() {
       const orderData = {
         shippingAddress: shippingInfo,
         paymentMethod,
+        subtotal: calculateSubtotal(),
         totalAmount: calculateTotal(),
         paymentDetails: paymentMethod === 'upi' 
           ? { upiId } 
