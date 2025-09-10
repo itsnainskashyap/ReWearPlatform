@@ -163,14 +163,22 @@ export function EnhancedAddProductModal({ open, onOpenChange }: EnhancedAddProdu
     const validImageUrls = imageUrls.filter(url => url.trim() !== "");
     const validSizes = sizes.filter(size => size.trim() !== "");
     
-    createProductMutation.mutate({
+    // Convert discountExpiry string to Date object if present, otherwise remove it
+    const processedData = {
       ...data,
       images: validImageUrls,
       sizes: validSizes,
       tags,
       ecoBadges,
       relatedProducts,
-    });
+    };
+    
+    // Remove discountExpiry if it's empty to avoid date conversion issues
+    if (!processedData.discountExpiry || processedData.discountExpiry === '') {
+      delete processedData.discountExpiry;
+    }
+    
+    createProductMutation.mutate(processedData);
   };
 
   const addImageUrl = () => setImageUrls([...imageUrls, ""]);
