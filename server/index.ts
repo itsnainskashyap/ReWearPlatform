@@ -20,6 +20,20 @@ console.log(`[STARTUP] Platform: ${process.platform}`);
 let startupHealthy = true;
 let startupError = '';
 
+// Helper function to recursively copy files
+function copyRecursive(src: string, dest: string) {
+  const stat = fs.lstatSync(src);
+  if (stat.isDirectory()) {
+    fs.mkdirSync(dest, { recursive: true });
+    const files = fs.readdirSync(src);
+    for (const file of files) {
+      copyRecursive(path.join(src, file), path.join(dest, file));
+    }
+  } else {
+    fs.copyFileSync(src, dest);
+  }
+}
+
 // Function to ensure static assets are available for production deployment
 function ensureStaticAssets() {
   const serverPublic = path.resolve(import.meta.dirname, 'public');
@@ -48,18 +62,6 @@ function ensureStaticAssets() {
     } catch (symlinkError) {
       try {
         // Fallback to copying files
-        function copyRecursive(src: string, dest: string) {
-          const stat = fs.lstatSync(src);
-          if (stat.isDirectory()) {
-            fs.mkdirSync(dest, { recursive: true });
-            const files = fs.readdirSync(src);
-            for (const file of files) {
-              copyRecursive(path.join(src, file), path.join(dest, file));
-            }
-          } else {
-            fs.copyFileSync(src, dest);
-          }
-        }
         copyRecursive(distPublic, serverPublic);
         console.log('[STARTUP] Copied static assets from dist/public to server/public');
       } catch (copyError) {
