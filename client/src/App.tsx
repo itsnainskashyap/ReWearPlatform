@@ -48,25 +48,26 @@ function Router() {
         {/* Admin panel is accessible without user authentication (has its own auth) */}
         <Route path="/admin-panel" component={AdminPanel} />
         
-        {isLoading || !isAuthenticated ? (
-          <Route path="/" component={Landing} />
-        ) : (
+        {/* Public routes accessible without login */}
+        <Route path="/" component={isAuthenticated ? Home : Landing} />
+        <Route path="/shop" component={Shop} />
+        <Route path="/product/:id" component={ProductDetail} />
+        <Route path="/about" component={About} />
+        <Route path="/contact" component={Contact} />
+        <Route path="/faqs" component={FAQs} />
+        <Route path="/policies" component={Policies} />
+        <Route path="/careers" component={Careers} />
+        <Route path="/blog" component={Blog} />
+        
+        {/* Protected routes that require authentication */}
+        {isAuthenticated && (
           <>
-            <Route path="/" component={Home} />
-            <Route path="/shop" component={Shop} />
-            <Route path="/product/:id" component={ProductDetail} />
             <Route path="/wishlist" component={Wishlist} />
             <Route path="/profile" component={Profile} />
             <Route path="/cart" component={Cart} />
             <Route path="/checkout" component={Checkout} />
             <Route path="/orders" component={Orders} />
-            <Route path="/about" component={About} />
-            <Route path="/contact" component={Contact} />
-            <Route path="/faqs" component={FAQs} />
-            <Route path="/policies" component={Policies} />
-            <Route path="/careers" component={Careers} />
             <Route path="/admin" component={Admin} />
-            <Route path="/blog" component={Blog} />
           </>
         )}
         <Route component={NotFound} />

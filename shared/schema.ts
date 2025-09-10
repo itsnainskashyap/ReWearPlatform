@@ -462,6 +462,31 @@ export const storeSettings = pgTable("store_settings", {
   updatedAt: timestamp("updated_at").defaultNow(),
 });
 
+// Promotional popups table
+export const promotionalPopups = pgTable("promotional_popups", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  title: varchar("title").notNull(),
+  description: text("description"),
+  imageUrl: varchar("image_url"),
+  buttonText: varchar("button_text"),
+  buttonUrl: varchar("button_url"),
+  backgroundColor: varchar("background_color").default("#ffffff"),
+  textColor: varchar("text_color").default("#000000"),
+  buttonColor: varchar("button_color").default("#10b981"),
+  position: varchar("position").default("center"), // center, bottom, top
+  size: varchar("size").default("medium"), // small, medium, large
+  trigger: varchar("trigger").default("page_load"), // page_load, exit_intent, time_delay
+  triggerValue: integer("trigger_value").default(0), // seconds for time_delay
+  showFrequency: varchar("show_frequency").default("once"), // once, daily, weekly, always
+  targetPages: text("target_pages").array().default([]), // which pages to show on
+  startDate: timestamp("start_date"),
+  endDate: timestamp("end_date"),
+  isActive: boolean("is_active").default(true),
+  priority: integer("priority").default(0),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
 // Insert schemas for new tables
 export const insertTaxRateSchema = createInsertSchema(taxRates).omit({
   id: true,
@@ -525,6 +550,12 @@ export const insertStoreSettingSchema = createInsertSchema(storeSettings).omit({
   updatedAt: true,
 });
 
+export const insertPromotionalPopupSchema = createInsertSchema(promotionalPopups).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
 // Types
 export type UpsertUser = z.infer<typeof insertUserSchema>;
 export type User = typeof users.$inferSelect;
@@ -547,6 +578,7 @@ export type Banner = typeof banners.$inferSelect;
 export type ContentPage = typeof contentPages.$inferSelect;
 export type AiConfig = typeof aiConfig.$inferSelect;
 export type StoreSetting = typeof storeSettings.$inferSelect;
+export type PromotionalPopup = typeof promotionalPopups.$inferSelect;
 
 export type InsertCategory = z.infer<typeof insertCategorySchema>;
 export type InsertBrand = z.infer<typeof insertBrandSchema>;
@@ -559,3 +591,4 @@ export type InsertOrderItem = z.infer<typeof insertOrderItemSchema>;
 export type InsertTaxRate = z.infer<typeof insertTaxRateSchema>;
 export type InsertProductMedia = z.infer<typeof insertProductMediaSchema>;
 export type InsertOrderTracking = z.infer<typeof insertOrderTrackingSchema>;
+export type InsertPromotionalPopup = z.infer<typeof insertPromotionalPopupSchema>;
