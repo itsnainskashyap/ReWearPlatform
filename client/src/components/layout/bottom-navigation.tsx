@@ -3,9 +3,13 @@ import { Button } from "@/components/ui/button";
 import { useCartStore } from "@/store/cart-store";
 import { useState, useEffect } from "react";
 import { useLocation } from "wouter";
+import { useAuth } from "@/hooks/useAuth";
+import { useAuthModal } from "@/contexts/auth-modal-context";
 
 export default function BottomNavigation() {
   const { itemCount } = useCartStore();
+  const { isAuthenticated } = useAuth();
+  const { openLogin } = useAuthModal();
   const [isVisible, setIsVisible] = useState(false);
   const [location, navigate] = useLocation();
 
@@ -14,15 +18,17 @@ export default function BottomNavigation() {
   }, []);
 
   const navItems = [
-    { icon: Home, label: "Home", path: "/", testId: "nav-home" },
-    { icon: Grid, label: "Shop", path: "/shop", testId: "nav-shop" },
-    { icon: Heart, label: "Wishlist", path: "/wishlist", testId: "nav-wishlist", hasNotification: true },
-    { icon: ShoppingBag, label: "Cart", path: "/cart", testId: "nav-cart", count: itemCount },
-    { icon: User, label: "Profile", path: "/profile", testId: "nav-profile" },
+    { icon: Home, label: "Home", path: "/", testId: "nav-home", protected: false },
+    { icon: Grid, label: "Shop", path: "/shop", testId: "nav-shop", protected: false },
+    { icon: Heart, label: "Wishlist", path: "/wishlist", testId: "nav-wishlist", hasNotification: true, protected: true },
+    { icon: ShoppingBag, label: "Cart", path: "/cart", testId: "nav-cart", count: itemCount, protected: false },
+    { icon: User, label: "Profile", path: "/profile", testId: "nav-profile", protected: true },
   ];
 
   const handleNavClick = (item: any) => {
-    if (item.path) {
+    if (item.protected && !isAuthenticated) {
+      openLogin(item.path); // Pass the intended path for redirect after login
+    } else if (item.path) {
       navigate(item.path);
     } else if (item.action) {
       item.action();

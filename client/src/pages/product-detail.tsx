@@ -7,6 +7,8 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { ChevronLeft, Heart, ShoppingBag, Sparkles, Star, Ruler, Package, Shield, Camera, Share2, Truck, ArrowLeft } from "lucide-react";
 import { useState, useEffect } from "react";
 import { useToast } from "@/hooks/use-toast";
+import { useAuth } from "@/hooks/useAuth";
+import { useAuthModal } from "@/contexts/auth-modal-context";
 import { apiRequest } from "@/lib/queryClient";
 import { useCartStore } from "@/store/cart-store";
 import VirtualTryOn from "@/components/ai/virtual-tryon";
@@ -19,6 +21,8 @@ export default function ProductDetail() {
   const [, params] = useRoute("/product/:id");
   const [, navigate] = useLocation();
   const { toast } = useToast();
+  const { isAuthenticated } = useAuth();
+  const { openLogin } = useAuthModal();
   const queryClient = useQueryClient();
   const { openCart } = useCartStore();
   
@@ -81,7 +85,19 @@ export default function ProductDetail() {
     },
   });
 
+  const handleAddToWishlist = () => {
+    if (!isAuthenticated) {
+      openLogin("/wishlist"); // Redirect to wishlist after login
+      return;
+    }
+    addToWishlistMutation.mutate();
+  };
+
   const buyNowHandler = () => {
+    if (!isAuthenticated) {
+      openLogin("/checkout"); // Redirect to checkout after login
+      return;
+    }
     addToCartMutation.mutate();
     setTimeout(() => {
       navigate("/checkout");
@@ -155,7 +171,7 @@ export default function ProductDetail() {
               variant="ghost"
               size="icon"
               className="hover-lift rounded-2xl"
-              onClick={() => addToWishlistMutation.mutate()}
+              onClick={handleAddToWishlist}
               data-testid="button-wishlist"
             >
               <Heart className="w-5 h-5" />
