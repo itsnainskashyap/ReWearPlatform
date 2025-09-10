@@ -656,9 +656,32 @@
     color: hsl(0, 0%, 90%) !important;
   }
 
-  /* DARK MODE: WHITE TEXT ON BLACK BACKGROUNDS */
-  .dark .text-primary {
-    color: hsl(0, 0%, 100%) !important; /* White text */
+  /* Dark mode: Make price dark green - specific selector for price */
+  .dark .text-3xl.text-primary {
+    color: hsl(120, 100%, 25%) !important; /* Dark green for price */
+  }
+
+  /* Dark mode: Make original price red */
+  .dark .line-through {
+    color: hsl(0, 70%, 50%) !important; /* Red for original price */
+  }
+
+  /* Dark mode: Make condition and discount badges dark green */
+  .dark .bg-primary\/10 {
+    background-color: hsl(120, 100%, 15%) !important; /* Dark green background */
+    color: hsl(120, 100%, 80%) !important; /* Light green text */
+    border-color: hsl(120, 100%, 25%) !important; /* Dark green border */
+  }
+
+  .dark .bg-green-100 {
+    background-color: hsl(120, 100%, 15%) !important; /* Dark green background */
+    color: hsl(120, 100%, 80%) !important; /* Light green text */
+    border-color: hsl(120, 100%, 25%) !important; /* Dark green border */
+  }
+
+  /* DARK MODE: WHITE TEXT ON BLACK BACKGROUNDS (general text) */
+  .dark .text-primary:not(.text-3xl) {
+    color: hsl(0, 0%, 100%) !important; /* White text for general elements */
   }
 
   .dark .text-black {
