@@ -532,26 +532,31 @@ export class DatabaseStorage implements IStorage {
 
   // Promotional popup operations
   async getPromotionalPopups(options?: { active?: boolean }): Promise<PromotionalPopup[]> {
-    let query = db.select().from(promotionalPopups);
-    
     if (options?.active) {
       const now = new Date();
-      query = query.where(
-        and(
-          eq(promotionalPopups.isActive, true),
-          or(
-            sql`${promotionalPopups.startDate} IS NULL`,
-            sql`${promotionalPopups.startDate} <= ${now}`
-          ),
-          or(
-            sql`${promotionalPopups.endDate} IS NULL`,
-            sql`${promotionalPopups.endDate} >= ${now}`
+      return await db
+        .select()
+        .from(promotionalPopups)
+        .where(
+          and(
+            eq(promotionalPopups.isActive, true),
+            or(
+              sql`${promotionalPopups.startDate} IS NULL`,
+              sql`${promotionalPopups.startDate} <= ${now}`
+            ),
+            or(
+              sql`${promotionalPopups.endDate} IS NULL`,
+              sql`${promotionalPopups.endDate} >= ${now}`
+            )
           )
         )
-      );
+        .orderBy(desc(promotionalPopups.priority), desc(promotionalPopups.createdAt));
     }
     
-    return await query.orderBy(desc(promotionalPopups.priority), desc(promotionalPopups.createdAt));
+    return await db
+      .select()
+      .from(promotionalPopups)
+      .orderBy(desc(promotionalPopups.priority), desc(promotionalPopups.createdAt));
   }
 
   async getPromotionalPopupById(id: string): Promise<PromotionalPopup | undefined> {
