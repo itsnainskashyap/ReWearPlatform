@@ -133,7 +133,7 @@ export function ProductShare({ product, className = "", variant = "icon" }: Prod
           </Button>
         )}
       </DropdownMenuTrigger>
-      <DropdownMenuContent align="end" className="w-56">
+      <DropdownMenuContent align="end" className="w-56 backdrop-blur-md bg-background/95">
         <DropdownMenuLabel>Share this product</DropdownMenuLabel>
         <DropdownMenuSeparator />
         

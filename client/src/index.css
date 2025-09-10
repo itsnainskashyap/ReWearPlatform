@@ -145,15 +145,15 @@
   --elevate-1: rgba(255,255,255, .04);
   --elevate-2: rgba(255,255,255, .09);
 
-  --background: hsl(240, 10%, 3.9%);
+  --background: hsl(0, 0%, 0%);
   --foreground: hsl(0, 0%, 98%);
   --border: hsl(240, 3.7%, 15.9%);
 
-  --card: hsl(240, 10%, 3.9%);
+  --card: hsl(0, 0%, 2%);
   --card-foreground: hsl(0, 0%, 98%);
   --card-border: hsl(240, 3.7%, 15.9%);
 
-  --sidebar: hsl(240, 5.9%, 10%);
+  --sidebar: hsl(0, 0%, 2%);
   --sidebar-foreground: hsl(240, 4.8%, 95.9%);
   --sidebar-border: hsl(240, 3.7%, 15.9%);
   --sidebar-primary: hsl(158, 82%, 28%);
@@ -162,7 +162,7 @@
   --sidebar-accent-foreground: hsl(240, 5.9%, 10%);
   --sidebar-ring: hsl(158, 82%, 28%);
 
-  --popover: hsl(240, 10%, 3.9%);
+  --popover: hsl(0, 0%, 2%);
   --popover-foreground: hsl(0, 0%, 98%);
   --popover-border: hsl(240, 3.7%, 15.9%);
 
