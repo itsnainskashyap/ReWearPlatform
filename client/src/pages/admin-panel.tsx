@@ -230,7 +230,9 @@ export default function AdminPanel() {
     categoryId: "",
     brandId: "",
     stock: "1",
-    images: []
+    images: [],
+    isOriginal: false,
+    isThrift: false
   });
 
   const handleLogout = () => {
@@ -419,7 +421,9 @@ export default function AdminPanel() {
         categoryId: "",
         brandId: "",
         stock: "1",
-        images: []
+        images: [],
+        isOriginal: false,
+        isThrift: false
       });
     }
   });
@@ -1028,24 +1032,63 @@ export default function AdminPanel() {
                         </SelectContent>
                       </Select>
                     </div>
-                    <div>
-                      <Label htmlFor="product-brand">Brand</Label>
-                      <Select 
-                        value={productFormData.brandId}
-                        onValueChange={(value) => setProductFormData({...productFormData, brandId: value})}
-                      >
-                        <SelectTrigger data-testid="select-product-brand">
-                          <SelectValue placeholder="Select brand" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {brandsData?.map((brand: any) => (
-                            <SelectItem key={brand.id} value={brand.id}>
-                              {brand.name}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
+                    {!productFormData.isOriginal && (
+                      <div>
+                        <Label htmlFor="product-brand">Brand</Label>
+                        <Select 
+                          value={productFormData.brandId}
+                          onValueChange={(value) => setProductFormData({...productFormData, brandId: value})}
+                        >
+                          <SelectTrigger data-testid="select-product-brand">
+                            <SelectValue placeholder="Select brand" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {brandsData?.map((brand: any) => (
+                              <SelectItem key={brand.id} value={brand.id}>
+                                {brand.name}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      </div>
+                    )}
+                  </div>
+                  
+                  {/* Product Type Toggles */}
+                  <div className="space-y-4">
+                    <Label>Product Type</Label>
+                    <div className="flex gap-6">
+                      <div className="flex items-center space-x-2">
+                        <Switch 
+                          id="isThrift"
+                          checked={productFormData.isThrift}
+                          onCheckedChange={(checked) => setProductFormData({
+                            ...productFormData, 
+                            isThrift: checked,
+                            isOriginal: checked ? false : productFormData.isOriginal
+                          })}
+                        />
+                        <Label htmlFor="isThrift">Thrift Item</Label>
+                      </div>
+                      <div className="flex items-center space-x-2">
+                        <Switch 
+                          id="isOriginal"
+                          checked={productFormData.isOriginal}
+                          onCheckedChange={(checked) => setProductFormData({
+                            ...productFormData, 
+                            isOriginal: checked,
+                            isThrift: checked ? false : productFormData.isThrift,
+                            brandId: checked ? "" : productFormData.brandId // Clear brand when Original is selected
+                          })}
+                        />
+                        <Label htmlFor="isOriginal">ReWeara Original</Label>
+                      </div>
                     </div>
+                    {productFormData.isOriginal && (
+                      <div className="text-sm text-muted-foreground bg-primary/5 p-3 rounded-lg">
+                        💡 ReWeara Originals don't require a brand selection as they are our own designs.
+                      </div>
+                    )}
                   </div>
                 </div>
                 <div className="flex justify-end gap-2">

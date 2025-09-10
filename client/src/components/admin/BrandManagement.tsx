@@ -41,7 +41,7 @@ export default function BrandManagement() {
   });
 
   // Fetch brands
-  const { data: brands = [], isLoading } = useQuery({
+  const { data: brands = [], isLoading } = useQuery<Brand[]>({
     queryKey: ["/api/brands"]
   });
 
