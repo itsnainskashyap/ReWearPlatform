@@ -11,6 +11,9 @@ import { apiRequest } from "@/lib/queryClient";
 import { useCartStore } from "@/store/cart-store";
 import VirtualTryOn from "@/components/ai/virtual-tryon";
 import AIRecommendations from "@/components/ai/recommendations";
+import type { products } from "@shared/schema";
+
+type Product = typeof products.$inferSelect;
 
 export default function ProductDetail() {
   const [, params] = useRoute("/product/:id");
@@ -33,19 +36,19 @@ export default function ProductDetail() {
   // Ensure we have a valid product ID
   const productId = params?.id as string;
 
-  const { data: product, isLoading } = useQuery({
-    queryKey: ["/api/products", productId],
+  const { data: product, isLoading } = useQuery<Product>({
+    queryKey: [`/api/products/${productId}`],
     enabled: !!productId && typeof productId === 'string',
   });
 
   const { data: reviews } = useQuery({
-    queryKey: ["/api/products", productId, "reviews"],
-    enabled: !!productId && typeof productId === 'string',
+    queryKey: [`/api/products/${productId}/reviews`],
+    enabled: false, // Temporarily disabled until backend endpoint exists
   });
 
   const { data: related } = useQuery({
-    queryKey: ["/api/products", productId, "related"],
-    enabled: !!productId && typeof productId === 'string',
+    queryKey: [`/api/products/${productId}/related`],
+    enabled: false, // Temporarily disabled until backend endpoint exists
   });
 
   const addToCartMutation = useMutation({
@@ -417,7 +420,7 @@ export default function ProductDetail() {
                 </div>
                 <div className="flex justify-between py-2">
                   <span className="text-muted-foreground">SKU</span>
-                  <span className="font-medium">{product.id.slice(0, 8).toUpperCase()}</span>
+                  <span className="font-medium">{product?.id ? product.id.slice(0, 8).toUpperCase() : 'N/A'}</span>
                 </div>
               </CardContent>
             </Card>
