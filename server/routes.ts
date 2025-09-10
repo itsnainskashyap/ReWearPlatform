@@ -21,7 +21,7 @@ import {
   orderTracking,
   orderItems
 } from "@shared/schema";
-import { GoogleGenerativeAI } from "@google/generative-ai";
+import { geminiService } from "./geminiService";
 import { z } from "zod";
 import { setupAdminRoutes } from "./adminRoutes";
 import { db } from "./db";
@@ -529,7 +529,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Initialize Gemini AI
-  const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY || '');
 
   // Configure multer for file uploads
   const upload = multer({ 
@@ -547,11 +546,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // AI Recommendations API - using Gemini embeddings for semantic search
   app.get('/api/ai/recommendations/:productId?', async (req, res) => {
     try {
-      if (!process.env.GEMINI_API_KEY) {
-        return res.status(500).json({ error: 'AI service unavailable' });
-      }
-
-      const model = genAI.getGenerativeModel({ model: 'gemini-1.5-flash' });
       const products = await storage.getProducts();
       
       if (!products || products.length === 0) {
@@ -567,19 +561,32 @@ export async function registerRoutes(app: Express): Promise<Server> {
       if (req.params.productId) {
         const targetProduct = products.find(p => p.id === req.params.productId);
         if (targetProduct) {
-          // Use Gemini to find semantically similar products
-          const embedPrompt = `Embed for semantic search: ${targetProduct.name} - ${targetProduct.description} - Category: ${targetProduct.categoryId}`;
-          
           try {
-            const result = await model.generateContent([
-              `Find products similar to: ${targetProduct.name}. Consider: sustainable fashion, eco-friendly materials, style, category. Return product recommendations.`,
-              `Available products: ${products.map(p => `${p.name} - ${p.description}`).join('; ')}`
-            ]);
+            const availableProducts = products
+              .filter(p => p.id !== targetProduct.id)
+              .map(p => `${p.name} - ${p.description}`);
             
-            // For now, use simple category-based recommendations as fallback
-            recommendations = products
-              .filter(p => p.categoryId === targetProduct.categoryId && p.id !== targetProduct.id)
-              .slice(0, 6);
+            const aiResponse = await geminiService.generateRecommendations(
+              targetProduct.name,
+              targetProduct.description || '',
+              availableProducts
+            );
+            
+            // Parse AI response to get recommended product names
+            const recommendedNames = aiResponse.split(',').map(name => name.trim());
+            recommendations = products.filter(p => 
+              recommendedNames.some(name => 
+                p.name.toLowerCase().includes(name.toLowerCase()) || 
+                name.toLowerCase().includes(p.name.toLowerCase())
+              )
+            ).slice(0, 6);
+            
+            // Fallback to category-based if no AI matches
+            if (recommendations.length === 0) {
+              recommendations = products
+                .filter(p => p.categoryId === targetProduct.categoryId && p.id !== targetProduct.id)
+                .slice(0, 6);
+            }
               
           } catch (aiError) {
             console.log('AI recommendation fallback triggered');
@@ -604,9 +611,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Virtual Try-On API - using Gemini image generation
   app.post('/api/ai/tryon', upload.single('userImage'), async (req, res) => {
     try {
-      if (!process.env.GEMINI_API_KEY) {
-        return res.status(500).json({ error: 'AI service unavailable' });
-      }
+
 
       if (!req.file) {
         return res.status(400).json({ error: 'User image is required' });
@@ -623,26 +628,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(404).json({ error: 'Product not found' });
       }
 
-      const model = genAI.getGenerativeModel({ model: 'gemini-1.5-flash' });
-      
-      // Read user image
-      const userImageBuffer = fs.readFileSync(req.file.path);
-      const userImageBase64 = userImageBuffer.toString('base64');
-
       try {
-        const result = await model.generateContent([
-          `Create a virtual try-on visualization: ${prompt}. Show the user wearing ${product.name}. Make it realistic while preserving the user's face and pose. This is for a sustainable fashion e-commerce platform ReWeara.`,
-          {
-            inlineData: {
-              data: userImageBase64,
-              mimeType: req.file.mimetype
-            }
-          }
-        ]);
-
-        // For now, return a success message as Gemini's image generation capabilities vary
-        const response = result.response;
-        const text = response.text();
+        // Use the stored AI prompt or generate one
+        const tryOnPrompt = product.aiTryOnPrompt || geminiService.generateTryOnPrompt(product.name);
+        const finalPrompt = prompt || tryOnPrompt;
+        
+        const aiResponse = await geminiService.generateTryOnResponse(product.name, finalPrompt);
         
         // Auto-delete uploaded file for privacy
         fs.unlinkSync(req.file.path);
@@ -650,7 +641,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         res.json({ 
           success: true,
           message: 'Try-on visualization created',
-          description: text,
+          description: aiResponse,
           // In a full implementation, this would return the generated image
           image: null 
         });
@@ -684,21 +675,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(403).json({ message: "Access denied" });
       }
 
-      if (!process.env.GEMINI_API_KEY) {
-        return res.status(500).json({ error: 'AI service unavailable' });
-      }
+
 
       const { prompt = 'Eco-fashion thrift scene with sustainable clothing, cartoon style, vibrant greens' } = req.body;
       
-      const model = genAI.getGenerativeModel({ model: 'gemini-1.5-flash' });
-      
       try {
-        const result = await model.generateContent([
-          `Generate a description for a cartoon-style hero background for ReWeara sustainable fashion e-commerce: ${prompt}. Make it vibrant, eco-friendly, and appealing for a thrift store and original sustainable fashion brand. Include details about colors, style, and eco-fashion elements. Size should be optimized for web hero sections (1920x1080).`
-        ]);
-
-        const response = result.response;
-        const backgroundDescription = response.text();
+        const backgroundPrompt = `Generate a description for a cartoon-style hero background for ReWeara sustainable fashion e-commerce: ${prompt}. Make it vibrant, eco-friendly, and appealing for a thrift store and original sustainable fashion brand. Include details about colors, style, and eco-fashion elements. Size should be optimized for web hero sections (1920x1080).`;
+        
+        const backgroundDescription = await geminiService.generateContent(backgroundPrompt);
 
         res.json({ 
           success: true,
@@ -1099,9 +1083,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // AI Chat Assistant API - for customer support
   app.post('/api/ai/chat', async (req, res) => {
     try {
-      if (!process.env.GEMINI_API_KEY) {
-        return res.status(500).json({ error: 'AI service unavailable' });
-      }
+
 
       const { message, context = '' } = req.body;
       
@@ -1109,7 +1091,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ error: 'Message is required' });
       }
 
-      const model = genAI.getGenerativeModel({ model: 'gemini-1.5-flash' });
       
       const systemPrompt = `You are ReWeara's AI shopping assistant. ReWeara is a sustainable fashion e-commerce platform that sells both curated thrift finds and original eco-friendly designs. 
 
@@ -1132,14 +1113,7 @@ Please help customers with:
 Keep responses helpful, friendly, and focused on sustainable fashion. If asked about specific products, recommend checking our shop section.`;
 
       try {
-        const result = await model.generateContent([
-          systemPrompt,
-          `Customer message: ${message}`,
-          context ? `Previous context: ${context}` : ''
-        ]);
-
-        const response = result.response;
-        const assistantReply = response.text();
+        const assistantReply = await geminiService.generateChatResponse(message, context);
 
         res.json({ 
           success: true,
