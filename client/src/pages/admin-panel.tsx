@@ -226,6 +226,8 @@ export default function AdminPanel() {
   });
   const [showProductDialog, setShowProductDialog] = useState(false);
   const [showEnhancedProductDialog, setShowEnhancedProductDialog] = useState(false);
+  const [showEditProductDialog, setShowEditProductDialog] = useState(false);
+  const [editingProduct, setEditingProduct] = useState<any>(null);
   const [productFormData, setProductFormData] = useState({
     name: "",
     description: "",
@@ -522,6 +524,22 @@ export default function AdminPanel() {
     if (confirm("Are you sure you want to delete this product?")) {
       deleteProduct.mutate(productId);
     }
+  };
+
+  const handleEditProduct = (product: any) => {
+    setEditingProduct(product);
+    setProductFormData({
+      name: product.name || "",
+      description: product.description || "",
+      price: product.price?.toString() || "",
+      categoryId: product.categoryId || "",
+      brandId: product.brandId || "",
+      stock: product.stock?.toString() || "1",
+      images: product.images || [],
+      isOriginal: product.isOriginal || false,
+      isThrift: product.isThrift || false
+    });
+    setShowEditProductDialog(true);
   };
 
   const handleUpdateOrderStatus = (orderId: string, newStatus: string) => {
@@ -962,6 +980,7 @@ export default function AdminPanel() {
                           <Button 
                             size="icon" 
                             variant="ghost"
+                            onClick={() => handleEditProduct(product)}
                             data-testid={`button-edit-product-${product.id}`}
                           >
                             <Edit className="w-4 h-4" />
@@ -1134,6 +1153,139 @@ export default function AdminPanel() {
                     data-testid="button-create-product-submit"
                   >
                     {createProduct.isPending ? "Creating..." : "Create Product"}
+                  </Button>
+                </div>
+              </DialogContent>
+            </Dialog>
+
+            {/* Edit Product Dialog */}
+            <Dialog open={showEditProductDialog} onOpenChange={setShowEditProductDialog}>
+              <DialogContent className="max-w-2xl">
+                <DialogHeader>
+                  <DialogTitle>Edit Product</DialogTitle>
+                  <DialogDescription>
+                    Update product information
+                  </DialogDescription>
+                </DialogHeader>
+                <div className="space-y-4 max-h-96 overflow-y-auto">
+                  <div>
+                    <Label htmlFor="edit-product-name">Product Name *</Label>
+                    <Input
+                      id="edit-product-name"
+                      placeholder="Product name"
+                      value={productFormData.name}
+                      onChange={(e) => setProductFormData({...productFormData, name: e.target.value})}
+                      data-testid="input-edit-product-name"
+                    />
+                  </div>
+                  <div>
+                    <Label htmlFor="edit-product-description">Description</Label>
+                    <Textarea
+                      id="edit-product-description"
+                      placeholder="Product description"
+                      value={productFormData.description}
+                      onChange={(e) => setProductFormData({...productFormData, description: e.target.value})}
+                      data-testid="input-edit-product-description"
+                    />
+                  </div>
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <Label htmlFor="edit-product-price">Price (₹) *</Label>
+                      <Input
+                        id="edit-product-price"
+                        type="number"
+                        placeholder="0.00"
+                        value={productFormData.price}
+                        onChange={(e) => setProductFormData({...productFormData, price: e.target.value})}
+                        data-testid="input-edit-product-price"
+                      />
+                    </div>
+                    <div>
+                      <Label htmlFor="edit-product-stock">Stock *</Label>
+                      <Input
+                        id="edit-product-stock"
+                        type="number"
+                        placeholder="1"
+                        value={productFormData.stock}
+                        onChange={(e) => setProductFormData({...productFormData, stock: e.target.value})}
+                        data-testid="input-edit-product-stock"
+                      />
+                    </div>
+                  </div>
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <Label htmlFor="edit-product-category">Category *</Label>
+                      <Select 
+                        value={productFormData.categoryId}
+                        onValueChange={(value) => setProductFormData({...productFormData, categoryId: value})}
+                      >
+                        <SelectTrigger data-testid="select-edit-product-category">
+                          <SelectValue placeholder="Select category" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {categoriesData?.map((category: any) => (
+                            <SelectItem key={category.id} value={category.id}>
+                              {category.name}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    {!productFormData.isOriginal && (
+                      <div>
+                        <Label htmlFor="edit-product-brand">Brand</Label>
+                        <Select 
+                          value={productFormData.brandId}
+                          onValueChange={(value) => setProductFormData({...productFormData, brandId: value})}
+                        >
+                          <SelectTrigger data-testid="select-edit-product-brand">
+                            <SelectValue placeholder="Select brand" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {brandsData?.map((brand: any) => (
+                              <SelectItem key={brand.id} value={brand.id}>
+                                {brand.name}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      </div>
+                    )}
+                  </div>
+                </div>
+                <div className="flex justify-end gap-2">
+                  <Button 
+                    variant="outline" 
+                    onClick={() => setShowEditProductDialog(false)}
+                    data-testid="button-cancel-edit-product"
+                  >
+                    Cancel
+                  </Button>
+                  <Button 
+                    onClick={() => {
+                      if (!productFormData.name || !productFormData.price || !productFormData.categoryId) {
+                        toast({
+                          title: "Error", 
+                          description: "Please fill in all required fields",
+                          variant: "destructive"
+                        });
+                        return;
+                      }
+                      
+                      updateProduct.mutate({
+                        productId: editingProduct.id,
+                        data: {
+                          ...productFormData,
+                          price: parseFloat(productFormData.price),
+                          stock: parseInt(productFormData.stock)
+                        }
+                      });
+                      setShowEditProductDialog(false);
+                    }}
+                    disabled={updateProduct.isPending}
+                    data-testid="button-update-product-submit"
+                  >
+                    {updateProduct.isPending ? "Updating..." : "Update Product"}
                   </Button>
                 </div>
               </DialogContent>
