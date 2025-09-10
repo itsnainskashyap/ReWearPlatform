@@ -149,8 +149,8 @@
   --foreground: hsl(0, 0%, 95%);
   --border: hsl(0, 0%, 8%);
 
-  --card: hsl(0, 0%, 1%);
-  --card-foreground: hsl(0, 0%, 95%);
+  --card: hsl(0, 0%, 3%);
+  --card-foreground: hsl(0, 0%, 98%);
   --card-border: hsl(0, 0%, 8%);
 
   --sidebar: hsl(0, 0%, 1%);
@@ -172,8 +172,8 @@
   --secondary: hsl(0, 0%, 5%);
   --secondary-foreground: hsl(0, 0%, 95%);
 
-  --muted: hsl(0, 0%, 5%);
-  --muted-foreground: hsl(0, 0%, 60%);
+  --muted: hsl(0, 0%, 8%);
+  --muted-foreground: hsl(0, 0%, 70%);
 
   --accent: hsl(47, 95%, 63%);
   --accent-foreground: hsl(0, 0%, 0%);
@@ -568,6 +568,49 @@
   .hover-elevate-2:hover:not(.no-default-hover-elevate)::after,
   .active-elevate-2:active:not(.no-default-active-elevate)::after {
     background-color: var(--elevate-2);
+  }
+
+  /* Dark mode improvements for better text visibility */
+  .dark .text-muted-foreground {
+    color: hsl(0, 0%, 75%) !important;
+  }
+
+  .dark .card {
+    background-color: hsl(0, 0%, 4%) !important;
+    border-color: hsl(0, 0%, 12%) !important;
+  }
+
+  .dark .card .text-sm {
+    color: hsl(0, 0%, 85%) !important;
+  }
+
+  .dark .text-sm {
+    color: hsl(0, 0%, 80%) !important;
+  }
+
+  .dark h3, .dark h2, .dark h1 {
+    color: hsl(0, 0%, 95%) !important;
+  }
+
+  .dark .font-semibold {
+    color: hsl(0, 0%, 90%) !important;
+  }
+
+  .dark .product-card {
+    background-color: hsl(0, 0%, 5%) !important;
+    border-color: hsl(0, 0%, 15%) !important;
+  }
+
+  .dark .product-card:hover {
+    background-color: hsl(0, 0%, 7%) !important;
+  }
+
+  .dark .border {
+    border-color: hsl(0, 0%, 15%) !important;
+  }
+
+  .dark .bg-muted {
+    background-color: hsl(0, 0%, 8%) !important;
   }
 
   /* If there's a 1px border, adjust the inset so that it covers that parent's border */
