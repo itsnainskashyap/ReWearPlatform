@@ -15,6 +15,7 @@ import ShopSettings from "@/components/ui/shop-settings";
 import TaxManagement from "@/components/admin/TaxManagement";
 import BrandManagement from "@/components/admin/BrandManagement";
 import OrderWorkflow from "@/components/admin/OrderWorkflow";
+import { PromotionalPopupManagement } from "@/components/admin/promotional-popup-management";
 import { useLocation } from "wouter";
 import { useToast } from "@/hooks/use-toast";
 import { useQuery, useMutation } from "@tanstack/react-query";
@@ -608,6 +609,10 @@ export default function AdminPanel() {
               <TabsTrigger value="marketing" className="gap-2">
                 <Tag className="w-4 h-4" />
                 Marketing
+              </TabsTrigger>
+              <TabsTrigger value="promotional-popups" className="gap-2">
+                <Target className="w-4 h-4" />
+                Popups
               </TabsTrigger>
               <TabsTrigger value="content" className="gap-2">
                 <FileText className="w-4 h-4" />
@@ -1354,6 +1359,11 @@ export default function AdminPanel() {
                 </CardContent>
               </Card>
             </div>
+          </TabsContent>
+
+          {/* Promotional Popups Tab */}
+          <TabsContent value="promotional-popups" className="space-y-4">
+            <PromotionalPopupManagement />
           </TabsContent>
 
           {/* Content Tab */}

@@ -8,6 +8,7 @@ import {
   wishlists,
   orders,
   orderItems,
+  promotionalPopups,
   type User,
   type UpsertUser,
   type Category,
@@ -18,6 +19,7 @@ import {
   type Wishlist,
   type Order,
   type OrderItem,
+  type PromotionalPopup,
   type InsertCategory,
   type InsertBrand,
   type InsertProduct,
@@ -26,7 +28,6 @@ import {
   type InsertWishlist,
   type InsertOrder,
   type InsertOrderItem,
-  type PromotionalPopup,
   type InsertPromotionalPopup,
 } from "@shared/schema";
 import { db } from "./db";
