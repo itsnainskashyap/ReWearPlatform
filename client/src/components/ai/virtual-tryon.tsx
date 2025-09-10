@@ -101,7 +101,7 @@ export default function VirtualTryOn({ productId, productName, productImage }: V
     const formData = new FormData();
     formData.append('userImage', selectedImage);
     formData.append('productId', productId);
-    formData.append('prompt', `Show user wearing ${productName} in a realistic way`);
+    // The prompt will be used from the product's stored aiTryOnPrompt or auto-generated
 
     tryOnMutation.mutate(formData);
   };

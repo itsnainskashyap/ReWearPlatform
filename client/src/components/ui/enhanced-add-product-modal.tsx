@@ -26,7 +26,8 @@ import {
   Calendar,
   Package,
   AlertCircle,
-  Link
+  Link,
+  Sparkles
 } from "lucide-react";
 
 const enhancedProductSchema = z.object({
@@ -65,6 +66,7 @@ const enhancedProductSchema = z.object({
   isFeatured: z.boolean().default(false),
   isHotSelling: z.boolean().default(false),
   isActive: z.boolean().default(true),
+  aiTryOnPrompt: z.string().optional(),
 });
 
 type EnhancedProductForm = z.infer<typeof enhancedProductSchema>;
@@ -493,6 +495,36 @@ export function EnhancedAddProductModal({ open, onOpenChange }: EnhancedAddProdu
                   placeholder="e.g., Machine wash cold, tumble dry low..."
                   rows={3}
                 />
+              </div>
+
+              {/* AI Try-On Prompt */}
+              <div className="space-y-2">
+                <div className="flex items-center space-x-2">
+                  <Label htmlFor="aiTryOnPrompt">AI Try-On Prompt</Label>
+                  <Badge variant="secondary" className="text-xs">
+                    AI Feature
+                  </Badge>
+                </div>
+                <Textarea 
+                  id="aiTryOnPrompt" 
+                  {...register("aiTryOnPrompt")} 
+                  placeholder={`Auto-generated: "Wear this ${watch("name") || "product"} on me realistically."`}
+                  rows={2}
+                  className="text-sm"
+                />
+                <p className="text-xs text-muted-foreground">
+                  Custom prompt for virtual try-on feature. If left empty, an AI prompt will be auto-generated based on the product name.
+                </p>
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setValue("aiTryOnPrompt", `Wear this ${watch("name") || "product"} on me realistically. Show how it fits and looks from multiple angles.`)}
+                  className="w-fit"
+                >
+                  <Sparkles className="w-3 h-3 mr-1" />
+                  Generate Default Prompt
+                </Button>
               </div>
 
               <div>
