@@ -61,7 +61,7 @@ export default function Profile() {
             <h1 className="text-2xl font-bold">
               {user?.firstName} {user?.lastName}
             </h1>
-            <p className="text-white/80">{user?.email}</p>
+            <p className="text-white">{user?.email}</p>
             <Badge className="mt-2 bg-white/20 text-white border-white/30">
               Member since 2024
             </Badge>
@@ -157,7 +157,7 @@ export default function Profile() {
                           {item.count}
                         </Badge>
                       )}
-                      <ChevronRight className="w-5 h-5 text-muted-foreground" />
+                      <ChevronRight className="w-5 h-5 text-primary/70" />
                     </div>
                   </CardContent>
                 </Card>
@@ -175,7 +175,7 @@ export default function Profile() {
                 <div className="flex items-center justify-between">
                   <div>
                     <p className="font-medium">Push Notifications</p>
-                    <p className="text-sm text-muted-foreground">Receive order updates</p>
+                    <p className="text-sm text-primary/70">Receive order updates</p>
                   </div>
                   <Button variant="outline" size="sm" className="rounded-xl">
                     Enable
@@ -184,7 +184,7 @@ export default function Profile() {
                 <div className="flex items-center justify-between">
                   <div>
                     <p className="font-medium">Email Notifications</p>
-                    <p className="text-sm text-muted-foreground">Promotional emails</p>
+                    <p className="text-sm text-primary/70">Promotional emails</p>
                   </div>
                   <Button variant="outline" size="sm" className="rounded-xl">
                     Manage

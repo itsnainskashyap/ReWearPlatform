@@ -43,7 +43,7 @@ export function LoginDialog({ open, onOpenChange, redirectAfterLogin }: LoginDia
             Welcome to ReWeara
           </DialogTitle>
           
-          <DialogDescription className="text-muted-foreground text-center">
+          <DialogDescription className="text-primary/70 text-center">
             Sustainable Fashion for a Better Tomorrow
           </DialogDescription>
         </DialogHeader>
@@ -57,7 +57,7 @@ export function LoginDialog({ open, onOpenChange, redirectAfterLogin }: LoginDia
             data-testid="button-login"
           >
             <User className="w-5 h-5 mr-2" />
-            {isLoading ? 'Connecting...' : 'Continue with Replit'}
+            {isLoading ? 'Connecting...' : 'Continue with Google'}
           </Button>
 
           {/* Continue as Guest */}

@@ -55,8 +55,8 @@ export default function Shop() {
       if (selectedCategory && selectedCategory !== 'all') params.append('category', selectedCategory);
       if (selectedBrand && selectedBrand !== 'all') params.append('brand', selectedBrand);
       if (searchQuery) params.append('search', searchQuery);
-      params.append('limit', '12');
-      params.append('offset', (page * 12).toString());
+      params.append('limit', '1000'); // Show all products for limitless scroll
+      params.append('offset', (page * 1000).toString());
       if (shopType === 'thrift') params.append('isThrift', 'true');
       if (shopType === 'originals') params.append('isOriginal', 'true');
       
@@ -76,8 +76,8 @@ export default function Shop() {
         // Subsequent pages, append to existing products
         setAllProducts(prev => [...prev, ...products]);
       }
-      // Check if we have more products to load
-      setHasMore(products.length === 12);
+      // For limitless scroll, load all at once
+      setHasMore(false);
     }
   }, [products, page]);
 
@@ -119,19 +119,28 @@ export default function Shop() {
     setSortBy("newest");
     setPage(0);
     setAllProducts([]);
-    setHasMore(true);
+    setHasMore(false);
   };
 
   // Reset pagination when filters change
   useEffect(() => {
     setPage(0);
     setAllProducts([]);
-    setHasMore(true);
+    setHasMore(false);
   }, [selectedCategory, selectedBrand, searchQuery, shopType]);
 
   const filteredProducts = Array.isArray(allProducts) ? allProducts.filter((p: Product) => {
     const price = parseFloat(p.price);
-    return price >= priceRange[0] && price <= priceRange[1];
+    const priceInRange = price >= priceRange[0] && price <= priceRange[1];
+    
+    // Filter for ReWeara originals when shopType is 'originals'
+    if (shopType === 'originals') {
+      // Check if product brand is "ReWeara" or has isOriginal flag
+      const isReWearaOriginal = p.brandName === 'ReWeara' || p.isOriginal === true;
+      return priceInRange && isReWearaOriginal;
+    }
+    
+    return priceInRange;
   }) : [];
 
   const sortedProducts = [...filteredProducts].sort((a: Product, b: Product) => {
@@ -389,18 +398,6 @@ export default function Shop() {
               ))}
             </div>
 
-            {/* Load More */}
-            {hasMore && (
-              <div className="text-center mt-8">
-                <Button
-                  onClick={() => setPage(page + 1)}
-                  disabled={isFetching}
-                  className="rounded-2xl bg-gradient-to-r from-accent to-accent/90 text-accent-foreground button-glow hover-lift"
-                >
-                  {isFetching ? 'Loading...' : 'Load More'}
-                </Button>
-              </div>
-            )}
           </>
         )}
       </div>
