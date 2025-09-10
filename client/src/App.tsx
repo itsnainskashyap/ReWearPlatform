@@ -31,6 +31,7 @@ import Drawer from "@/components/layout/drawer";
 import FloatingCartButton from "@/components/ui/floating-cart-button";
 import AIChatAssistant from "@/components/ai/chat-assistant";
 import { useState, useEffect } from "react";
+import { AuthModalProvider } from "@/contexts/auth-modal-context";
 
 function Router() {
   const { isAuthenticated, isLoading } = useAuth();
@@ -139,8 +140,10 @@ function App() {
     <QueryClientProvider client={queryClient}>
       <ThemeProvider defaultTheme="light" storageKey="reweara-theme">
         <TooltipProvider>
-          <AppContent />
-          <Toaster />
+          <AuthModalProvider>
+            <AppContent />
+            <Toaster />
+          </AuthModalProvider>
         </TooltipProvider>
       </ThemeProvider>
     </QueryClientProvider>
