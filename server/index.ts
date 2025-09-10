@@ -2,6 +2,7 @@ import express, { type Request, Response, NextFunction } from "express";
 import { registerRoutes } from "./routes";
 import { setupVite, serveStatic, log } from "./vite";
 import { validateDatabaseConnection, closeDatabaseConnection } from "./db";
+import { seedDatabase } from "./seed";
 
 // Environment configuration
 const NODE_ENV = process.env.NODE_ENV || 'development';
@@ -80,6 +81,12 @@ app.use((req, res, next) => {
     try {
       await validateDatabaseConnection();
       console.log('[STARTUP] Database validation completed successfully');
+      
+      // Seed database in production to ensure data is available
+      if (IS_PRODUCTION) {
+        console.log('[STARTUP] Seeding production database...');
+        await seedDatabase();
+      }
     } catch (dbError: any) {
       if (dbError.message && dbError.message.includes('endpoint has been disabled')) {
         console.warn('[STARTUP] DB unavailable (Neon endpoint disabled). Continuing with in-memory storage.');
