@@ -848,6 +848,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Admin: Delete brand
   app.delete('/api/admin/brands/:id', isAuthenticated, async (req, res) => {
     try {
+      // First, set brandId to null for all products using this brand
+      await db
+        .update(products)
+        .set({ brandId: null })
+        .where(eq(products.brandId, req.params.id));
+      
+      // Then delete the brand
       await db.delete(brands).where(eq(brands.id, req.params.id));
       res.json({ success: true });
     } catch (error) {
