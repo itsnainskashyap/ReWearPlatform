@@ -640,10 +640,10 @@
     color: hsl(0, 0%, 95%) !important;
   }
 
-  /* Keep gradient button text visible in dark mode - MUST BE BLACK */
+  /* Keep gradient button text visible in dark mode - WHITE TEXT */
   .dark .bg-gradient-to-r.text-accent-foreground,
   .dark .bg-gradient-to-r.text-primary-foreground {
-    color: hsl(0, 0%, 0%) !important; /* Black text on colored gradients for maximum contrast */
+    color: hsl(0, 0%, 100%) !important; /* White text on colored gradients */
     font-weight: 600 !important; /* Make text bolder for better visibility */
   }
   
