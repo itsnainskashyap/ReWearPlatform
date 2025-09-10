@@ -83,9 +83,20 @@ export const products = pgTable("products", {
   isFeatured: boolean("is_featured").default(false),
   isHotSelling: boolean("is_hot_selling").default(false),
   isOriginal: boolean("is_original").default(false), // For ReWeara Originals
+  isThrift: boolean("is_thrift").default(false), // For Thrift Store items
   stock: integer("stock").default(1),
+  stockAlert: integer("stock_alert").default(5), // Alert threshold
   viewCount: integer("view_count").default(0),
   sizes: text("sizes").array().default([]), // Available sizes
+  fabric: text("fabric"), // Fabric details
+  measurements: jsonb("measurements"), // Measurements JSON
+  washCare: text("wash_care"), // Wash care instructions
+  ecoBadges: text("eco_badges").array().default([]), // Eco-friendly badges
+  discount: decimal("discount", { precision: 5, scale: 2 }).default(0), // Discount percentage
+  discountType: varchar("discount_type"), // percentage or fixed
+  discountExpiry: timestamp("discount_expiry"), // Discount expiry date
+  relatedProducts: text("related_products").array().default([]), // Related product IDs
+  tags: text("tags").array().default([]), // Tags for search
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
 });

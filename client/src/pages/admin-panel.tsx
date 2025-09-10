@@ -9,6 +9,8 @@ import { Textarea } from "@/components/ui/textarea";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { EnhancedAddProductModal } from "@/components/ui/enhanced-add-product-modal";
+import ShopSettings from "@/components/ui/shop-settings";
 import { useLocation } from "wouter";
 import { useToast } from "@/hooks/use-toast";
 import { useQuery, useMutation } from "@tanstack/react-query";
@@ -217,6 +219,7 @@ export default function AdminPanel() {
     description: ""
   });
   const [showProductDialog, setShowProductDialog] = useState(false);
+  const [showEnhancedProductDialog, setShowEnhancedProductDialog] = useState(false);
   const [productFormData, setProductFormData] = useState({
     name: "",
     description: "",
@@ -578,6 +581,10 @@ export default function AdminPanel() {
                 <Package className="w-4 h-4" />
                 Products
               </TabsTrigger>
+              <TabsTrigger value="shop-settings" className="gap-2">
+                <Settings className="w-4 h-4" />
+                Shop Settings
+              </TabsTrigger>
               <TabsTrigger value="users" className="gap-2">
                 <Users className="w-4 h-4" />
                 Users
@@ -843,9 +850,13 @@ export default function AdminPanel() {
                     <CardDescription>Manage your product inventory</CardDescription>
                   </div>
                   <div className="flex gap-2">
-                    <Button onClick={() => setShowProductDialog(true)}>
+                    <Button onClick={() => setShowEnhancedProductDialog(true)}>
                       <Plus className="w-4 h-4 mr-2" />
-                      Add Product
+                      Add Product (Enhanced)
+                    </Button>
+                    <Button onClick={() => setShowProductDialog(true)} variant="outline">
+                      <Plus className="w-4 h-4 mr-2" />
+                      Add Product (Basic)
                     </Button>
                     <Button variant="outline">
                       <Upload className="w-4 h-4 mr-2" />
@@ -1029,6 +1040,11 @@ export default function AdminPanel() {
                 </div>
               </DialogContent>
             </Dialog>
+          </TabsContent>
+
+          {/* Shop Settings Tab */}
+          <TabsContent value="shop-settings" className="space-y-4">
+            <ShopSettings />
           </TabsContent>
 
           {/* Users Tab */}
@@ -1638,6 +1654,12 @@ export default function AdminPanel() {
             </Card>
           </TabsContent>
         </Tabs>
+
+        {/* Enhanced Product Modal */}
+        <EnhancedAddProductModal 
+          open={showEnhancedProductDialog} 
+          onOpenChange={setShowEnhancedProductDialog} 
+        />
       </div>
     </div>
   );
