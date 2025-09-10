@@ -112,15 +112,20 @@ export default function ProductCard({ product, onAddToCart, onAddToWishlist, ind
       </div>
 
       {/* Content */}
-      <div className="p-5 space-y-3">
-        {/* Header */}
-        <div className="flex items-center justify-between">
-          <Badge 
-            className={`text-xs font-medium px-3 py-1 rounded-full border ${getConditionColor(product.condition || 'Good')}`}
-            data-testid={`badge-condition-${product.id}`}
-          >
-            {product.condition || "Good"}
-          </Badge>
+      <div className="p-4 space-y-3">
+        {/* Header - Mobile optimized */}
+        <div className="flex items-start justify-between gap-2">
+          <div className="flex-1 min-w-0">
+            <h3 className="font-semibold text-sm leading-tight line-clamp-2 mb-1" data-testid={`text-name-${product.id}`}>
+              {product.name}
+            </h3>
+            <Badge 
+              className={`text-xs font-medium px-2 py-1 rounded-full border ${getConditionColor(product.condition || 'Good')}`}
+              data-testid={`badge-condition-${product.id}`}
+            >
+              {product.condition || "Good"}
+            </Badge>
+          </div>
           {product.stock && product.stock <= 3 && (
             <Badge variant="destructive" className="text-xs px-2 py-1 rounded-full">
               Only {product.stock} left
@@ -128,44 +133,26 @@ export default function ProductCard({ product, onAddToCart, onAddToWishlist, ind
           )}
         </div>
         
-        {/* Title */}
-        <div>
-          <h3 className="font-bold text-base text-foreground mb-1 line-clamp-1" data-testid={`text-product-name-${product.id}`}>
-            {product.name}
-          </h3>
-          {product.shortDescription && (
-            <p className="text-sm text-muted-foreground line-clamp-1">
-              {product.shortDescription}
-            </p>
-          )}
-        </div>
-        
-        {/* Price & Action */}
-        <div className="flex items-center justify-between pt-2">
-          <div className="space-y-1">
-            <div className="flex items-center space-x-2">
-              <span className="font-bold text-lg text-primary" data-testid={`text-price-${product.id}`}>
-                ₹{product.price}
-              </span>
-              {product.originalPrice && parseFloat(product.originalPrice) > parseFloat(product.price) && (
-                <span className="text-sm text-muted-foreground line-through" data-testid={`text-original-price-${product.id}`}>
-                  ₹{product.originalPrice}
-                </span>
-              )}
-            </div>
+        {/* Price & Mobile Actions */}
+        <div className="space-y-2">
+          <div className="flex items-center justify-between">
+            <span className="font-bold text-lg text-primary" data-testid={`text-price-${product.id}`}>
+              ₹{product.price}
+            </span>
             {product.originalPrice && parseFloat(product.originalPrice) > parseFloat(product.price) && (
-              <div className="text-xs text-green-600 font-medium">
-                Save ₹{(parseFloat(product.originalPrice) - parseFloat(product.price)).toFixed(0)}
-              </div>
+              <span className="text-sm text-muted-foreground line-through" data-testid={`text-original-price-${product.id}`}>
+                ₹{product.originalPrice}
+              </span>
             )}
           </div>
           
+          {/* Mobile Action Buttons */}
           <Button 
             onClick={(e) => {
               e.stopPropagation();
               handleAddToCart();
             }}
-            className="h-11 px-4 bg-gradient-to-r from-accent to-accent/90 text-accent-foreground hover:from-accent/90 hover:to-accent rounded-2xl button-glow font-semibold transition-all duration-300 hover:scale-105"
+            className="w-full h-10 bg-gradient-to-r from-primary to-primary/90 text-primary-foreground hover:from-primary/90 hover:to-primary rounded-xl font-semibold transition-all duration-300"
             data-testid={`button-add-to-cart-${product.id}`}
           >
             <ShoppingBag className="w-4 h-4 mr-2" />
