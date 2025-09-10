@@ -5,16 +5,169 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Package, Truck, CheckCircle, Clock, X, ChevronRight, ArrowLeft, Calendar } from "lucide-react";
-import { useLocation } from "wouter";
+import { useLocation, useParams } from "wouter";
 import { format } from "date-fns";
 
 export default function Orders() {
   const [, navigate] = useLocation();
+  const params = useParams<{ id?: string }>();
   const [selectedStatus, setSelectedStatus] = useState("all");
 
+  // If we have an order ID, fetch that specific order
   const { data: orders, isLoading } = useQuery({
-    queryKey: ["/api/orders"],
+    queryKey: params.id ? ["/api/orders", params.id] : ["/api/orders"],
   });
+
+  const { data: orderDetails, isLoading: isLoadingDetails } = useQuery({
+    queryKey: ["/api/orders", params.id],
+    enabled: !!params.id,
+  });
+
+  // If we're viewing a specific order, show order details
+  if (params.id) {
+    if (isLoadingDetails) {
+      return (
+        <div className="min-h-screen bg-gradient-to-br from-background via-background to-primary/5 pb-20">
+          <div className="sticky top-0 z-40 glassmorphism border-b border-white/20 p-4">
+            <div className="h-8 w-32 skeleton rounded-full"></div>
+          </div>
+          <div className="p-4 space-y-4">
+            <div className="h-64 skeleton rounded-2xl"></div>
+          </div>
+        </div>
+      );
+    }
+
+    if (!orderDetails) {
+      return (
+        <div className="min-h-screen bg-gradient-to-br from-background via-background to-primary/5 pb-20">
+          <div className="sticky top-0 z-40 glassmorphism border-b border-white/20 p-4">
+            <div className="flex items-center space-x-3">
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={() => navigate("/orders")}
+                className="hover-lift rounded-2xl"
+              >
+                <ArrowLeft className="w-6 h-6" />
+              </Button>
+              <h1 className="text-2xl font-bold gradient-text">Order Not Found</h1>
+            </div>
+          </div>
+          <div className="p-4 text-center py-16">
+            <h3 className="text-xl font-bold mb-3">Order not found</h3>
+            <p className="text-muted-foreground mb-6">The order you're looking for doesn't exist.</p>
+            <Button onClick={() => navigate("/orders")}>Back to Orders</Button>
+          </div>
+        </div>
+      );
+    }
+
+    // Order Details View
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-background via-background to-primary/5 pb-20">
+        <div className="sticky top-0 z-40 glassmorphism border-b border-white/20 p-4">
+          <div className="flex items-center space-x-3">
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={() => navigate("/orders")}
+              className="hover-lift rounded-2xl"
+            >
+              <ArrowLeft className="w-6 h-6" />
+            </Button>
+            <div>
+              <h1 className="text-2xl font-bold gradient-text">Order Details</h1>
+              <p className="text-sm text-muted-foreground">Order #{orderDetails.id}</p>
+            </div>
+          </div>
+        </div>
+
+        <div className="p-4">
+          <Card className="card-premium rounded-2xl">
+            <CardHeader>
+              <div className="flex items-center justify-between">
+                <div>
+                  <CardTitle>Order #{orderDetails.id}</CardTitle>
+                  <p className="text-sm text-muted-foreground flex items-center mt-2">
+                    <Calendar className="w-4 h-4 mr-1" />
+                    {orderDetails.createdAt 
+                      ? format(new Date(orderDetails.createdAt), 'dd MMM yyyy, hh:mm a')
+                      : 'Date not available'
+                    }
+                  </p>
+                </div>
+                <Badge className={`rounded-full px-3 py-1 flex items-center space-x-1 ${getStatusColor(orderDetails.status)}`}>
+                  {getStatusIcon(orderDetails.status)}
+                  <span className="capitalize">{orderDetails.status}</span>
+                </Badge>
+              </div>
+            </CardHeader>
+            <CardContent className="space-y-6">
+              {/* Order Summary */}
+              <div className="space-y-4">
+                <h3 className="font-semibold text-lg">Order Summary</h3>
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <span className="text-sm text-muted-foreground">Payment Method:</span>
+                    <p className="font-medium uppercase">{orderDetails.paymentMethod}</p>
+                  </div>
+                  <div>
+                    <span className="text-sm text-muted-foreground">Payment Status:</span>
+                    <p className="font-medium">{orderDetails.paymentStatus}</p>
+                  </div>
+                  <div>
+                    <span className="text-sm text-muted-foreground">Subtotal:</span>
+                    <p className="font-medium">₹{orderDetails.subtotal}</p>
+                  </div>
+                  <div>
+                    <span className="text-sm text-muted-foreground">Total Amount:</span>
+                    <p className="font-bold text-lg">₹{orderDetails.totalAmount}</p>
+                  </div>
+                </div>
+              </div>
+
+              {/* Shipping Address */}
+              {orderDetails.shippingAddress && (
+                <div className="space-y-2">
+                  <h3 className="font-semibold text-lg">Shipping Address</h3>
+                  <div className="p-3 bg-muted/30 rounded-xl">
+                    <p className="font-medium">{orderDetails.shippingAddress.fullName}</p>
+                    <p className="text-sm text-muted-foreground">{orderDetails.shippingAddress.address}</p>
+                    <p className="text-sm text-muted-foreground">
+                      {orderDetails.shippingAddress.city}, {orderDetails.shippingAddress.state} {orderDetails.shippingAddress.pincode}
+                    </p>
+                    <p className="text-sm text-muted-foreground">{orderDetails.shippingAddress.phone}</p>
+                  </div>
+                </div>
+              )}
+
+              {/* Action Buttons */}
+              <div className="flex space-x-3 pt-4">
+                {orderDetails.status === 'shipped' && (
+                  <Button variant="outline" className="flex-1">
+                    Track Order
+                  </Button>
+                )}
+                {orderDetails.status === 'delivered' && (
+                  <Button variant="outline" className="flex-1">
+                    Rate & Review
+                  </Button>
+                )}
+                <Button 
+                  variant="outline" 
+                  className="flex-1"
+                  onClick={() => navigate("/orders")}
+                >
+                  Back to Orders
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+      </div>
+    );
+  }
 
   const getStatusIcon = (status: string) => {
     switch (status) {

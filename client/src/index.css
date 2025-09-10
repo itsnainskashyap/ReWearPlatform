@@ -782,6 +782,48 @@
     color: hsl(0, 0%, 100%) !important; /* White text */
   }
 
+  /* CART AND PRODUCT CARD DARK MODE FIXES */
+  .dark .card-premium {
+    background-color: hsl(0, 0%, 5%) !important; /* Dark background */
+    color: hsl(0, 0%, 100%) !important; /* White text */
+  }
+
+  .dark .card-premium h3,
+  .dark .card-premium .font-bold {
+    color: hsl(0, 0%, 100%) !important; /* White text */
+  }
+
+  .dark .card-premium .text-sm,
+  .dark .card-premium .text-base {
+    color: hsl(0, 0%, 90%) !important; /* Light gray text */
+  }
+
+  .dark .glassmorphism {
+    background-color: hsl(0, 0%, 5%) !important; /* Dark background */
+    color: hsl(0, 0%, 100%) !important; /* White text */
+  }
+
+  .dark .glassmorphism h3,
+  .dark .glassmorphism .font-bold,
+  .dark .glassmorphism .font-semibold {
+    color: hsl(0, 0%, 100%) !important; /* White text */
+  }
+
+  .dark .product-card {
+    background-color: hsl(0, 0%, 8%) !important; /* Dark background */
+    color: hsl(0, 0%, 100%) !important; /* White text */
+  }
+
+  .dark .product-card h3,
+  .dark .product-card .font-bold,
+  .dark .product-card .font-semibold {
+    color: hsl(0, 0%, 100%) !important; /* White text */
+  }
+
+  .dark .product-card .text-sm {
+    color: hsl(0, 0%, 85%) !important; /* Light gray text */
+  }
+
   /* If there's a 1px border, adjust the inset so that it covers that parent's border */
   .border.hover-elevate:not(.no-hover-interaction-elevate)::after,
   .border.active-elevate:not(.no-active-interaction-elevate)::after,
