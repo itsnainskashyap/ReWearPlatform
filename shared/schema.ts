@@ -125,6 +125,7 @@ export const products = pgTable("products", {
   discountExpiry: timestamp("discount_expiry"), // Discount expiry date
   relatedProducts: text("related_products").array().default([]), // Related product IDs
   tags: text("tags").array().default([]), // Tags for search
+  aiTryOnPrompt: text("ai_try_on_prompt"), // AI prompt for virtual try-on
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
 });
