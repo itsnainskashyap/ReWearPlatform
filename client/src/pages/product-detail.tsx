@@ -302,7 +302,7 @@ export default function ProductDetail() {
               </Button>
             </div>
             <div className="flex flex-wrap gap-2">
-              {['XS', 'S', 'M', 'L', 'XL', 'XXL'].map(size => (
+              {(product.sizes || []).map(size => (
                 <Button
                   key={size}
                   variant={selectedSize === size ? "default" : "outline"}
