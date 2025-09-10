@@ -63,6 +63,33 @@ export const brands = pgTable("brands", {
   updatedAt: timestamp("updated_at").defaultNow(),
 });
 
+// Tax rates table
+export const taxRates = pgTable("tax_rates", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  name: varchar("name").notNull(),
+  rate: decimal("rate", { precision: 5, scale: 2 }).notNull(), // Tax percentage
+  country: varchar("country"),
+  state: varchar("state"),
+  city: varchar("city"),
+  zipCode: varchar("zip_code"),
+  isActive: boolean("is_active").default(true),
+  priority: integer("priority").default(0), // For multiple tax rules
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
+// Product images table for multiple images/videos
+export const productMedia = pgTable("product_media", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  productId: varchar("product_id").notNull().references(() => products.id, { onDelete: "cascade" }),
+  type: varchar("type").notNull(), // image, video
+  url: varchar("url").notNull(),
+  alt: text("alt"),
+  sortOrder: integer("sort_order").default(0),
+  isMain: boolean("is_main").default(false),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
 // Products table
 export const products = pgTable("products", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
@@ -79,6 +106,7 @@ export const products = pgTable("products", {
   color: varchar("color"),
   material: varchar("material"),
   images: text("images").array().default([]),
+  videos: text("videos").array().default([]),
   isActive: boolean("is_active").default(true),
   isFeatured: boolean("is_featured").default(false),
   isHotSelling: boolean("is_hot_selling").default(false),
@@ -92,7 +120,7 @@ export const products = pgTable("products", {
   measurements: jsonb("measurements"), // Measurements JSON
   washCare: text("wash_care"), // Wash care instructions
   ecoBadges: text("eco_badges").array().default([]), // Eco-friendly badges
-  discount: decimal("discount", { precision: 5, scale: 2 }).default(0), // Discount percentage
+  discount: decimal("discount", { precision: 5, scale: 2 }).default(sql`0`), // Discount percentage
   discountType: varchar("discount_type"), // percentage or fixed
   discountExpiry: timestamp("discount_expiry"), // Discount expiry date
   relatedProducts: text("related_products").array().default([]), // Related product IDs
@@ -128,13 +156,33 @@ export const wishlists = pgTable("wishlists", {
   createdAt: timestamp("created_at").defaultNow(),
 });
 
+// Order tracking table
+export const orderTracking = pgTable("order_tracking", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  orderId: varchar("order_id").notNull().references(() => orders.id, { onDelete: "cascade" }),
+  status: varchar("status").notNull(), // pending, confirmed, shipped, delivered
+  message: text("message"),
+  location: varchar("location"),
+  trackingNumber: varchar("tracking_number"),
+  carrier: varchar("carrier"),
+  estimatedDelivery: timestamp("estimated_delivery"),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
 // Orders table
 export const orders = pgTable("orders", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
   userId: varchar("user_id").references(() => users.id),
   guestEmail: varchar("guest_email"),
   status: varchar("status").notNull().default("pending"), // pending, confirmed, shipped, delivered, cancelled
+  subtotal: decimal("subtotal", { precision: 10, scale: 2 }).notNull(),
+  taxAmount: decimal("tax_amount", { precision: 10, scale: 2 }).default(sql`0`),
+  shippingAmount: decimal("shipping_amount", { precision: 10, scale: 2 }).default(sql`0`),
+  discountAmount: decimal("discount_amount", { precision: 10, scale: 2 }).default(sql`0`),
   totalAmount: decimal("total_amount", { precision: 10, scale: 2 }).notNull(),
+  couponCode: varchar("coupon_code"),
+  trackingNumber: varchar("tracking_number"),
+  estimatedDelivery: timestamp("estimated_delivery"),
   paymentMethod: varchar("payment_method"), // UPI, COD, etc.
   paymentStatus: varchar("payment_status").default("pending"),
   shippingAddress: jsonb("shipping_address"),
@@ -162,6 +210,17 @@ export const brandRelations = relations(brands, ({ many }) => ({
   products: many(products),
 }));
 
+export const taxRateRelations = relations(taxRates, ({ }) => ({
+  // Tax rates don't have direct relations
+}));
+
+export const productMediaRelations = relations(productMedia, ({ one }) => ({
+  product: one(products, {
+    fields: [productMedia.productId],
+    references: [products.id],
+  }),
+}));
+
 export const productRelations = relations(products, ({ one, many }) => ({
   category: one(categories, {
     fields: [products.categoryId],
@@ -174,6 +233,7 @@ export const productRelations = relations(products, ({ one, many }) => ({
   cartItems: many(cartItems),
   wishlistItems: many(wishlists),
   orderItems: many(orderItems),
+  media: many(productMedia),
 }));
 
 export const userRelations = relations(users, ({ many }) => ({
@@ -218,6 +278,14 @@ export const orderRelations = relations(orders, ({ one, many }) => ({
     references: [users.id],
   }),
   items: many(orderItems),
+  tracking: many(orderTracking),
+}));
+
+export const orderTrackingRelations = relations(orderTracking, ({ one }) => ({
+  order: one(orders, {
+    fields: [orderTracking.orderId],
+    references: [orders.id],
+  }),
 }));
 
 export const orderItemRelations = relations(orderItems, ({ one }) => ({
@@ -395,6 +463,22 @@ export const storeSettings = pgTable("store_settings", {
 });
 
 // Insert schemas for new tables
+export const insertTaxRateSchema = createInsertSchema(taxRates).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
+export const insertProductMediaSchema = createInsertSchema(productMedia).omit({
+  id: true,
+  createdAt: true,
+});
+
+export const insertOrderTrackingSchema = createInsertSchema(orderTracking).omit({
+  id: true,
+  createdAt: true,
+});
+
 export const insertCouponSchema = createInsertSchema(coupons).omit({
   id: true,
   createdAt: true,
@@ -444,6 +528,9 @@ export const insertStoreSettingSchema = createInsertSchema(storeSettings).omit({
 // Types
 export type UpsertUser = z.infer<typeof insertUserSchema>;
 export type User = typeof users.$inferSelect;
+export type TaxRate = typeof taxRates.$inferSelect;
+export type ProductMedia = typeof productMedia.$inferSelect;
+export type OrderTracking = typeof orderTracking.$inferSelect;
 export type Category = typeof categories.$inferSelect;
 export type Brand = typeof brands.$inferSelect;
 export type Product = typeof products.$inferSelect;
@@ -469,3 +556,6 @@ export type InsertCartItem = z.infer<typeof insertCartItemSchema>;
 export type InsertWishlist = z.infer<typeof insertWishlistSchema>;
 export type InsertOrder = z.infer<typeof insertOrderSchema>;
 export type InsertOrderItem = z.infer<typeof insertOrderItemSchema>;
+export type InsertTaxRate = z.infer<typeof insertTaxRateSchema>;
+export type InsertProductMedia = z.infer<typeof insertProductMediaSchema>;
+export type InsertOrderTracking = z.infer<typeof insertOrderTrackingSchema>;
