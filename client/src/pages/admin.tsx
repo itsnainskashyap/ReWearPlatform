@@ -22,20 +22,22 @@ import {
   CheckCircle,
   XCircle,
   DollarSign,
-  Calendar
+  Calendar,
+  Printer
 } from "lucide-react";
 import { useLocation } from "wouter";
 import { useToast } from "@/hooks/use-toast";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { apiRequest, queryClient } from "@/lib/queryClient";
+import { format } from "date-fns";
 
 export default function Admin() {
   const { user, isAuthenticated } = useAuth();
   const [, navigate] = useLocation();
   const { toast } = useToast();
   
-  // Check if user is admin (based on the requirements, admin email is itsnainskashyap@gmail.com)
-  const isAdmin = user && typeof user === 'object' && 'email' in user ? user.email === "itsnainskashyap@gmail.com" : false;
+  // Check if user is admin (based on the requirements, admin email is rewearaofficials@gmail.com)
+  const isAdmin = user && typeof user === 'object' && 'email' in user ? user.email === "rewearaofficials@gmail.com" : false;
 
   useEffect(() => {
     if (!isAuthenticated || !isAdmin) {
@@ -76,6 +78,170 @@ export default function Admin() {
     queryKey: ["/api/admin/products"],
     enabled: isAdmin && selectedTab === "products",
   });
+
+  // Admin Invoice Print Function
+  const handlePrintOrderInvoice = async (order: any) => {
+    try {
+      // Fetch full order details with items if not already present
+      let fullOrder = order;
+      if (!order.items || order.items.length === 0) {
+        const response = await fetch(`/api/orders/${order.id}`);
+        if (response.ok) {
+          fullOrder = await response.json();
+        }
+      }
+      
+      const invoiceData = generateInvoiceHTML(fullOrder);
+      
+      // Open print window
+      const printWindow = window.open('', '_blank');
+      if (printWindow) {
+        printWindow.document.write(invoiceData);
+        printWindow.document.close();
+        printWindow.focus();
+        printWindow.print();
+      }
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Failed to generate invoice. Please try again.",
+        variant: "destructive",
+      });
+    }
+  };
+
+  // HTML escape function to prevent XSS
+  const escapeHtml = (text: string) => {
+    const div = document.createElement('div');
+    div.textContent = text;
+    return div.innerHTML;
+  };
+
+  const generateInvoiceHTML = (order: any) => {
+    const orderDate = order.createdAt ? format(new Date(order.createdAt), 'dd MMM yyyy, hh:mm a') : 'N/A';
+    
+    return `
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ReWeara Invoice - ${order.id}</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 0; padding: 20px; color: #333; }
+        .invoice-header { text-align: center; margin-bottom: 30px; border-bottom: 2px solid #1a5f3f; padding-bottom: 20px; }
+        .logo { color: #1a5f3f; font-size: 32px; font-weight: bold; margin-bottom: 5px; }
+        .tagline { color: #666; font-size: 14px; }
+        .invoice-info { display: flex; justify-content: space-between; margin-bottom: 30px; }
+        .section { margin-bottom: 20px; }
+        .section-title { font-weight: bold; color: #1a5f3f; margin-bottom: 10px; font-size: 16px; }
+        .items-table { width: 100%; border-collapse: collapse; margin-bottom: 20px; }
+        .items-table th, .items-table td { padding: 12px; text-align: left; border-bottom: 1px solid #ddd; }
+        .items-table th { background-color: #f8f9fa; font-weight: bold; }
+        .total-section { text-align: right; margin-top: 20px; }
+        .total-row { display: flex; justify-content: space-between; margin-bottom: 5px; }
+        .total-final { font-weight: bold; font-size: 18px; color: #1a5f3f; border-top: 2px solid #1a5f3f; padding-top: 10px; }
+        .footer { margin-top: 40px; text-align: center; color: #666; font-size: 12px; }
+        @media print { body { margin: 0; } }
+    </style>
+</head>
+<body>
+    <div class="invoice-header">
+        <div class="logo">ReWeara</div>
+        <div class="tagline">Sustainable Fashion for a Better Tomorrow</div>
+    </div>
+    
+    <div class="invoice-info">
+        <div>
+            <div class="section-title">Invoice To:</div>
+            <div><strong>${escapeHtml(order.user?.firstName ? `${order.user.firstName} ${order.user.lastName || ''}`.trim() : order.guestEmail || 'Guest Customer')}</strong></div>
+            <div>${escapeHtml(order.user?.email || order.guestEmail || '')}</div>
+            ${order.shippingAddress ? `
+            <div style="margin-top: 10px;">
+                <div><strong>Shipping Address:</strong></div>
+                <div>${escapeHtml(order.shippingAddress.fullName)}</div>
+                <div>${escapeHtml(order.shippingAddress.address)}</div>
+                <div>${escapeHtml(order.shippingAddress.city)}, ${escapeHtml(order.shippingAddress.state)} ${escapeHtml(order.shippingAddress.pincode)}</div>
+                <div>${escapeHtml(order.shippingAddress.phone)}</div>
+            </div>` : ''}
+        </div>
+        <div style="text-align: right;">
+            <div class="section-title">Invoice Details:</div>
+            <div><strong>Invoice #:</strong> REW-${order.id.substring(0, 8).toUpperCase()}</div>
+            <div><strong>Order #:</strong> ${order.id}</div>
+            <div><strong>Date:</strong> ${orderDate}</div>
+            <div><strong>Status:</strong> ${order.status.charAt(0).toUpperCase() + order.status.slice(1)}</div>
+        </div>
+    </div>
+    
+    ${order.items && order.items.length > 0 ? `
+    <div class="section">
+        <div class="section-title">Items Ordered:</div>
+        <table class="items-table">
+            <thead>
+                <tr>
+                    <th>Item</th>
+                    <th>Quantity</th>
+                    <th>Unit Price</th>
+                    <th>Total</th>
+                </tr>
+            </thead>
+            <tbody>
+                ${order.items.map((item: any) => `
+                <tr>
+                    <td>
+                        <strong>${escapeHtml(item.product?.name || 'Unknown Product')}</strong>
+                        ${item.product?.brand?.name ? `<br><small>Brand: ${escapeHtml(item.product.brand.name)}</small>` : ''}
+                    </td>
+                    <td>${item.quantity}</td>
+                    <td>₹${item.price}</td>
+                    <td>₹${(parseFloat(item.price) * item.quantity).toFixed(2)}</td>
+                </tr>
+                `).join('')}
+            </tbody>
+        </table>
+    </div>` : ''}
+    
+    <div class="total-section">
+        <div class="total-row">
+            <span>Subtotal:</span>
+            <span>₹${order.subtotal}</span>
+        </div>
+        ${order.taxAmount && parseFloat(order.taxAmount) > 0 ? `
+        <div class="total-row">
+            <span>Tax:</span>
+            <span>₹${order.taxAmount}</span>
+        </div>` : ''}
+        ${order.shippingAmount && parseFloat(order.shippingAmount) > 0 ? `
+        <div class="total-row">
+            <span>Shipping:</span>
+            <span>₹${order.shippingAmount}</span>
+        </div>` : ''}
+        ${order.discountAmount && parseFloat(order.discountAmount) > 0 ? `
+        <div class="total-row">
+            <span>Discount:</span>
+            <span>-₹${order.discountAmount}</span>
+        </div>` : ''}
+        <div class="total-row total-final">
+            <span>Total Amount:</span>
+            <span>₹${order.totalAmount}</span>
+        </div>
+    </div>
+    
+    <div class="section">
+        <div class="section-title">Payment Information:</div>
+        <div><strong>Payment Method:</strong> ${order.paymentMethod?.toUpperCase() || 'N/A'}</div>
+        <div><strong>Payment Status:</strong> ${order.paymentStatus?.charAt(0).toUpperCase() + order.paymentStatus?.slice(1) || 'N/A'}</div>
+    </div>
+    
+    <div class="footer">
+        <p>Thank you for shopping with ReWeara!</p>
+        <p>For any queries, contact us at: support@reweara.com | +91 6200613195</p>
+        <p>This is a computer-generated invoice. No signature required.</p>
+    </div>
+</body>
+</html>`;
+  };
 
   const updateOrderStatusMutation = useMutation({
     mutationFn: async ({ orderId, status }: { orderId: string; status: string }) => {
@@ -230,35 +396,55 @@ export default function Admin() {
                   </div>
                 ) : (
                   <div className="space-y-4">
-                    {[
-                      { id: "REW1001", customer: "John Doe", amount: "₹1,299", status: "payment_pending" },
-                      { id: "REW1002", customer: "Jane Smith", amount: "₹2,199", status: "placed" },
-                      { id: "REW1003", customer: "Mike Johnson", amount: "₹899", status: "shipped" },
-                    ].map((order, index) => (
-                      <div key={index} className="flex items-center justify-between p-4 border rounded-xl hover:bg-muted/20 transition-colors">
+                    {orders && Array.isArray(orders) && orders.length > 0 ? orders.map((order: any) => (
+                      <div key={order.id} className="flex items-center justify-between p-4 border rounded-xl hover:bg-muted/20 transition-colors">
                         <div className="flex-1">
                           <div className="flex items-center space-x-4">
                             <div>
-                              <p className="font-semibold">{order.id}</p>
-                              <p className="text-sm text-muted-foreground">{order.customer}</p>
+                              <p className="font-semibold">#{order.id.substring(0, 8).toUpperCase()}</p>
+                              <p className="text-sm text-muted-foreground">
+                                {order.user?.firstName ? `${order.user.firstName} ${order.user.lastName || ''}`.trim() : order.guestEmail || 'Guest Customer'}
+                              </p>
+                              <p className="text-xs text-muted-foreground">
+                                {order.createdAt ? format(new Date(order.createdAt), 'dd MMM yyyy') : 'Date not available'}
+                              </p>
                             </div>
                             <Badge className={orderStatuses.find(s => s.value === order.status)?.color}>
-                              {orderStatuses.find(s => s.value === order.status)?.label}
+                              {orderStatuses.find(s => s.value === order.status)?.label || order.status}
                             </Badge>
                           </div>
                         </div>
                         <div className="flex items-center space-x-4">
-                          <span className="font-bold">{order.amount}</span>
+                          <span className="font-bold">₹{order.totalAmount}</span>
                           <div className="flex space-x-2">
-                            <Button variant="ghost" size="icon" className="rounded-xl">
+                            <Button 
+                              variant="ghost" 
+                              size="icon" 
+                              className="rounded-xl"
+                              onClick={() => handlePrintOrderInvoice(order)}
+                              title="Print Invoice"
+                              data-testid={`button-print-invoice-${order.id}`}
+                            >
+                              <Printer className="w-4 h-4" />
+                            </Button>
+                            <Button 
+                              variant="ghost" 
+                              size="icon" 
+                              className="rounded-xl"
+                              onClick={() => navigate(`/orders/${order.id}`)}
+                              title="View Details"
+                              data-testid={`button-view-order-${order.id}`}
+                            >
                               <Eye className="w-4 h-4" />
                             </Button>
-                            {order.status === "payment_pending" && (
+                            {order.status === "pending" && (
                               <Button 
                                 variant="ghost" 
                                 size="icon" 
                                 className="rounded-xl text-green-600"
-                                onClick={() => updateOrderStatusMutation.mutate({ orderId: order.id, status: "placed" })}
+                                onClick={() => updateOrderStatusMutation.mutate({ orderId: order.id, status: "confirmed" })}
+                                title="Confirm Order"
+                                data-testid={`button-confirm-order-${order.id}`}
                               >
                                 <CheckCircle className="w-4 h-4" />
                               </Button>
@@ -266,7 +452,11 @@ export default function Admin() {
                           </div>
                         </div>
                       </div>
-                    ))}
+                    )) : (
+                      <div className="text-center py-8">
+                        <p className="text-muted-foreground">No orders found</p>
+                      </div>
+                    )}
                   </div>
                 )}
               </CardContent>
