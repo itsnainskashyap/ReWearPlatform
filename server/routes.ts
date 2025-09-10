@@ -9,6 +9,7 @@ import {
   insertTaxRateSchema,
   insertProductMediaSchema,
   insertOrderTrackingSchema,
+  insertPromotionalPopupSchema,
   coupons, 
   banners,
   taxRates,
@@ -21,6 +22,7 @@ import {
   orderItems
 } from "@shared/schema";
 import { GoogleGenerativeAI } from "@google/generative-ai";
+import { z } from "zod";
 import { setupAdminRoutes } from "./adminRoutes";
 import { db } from "./db";
 import { eq, and, or, gte, isNull, asc, desc, sql } from "drizzle-orm";
@@ -1156,6 +1158,81 @@ Keep responses helpful, friendly, and focused on sustainable fashion. If asked a
     } catch (error) {
       console.error("Error in chat API:", error);
       res.status(500).json({ error: 'Chat service unavailable' });
+    }
+  });
+
+  // Promotional popup routes
+  app.get('/api/promotional-popups/active', async (req, res) => {
+    try {
+      const popups = await storage.getPromotionalPopups({ active: true });
+      res.json(popups);
+    } catch (error) {
+      console.error('Error fetching active promotional popups:', error);
+      res.status(500).json({ message: 'Failed to fetch promotional popups' });
+    }
+  });
+
+  app.get('/api/promotional-popups', isAuthenticated, async (req, res) => {
+    try {
+      const popups = await storage.getPromotionalPopups();
+      res.json(popups);
+    } catch (error) {
+      console.error('Error fetching promotional popups:', error);
+      res.status(500).json({ message: 'Failed to fetch promotional popups' });
+    }
+  });
+
+  app.get('/api/promotional-popups/:id', isAuthenticated, async (req, res) => {
+    try {
+      const popup = await storage.getPromotionalPopupById(req.params.id);
+      if (!popup) {
+        return res.status(404).json({ message: 'Promotional popup not found' });
+      }
+      res.json(popup);
+    } catch (error) {
+      console.error('Error fetching promotional popup:', error);
+      res.status(500).json({ message: 'Failed to fetch promotional popup' });
+    }
+  });
+
+  app.post('/api/promotional-popups', isAuthenticated, async (req, res) => {
+    try {
+      const validatedData = insertPromotionalPopupSchema.parse(req.body);
+      const popup = await storage.createPromotionalPopup(validatedData);
+      res.status(201).json(popup);
+    } catch (error: any) {
+      console.error('Error creating promotional popup:', error);
+      if (error instanceof z.ZodError) {
+        return res.status(400).json({ message: 'Invalid data', errors: error.errors });
+      }
+      res.status(500).json({ message: 'Failed to create promotional popup' });
+    }
+  });
+
+  app.put('/api/promotional-popups/:id', isAuthenticated, async (req, res) => {
+    try {
+      const validatedData = insertPromotionalPopupSchema.partial().parse(req.body);
+      const popup = await storage.updatePromotionalPopup(req.params.id, validatedData);
+      if (!popup) {
+        return res.status(404).json({ message: 'Promotional popup not found' });
+      }
+      res.json(popup);
+    } catch (error: any) {
+      console.error('Error updating promotional popup:', error);
+      if (error instanceof z.ZodError) {
+        return res.status(400).json({ message: 'Invalid data', errors: error.errors });
+      }
+      res.status(500).json({ message: 'Failed to update promotional popup' });
+    }
+  });
+
+  app.delete('/api/promotional-popups/:id', isAuthenticated, async (req, res) => {
+    try {
+      await storage.deletePromotionalPopup(req.params.id);
+      res.status(204).send();
+    } catch (error) {
+      console.error('Error deleting promotional popup:', error);
+      res.status(500).json({ message: 'Failed to delete promotional popup' });
     }
   });
 

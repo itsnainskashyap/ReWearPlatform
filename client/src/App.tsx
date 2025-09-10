@@ -6,6 +6,8 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { ThemeProvider } from "@/components/ui/theme-provider";
 import { useAuth } from "@/hooks/useAuth";
 import NotFound from "@/pages/not-found";
+import { PromotionalPopupComponent } from "@/components/ui/promotional-popup";
+import { useLocation } from "wouter";
 import Landing from "@/pages/landing";
 import Home from "@/pages/home";
 import Shop from "@/pages/shop";
@@ -32,6 +34,7 @@ import { useState, useEffect } from "react";
 
 function Router() {
   const { isAuthenticated, isLoading } = useAuth();
+  const [location] = useLocation();
   const [isTransitioning, setIsTransitioning] = useState(false);
 
   useEffect(() => {
@@ -44,6 +47,7 @@ function Router() {
 
   return (
     <div className={`transition-all duration-500 ${isTransitioning ? 'opacity-0 transform scale-95' : 'opacity-100 transform scale-100'}`}>
+      <PromotionalPopupComponent currentPath={location} />
       <Switch>
         {/* Admin panel is accessible without user authentication (has its own auth) */}
         <Route path="/admin-panel" component={AdminPanel} />

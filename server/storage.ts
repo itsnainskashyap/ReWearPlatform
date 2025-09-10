@@ -26,6 +26,8 @@ import {
   type InsertWishlist,
   type InsertOrder,
   type InsertOrderItem,
+  type PromotionalPopup,
+  type InsertPromotionalPopup,
 } from "@shared/schema";
 import { db } from "./db";
 import { eq, desc, and, sql, like, inArray, or } from "drizzle-orm";
@@ -86,6 +88,13 @@ export interface IStorage {
   }): Promise<(Order & { user?: User })[]>;
   getOrderById(id: string): Promise<(Order & { items: (OrderItem & { product: Product })[] }) | undefined>;
   updateOrderStatus(id: string, status: string): Promise<Order | undefined>;
+  
+  // Promotional popup operations
+  getPromotionalPopups(options?: { active?: boolean }): Promise<PromotionalPopup[]>;
+  getPromotionalPopupById(id: string): Promise<PromotionalPopup | undefined>;
+  createPromotionalPopup(popup: InsertPromotionalPopup): Promise<PromotionalPopup>;
+  updatePromotionalPopup(id: string, updates: Partial<InsertPromotionalPopup>): Promise<PromotionalPopup | undefined>;
+  deletePromotionalPopup(id: string): Promise<void>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -508,6 +517,61 @@ export class DatabaseStorage implements IStorage {
       .returning();
     
     return updatedOrder;
+  }
+
+  // Promotional popup operations
+  async getPromotionalPopups(options?: { active?: boolean }): Promise<PromotionalPopup[]> {
+    let query = db.select().from(promotionalPopups);
+    
+    if (options?.active) {
+      const now = new Date();
+      query = query.where(
+        and(
+          eq(promotionalPopups.isActive, true),
+          or(
+            sql`${promotionalPopups.startDate} IS NULL`,
+            sql`${promotionalPopups.startDate} <= ${now}`
+          ),
+          or(
+            sql`${promotionalPopups.endDate} IS NULL`,
+            sql`${promotionalPopups.endDate} >= ${now}`
+          )
+        )
+      );
+    }
+    
+    return await query.orderBy(desc(promotionalPopups.priority), desc(promotionalPopups.createdAt));
+  }
+
+  async getPromotionalPopupById(id: string): Promise<PromotionalPopup | undefined> {
+    const [popup] = await db
+      .select()
+      .from(promotionalPopups)
+      .where(eq(promotionalPopups.id, id));
+    return popup;
+  }
+
+  async createPromotionalPopup(popup: InsertPromotionalPopup): Promise<PromotionalPopup> {
+    const [newPopup] = await db
+      .insert(promotionalPopups)
+      .values(popup)
+      .returning();
+    return newPopup;
+  }
+
+  async updatePromotionalPopup(id: string, updates: Partial<InsertPromotionalPopup>): Promise<PromotionalPopup | undefined> {
+    const [updatedPopup] = await db
+      .update(promotionalPopups)
+      .set({ ...updates, updatedAt: new Date() })
+      .where(eq(promotionalPopups.id, id))
+      .returning();
+    return updatedPopup;
+  }
+
+  async deletePromotionalPopup(id: string): Promise<void> {
+    await db
+      .delete(promotionalPopups)
+      .where(eq(promotionalPopups.id, id));
   }
 }
 
