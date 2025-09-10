@@ -261,10 +261,9 @@ if (import.meta.url === `file://${process.argv[1]}`) {
   seedDatabase()
     .then(() => {
       console.log('[SEED] Seeding script completed successfully');
-      process.exit(0);
+      console.log('[SEED] main done, exiting');
     })
     .catch((error) => {
       console.error('[SEED] Seeding script failed:', error);
-      process.exit(1);
     });
 }
