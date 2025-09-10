@@ -75,10 +75,18 @@ app.use((req, res, next) => {
 
 (async () => {
   try {
-    // Validate database connection before starting the server
+    // Validate database connection before starting the server (non-fatal)
     console.log('[STARTUP] Validating database connection...');
-    await validateDatabaseConnection();
-    console.log('[STARTUP] Database validation completed successfully');
+    try {
+      await validateDatabaseConnection();
+      console.log('[STARTUP] Database validation completed successfully');
+    } catch (dbError: any) {
+      if (dbError.message && dbError.message.includes('endpoint has been disabled')) {
+        console.warn('[STARTUP] DB unavailable (Neon endpoint disabled). Continuing with in-memory storage.');
+      } else {
+        console.warn('[STARTUP] DB connection failed. Continuing with in-memory storage. Error:', dbError.message);
+      }
+    }
     
     console.log('[STARTUP] Registering routes...');
     const server = await registerRoutes(app);

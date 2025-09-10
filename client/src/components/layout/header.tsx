@@ -60,17 +60,28 @@ export default function Header() {
         <div className="flex items-center space-x-2">
           <ThemeToggle />
           {isAuthenticated ? (
-            <Button 
-              variant="ghost" 
-              size="icon"
-              className="hover-lift relative rounded-2xl"
-              data-testid="button-notifications"
-            >
-              <Bell className="w-6 h-6 transition-transform duration-200 hover:scale-110" />
-              <span className="absolute -top-1 -right-1 w-4 h-4 bg-gradient-to-r from-destructive to-destructive/80 rounded-full animate-pulse">
-                <span className="absolute inset-0 w-4 h-4 bg-destructive rounded-full animate-ping opacity-75"></span>
-              </span>
-            </Button>
+            <div className="flex items-center space-x-2">
+              <Button 
+                variant="ghost" 
+                size="icon"
+                className="hover-lift relative rounded-2xl"
+                data-testid="button-notifications"
+              >
+                <Bell className="w-6 h-6 transition-transform duration-200 hover:scale-110" />
+                <span className="absolute -top-1 -right-1 w-4 h-4 bg-gradient-to-r from-destructive to-destructive/80 rounded-full animate-pulse">
+                  <span className="absolute inset-0 w-4 h-4 bg-destructive rounded-full animate-ping opacity-75"></span>
+                </span>
+              </Button>
+              <Button 
+                onClick={() => window.location.href = '/api/logout'}
+                variant="outline"
+                size="sm"
+                className="rounded-2xl hover-lift"
+                data-testid="button-logout"
+              >
+                Logout
+              </Button>
+            </div>
           ) : (
             <Button 
               onClick={() => openLogin()}
