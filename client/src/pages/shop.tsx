@@ -63,19 +63,23 @@ export default function Shop() {
       const response = await fetch(`/api/products?${params.toString()}`);
       if (!response.ok) throw new Error('Failed to fetch products');
       return response.json();
-    },
-    onSuccess: (newProducts) => {
-      if (page === 0) {
-        // First page, replace all products
-        setAllProducts(newProducts);
-      } else {
-        // Subsequent pages, append to existing products
-        setAllProducts(prev => [...prev, ...newProducts]);
-      }
-      // Check if we have more products to load
-      setHasMore(newProducts.length === 12);
     }
   });
+
+  // Handle products data when it changes
+  useEffect(() => {
+    if (products) {
+      if (page === 0) {
+        // First page, replace all products
+        setAllProducts(products);
+      } else {
+        // Subsequent pages, append to existing products
+        setAllProducts(prev => [...prev, ...products]);
+      }
+      // Check if we have more products to load
+      setHasMore(products.length === 12);
+    }
+  }, [products, page]);
 
   const addToCartMutation = useMutation({
     mutationFn: async (productId: string) => {
@@ -156,7 +160,7 @@ export default function Shop() {
                 variant={shopType === 'all' ? 'default' : 'ghost'}
                 size="sm"
                 onClick={() => setShopType('all')}
-                className="rounded-xl"
+                className={`rounded-xl transition-all ${shopType === 'all' ? 'border-2 border-primary shadow-md' : 'dark:border dark:border-border/50'}`}
               >
                 All
               </Button>
@@ -164,7 +168,7 @@ export default function Shop() {
                 variant={shopType === 'thrift' ? 'default' : 'ghost'}
                 size="sm"
                 onClick={() => setShopType('thrift')}
-                className="rounded-xl"
+                className={`rounded-xl transition-all ${shopType === 'thrift' ? 'border-2 border-primary shadow-md' : 'dark:border dark:border-border/50'}`}
               >
                 <Recycle className="w-4 h-4 mr-1" />
                 Thrift
@@ -173,10 +177,10 @@ export default function Shop() {
                 variant={shopType === 'originals' ? 'default' : 'ghost'}
                 size="sm"
                 onClick={() => setShopType('originals')}
-                className="rounded-xl"
+                className={`rounded-xl transition-all ${shopType === 'originals' ? 'border-2 border-primary shadow-md' : 'dark:border dark:border-border/50'}`}
               >
                 <Sparkles className="w-4 h-4 mr-1" />
-                Originals
+                ReWeara OGs
               </Button>
             </div>
           </div>

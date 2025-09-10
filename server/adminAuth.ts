@@ -114,14 +114,14 @@ export async function isAdminAuthenticated(
 // Initialize default admin user
 export async function initializeAdminUser() {
   try {
-    const adminEmail = "itsnainskashyap@gmail.com";
+    const adminEmail = "rewearaofficials@gmail.com";
     const [existingAdmin] = await db
       .select()
       .from(adminUsers)
       .where(eq(adminUsers.email, adminEmail));
 
     if (!existingAdmin) {
-      const passwordHash = await hashPassword("nains@1357");
+      const passwordHash = await hashPassword("reweara@2025");
       await db.insert(adminUsers).values({
         email: adminEmail,
         passwordHash,

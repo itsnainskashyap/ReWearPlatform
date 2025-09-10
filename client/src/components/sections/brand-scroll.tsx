@@ -28,7 +28,7 @@ export default function BrandScroll() {
             <h2 className="text-2xl font-bold text-primary">Featured Brands</h2>
           </div>
         </div>
-        <div className="flex space-x-4 px-4 overflow-x-auto scroll-container" data-testid="container-brand-scroll">
+        <div className="flex space-x-4 px-4 overflow-x-auto scroll-container dark:bg-card/5 dark:rounded-xl dark:border dark:border-border/20 dark:p-3" data-testid="container-brand-scroll">
           {[...Array(5)].map((_, index) => (
             <div 
               key={index}
@@ -52,7 +52,7 @@ export default function BrandScroll() {
         </div>
       </div>
       
-      <div className="flex space-x-4 px-4 overflow-x-auto scroll-container" data-testid="container-brand-scroll">
+      <div className="flex space-x-4 px-4 overflow-x-auto scroll-container dark:bg-card/5 dark:rounded-xl dark:border dark:border-border/20 dark:p-3" data-testid="container-brand-scroll">
         {Array.isArray(brands) && brands.length > 0 ? (
           brands.map((brand: any, index: number) => (
             <div 
