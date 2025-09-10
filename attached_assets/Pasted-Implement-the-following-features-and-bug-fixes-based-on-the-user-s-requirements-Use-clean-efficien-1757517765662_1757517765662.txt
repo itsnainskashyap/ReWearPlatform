@@ -1,0 +1,51 @@
+Implement the following features and bug fixes based on the user's requirements. Use clean, efficient code in the existing tech stack (assume React for frontend, Node.js/Express for backend, and MongoDB for database unless specified otherwise). All AI features must be powered exclusively by calls to the Google Gemini API using this exact curl command structure:
+curl "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent" \
+  -H 'Content-Type: application/json' \
+  -H 'X-goog-api-key: AIzaSyAi2AQXRFGimgYr0rfAzbAuoORXVHbqqNo' \
+  -X POST \
+  -d '{
+    "contents": [
+      {
+        "parts": [
+          {
+            "text": "[INSERT_DYNAMIC_PROMPT_HERE]"
+          }
+        ]
+      }
+    ]
+  }'
+Replace [INSERT_DYNAMIC_PROMPT_HERE] with the appropriate text prompt for each AI feature. Ensure API responses are parsed and integrated securely, handling errors gracefully.
+Features to Implement:
+Virtual Try-On Feature:
+In the admin panel, when uploading a product (e.g., clothing like jeans), automatically generate and store a prefixed AI prompt for the try-on feature. Example prefix: "Wear this [product name, e.g., jeans] on me realistically."
+On the product page, when a user clicks the try-on button, set the user's uploaded photo as the base image for the try-on simulation. Remove any existing pop-up on the product page related to this feature.
+Add support for this try-on prompt generation and management in the admin panel UI as well.
+Category Filtering:
+When the user selects "Thrift Store" category, filter and display only thrifted products.
+When the user selects "ReWeara Originals" category, filter and display only products from the ReWeara collection.
+Cart and Navigation Enhancements:
+After clicking the "Add to Cart" button, display a quantity selector in the format "- 1 + " next to the item in the cart or mini-cart.
+In the bottom navigation bar, show a badge with the number "1" (or dynamic cart count) above the cart icon.
+Power All AI Features with Gemini API:
+Integrate the provided curl command for any AI-related functionality (e.g., try-on image generation, recommendations, or other generative tasks). Use the API key AIzaSyAi2AQXRFGimgYr0rfAzbAuoORXVHbqqNo exactly as shown. Do not use any other AI service.
+Bug Fixes:
+Product Management in Admin Panel:
+Fix the edit button for products so admins can edit product details successfully.
+Fix the delete button for products so it works and removes the product from the database and UI.
+Wishlist Button:
+Ensure the wishlist button is visible and does not blend with the background (adjust CSS for contrast, e.g., add borders or color changes).
+Admin Panel Analytics:
+Stop showing fake data in the analytics section; pull and display real data from the database or integrated analytics service.
+Shop Settings:
+Fix shop setting updates so changes (e.g., store name, descriptions) save correctly to the backend and reflect in the frontend.
+User Actions Management:
+Enable admins to take actions on user activities (e.g., view, approve, or ban user actions like orders or reviews) in the admin panel.
+Pop-Up Styling in Admin Panel:
+Change the text color in all pop-ups from green to white for better visibility.
+Banner Management:
+Fix the ability to add new banners from the admin panel (ensure upload form works and saves to storage/database).
+Content Editing:
+Enable editing for static pages: About, FAQs, Terms, Privacy, Careers, and Blog sections in the admin panel.
+Payment Verification Section:
+Make the payment verification section visible and functional in the admin panel (e.g., show orders awaiting verification and allow status updates).
+Provide the updated code snippets for key files affected (e.g., admin panel components, product routes, API integrations), a step-by-step implementation plan, and test cases to verify each change. Ensure the platform remains secure, responsive, and user-friendly. If any clarification is needed, list assumptions made.
