@@ -174,7 +174,7 @@ export const orders = pgTable("orders", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
   userId: varchar("user_id").references(() => users.id),
   guestEmail: varchar("guest_email"),
-  status: varchar("status").notNull().default("pending"), // pending, confirmed, shipped, delivered, cancelled
+  status: varchar("status").notNull().default("pending"), // pending, payment_verified, confirmed, shipped, delivered, cancelled
   subtotal: decimal("subtotal", { precision: 10, scale: 2 }).notNull(),
   taxAmount: decimal("tax_amount", { precision: 10, scale: 2 }).default(sql`0`),
   shippingAmount: decimal("shipping_amount", { precision: 10, scale: 2 }).default(sql`0`),
@@ -184,7 +184,10 @@ export const orders = pgTable("orders", {
   trackingNumber: varchar("tracking_number"),
   estimatedDelivery: timestamp("estimated_delivery"),
   paymentMethod: varchar("payment_method"), // UPI, COD, etc.
-  paymentStatus: varchar("payment_status").default("pending"),
+  paymentStatus: varchar("payment_status").default("pending"), // pending, verified, paid, failed
+  paymentProof: varchar("payment_proof"), // Screenshot upload URL
+  paymentVerifiedBy: varchar("payment_verified_by"), // Admin ID who verified
+  paymentVerifiedAt: timestamp("payment_verified_at"),
   shippingAddress: jsonb("shipping_address"),
   notes: text("notes"),
   createdAt: timestamp("created_at").defaultNow(),
@@ -458,6 +461,17 @@ export const storeSettings = pgTable("store_settings", {
   key: varchar("key").notNull().unique(),
   value: jsonb("value"),
   description: text("description"),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
+// Payment settings table
+export const paymentSettings = pgTable("payment_settings", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  upiId: varchar("upi_id"),
+  qrCodeUrl: varchar("qr_code_url"),
+  bankDetails: jsonb("bank_details"),
+  isActive: boolean("is_active").default(true),
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
 });

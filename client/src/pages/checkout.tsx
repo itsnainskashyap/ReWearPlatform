@@ -73,8 +73,8 @@ export default function Checkout() {
       total + (parseFloat(item.product.price) * item.quantity), 0
     );
     const shipping = subtotal > 500 ? 0 : 50;
-    const tax = subtotal * 0.18; // 18% GST
-    return (subtotal + shipping + tax).toFixed(2);
+    // Tax removed - will be managed from admin panel in future
+    return (subtotal + shipping).toFixed(2);
   };
 
   const calculateSubtotal = () => {
