@@ -146,42 +146,42 @@
   --elevate-2: rgba(255,255,255, .09);
 
   --background: hsl(0, 0%, 0%);
-  --foreground: hsl(0, 0%, 98%);
-  --border: hsl(240, 3.7%, 15.9%);
+  --foreground: hsl(0, 0%, 95%);
+  --border: hsl(0, 0%, 8%);
 
-  --card: hsl(0, 0%, 2%);
-  --card-foreground: hsl(0, 0%, 98%);
-  --card-border: hsl(240, 3.7%, 15.9%);
+  --card: hsl(0, 0%, 1%);
+  --card-foreground: hsl(0, 0%, 95%);
+  --card-border: hsl(0, 0%, 8%);
 
-  --sidebar: hsl(0, 0%, 2%);
-  --sidebar-foreground: hsl(240, 4.8%, 95.9%);
-  --sidebar-border: hsl(240, 3.7%, 15.9%);
+  --sidebar: hsl(0, 0%, 1%);
+  --sidebar-foreground: hsl(0, 0%, 95%);
+  --sidebar-border: hsl(0, 0%, 8%);
   --sidebar-primary: hsl(158, 82%, 28%);
   --sidebar-primary-foreground: hsl(0, 0%, 98%);
   --sidebar-accent: hsl(47, 95%, 63%);
-  --sidebar-accent-foreground: hsl(240, 5.9%, 10%);
+  --sidebar-accent-foreground: hsl(0, 0%, 0%);
   --sidebar-ring: hsl(158, 82%, 28%);
 
-  --popover: hsl(0, 0%, 2%);
-  --popover-foreground: hsl(0, 0%, 98%);
-  --popover-border: hsl(240, 3.7%, 15.9%);
+  --popover: hsl(0, 0%, 1%);
+  --popover-foreground: hsl(0, 0%, 95%);
+  --popover-border: hsl(0, 0%, 8%);
 
   --primary: hsl(158, 82%, 28%);
   --primary-foreground: hsl(0, 0%, 98%);
 
-  --secondary: hsl(240, 3.7%, 15.9%);
-  --secondary-foreground: hsl(0, 0%, 98%);
+  --secondary: hsl(0, 0%, 5%);
+  --secondary-foreground: hsl(0, 0%, 95%);
 
-  --muted: hsl(240, 3.7%, 15.9%);
-  --muted-foreground: hsl(240, 5%, 64.9%);
+  --muted: hsl(0, 0%, 5%);
+  --muted-foreground: hsl(0, 0%, 60%);
 
   --accent: hsl(47, 95%, 63%);
-  --accent-foreground: hsl(240, 5.9%, 10%);
+  --accent-foreground: hsl(0, 0%, 0%);
 
   --destructive: hsl(0, 62.8%, 30.6%);
   --destructive-foreground: hsl(0, 0%, 98%);
 
-  --input: hsl(240, 3.7%, 15.9%);
+  --input: hsl(0, 0%, 5%);
   --ring: hsl(158, 82%, 28%);
   
   --chart-1: hsl(158, 82%, 28%);
@@ -207,8 +207,12 @@
 
   body {
     @apply font-sans antialiased bg-background text-foreground;
-    color: #0B5A3A;
     text-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+  }
+  
+  /* Light mode specific text color */
+  body:not(.dark) {
+    color: #0B5A3A;
   }
   
   html {
