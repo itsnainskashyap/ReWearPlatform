@@ -1,6 +1,7 @@
 import { Heart, ShoppingBag, Sparkles } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { ProductShare } from "@/components/ui/product-share";
 import type { Product } from "@shared/schema";
 import { useState, useEffect } from "react";
 import { useLocation } from "wouter";
@@ -67,8 +68,24 @@ export default function ProductCard({ product, onAddToCart, onAddToWishlist, ind
         {/* Overlay Gradient */}
         <div className="absolute inset-0 bg-gradient-to-t from-black/20 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
         
-        {/* Wishlist Button */}
-        <div className="absolute top-3 right-3">
+        {/* Action Buttons */}
+        <div className="absolute top-3 right-3 flex gap-2">
+          {/* Share Button */}
+          <div onClick={(e) => e.stopPropagation()}>
+            <ProductShare 
+              product={{
+                id: product.id,
+                name: product.name,
+                description: product.shortDescription || product.description,
+                price: parseFloat(product.price),
+                images: product.images
+              }}
+              variant="icon"
+              className="h-10 w-10 glassmorphism bg-white/80 backdrop-blur-md hover:bg-white/90"
+            />
+          </div>
+          
+          {/* Wishlist Button */}
           <Button 
             variant="ghost" 
             size="icon"
