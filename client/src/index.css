@@ -197,6 +197,13 @@
   }
 }
 
+/* Text section with better visibility */
+.text-section {
+  padding: 0.5rem;
+  background: rgba(255, 255, 255, 0.7);
+  backdrop-filter: blur(4px);
+}
+
 /* Modern Animations & Effects */
 @keyframes fadeInUp {
   from {
