@@ -661,16 +661,18 @@
     color: hsl(120, 100%, 25%) !important; /* Dark green for price */
   }
 
-  /* Dark mode: Make original price red */
+  /* Dark mode: Make original price red with strikethrough */
   .dark .line-through {
-    color: hsl(0, 70%, 50%) !important; /* Red for original price */
+    color: hsl(0, 100%, 60%) !important; /* Red for original price */
+    text-decoration: line-through !important; /* Ensure strikethrough */
+    text-decoration-color: hsl(0, 100%, 60%) !important; /* Red strikethrough line */
   }
 
-  /* Dark mode: Make condition and discount badges dark green */
+  /* Dark mode: Make condition badge yellow */
   .dark .bg-primary\/10 {
-    background-color: hsl(120, 100%, 15%) !important; /* Dark green background */
-    color: hsl(120, 100%, 80%) !important; /* Light green text */
-    border-color: hsl(120, 100%, 25%) !important; /* Dark green border */
+    background-color: hsl(45, 100%, 20%) !important; /* Dark yellow background */
+    color: hsl(45, 100%, 80%) !important; /* Light yellow text */
+    border-color: hsl(45, 100%, 40%) !important; /* Yellow border */
   }
 
   .dark .bg-green-100 {
