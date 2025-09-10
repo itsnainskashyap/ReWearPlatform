@@ -75,9 +75,11 @@ export default function OrderWorkflow() {
   });
 
   // Fetch orders
-  const { data: orders = [], isLoading } = useQuery({
+  const { data: ordersResponse, isLoading } = useQuery({
     queryKey: [statusFilter !== "all" ? `/api/admin/orders?status=${statusFilter}` : "/api/admin/orders"],
   });
+
+  const orders = ordersResponse?.orders || [];
 
   // Update order status mutation
   const updateStatusMutation = useMutation({
