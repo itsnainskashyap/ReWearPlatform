@@ -28,7 +28,7 @@ interface ChatMessage {
 }
 
 export default function AIChatAssistant() {
-  // Position the AI assistant on the right side, fixed
+  // Fixed position at bottom-right corner
   const [isOpen, setIsOpen] = useState(false);
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [currentMessage, setCurrentMessage] = useState("");
@@ -132,20 +132,30 @@ export default function AIChatAssistant() {
   };
 
   return (
-    <div className="fixed right-4 bottom-20 z-50 space-y-2">
-      {/* Floating Chat Button */}
-      <Dialog open={isOpen} onOpenChange={setIsOpen}>
-          <DialogTrigger asChild>
-            <Button 
-              size="icon"
-              className="w-14 h-14 rounded-full bg-gradient-to-r from-primary to-accent hover:from-primary/90 hover:to-accent/90 shadow-2xl hover-lift border-2 border-white/20 backdrop-blur-sm"
-              data-testid="button-ai-chat"
-            >
-              <MessageCircle className="w-6 h-6 text-primary-foreground" />
-            </Button>
-          </DialogTrigger>
+    <>
+      {/* Strong blur backdrop when chat is open */}
+      {isOpen && (
+        <div 
+          className="fixed inset-0 bg-black/50 backdrop-blur-xl z-[48] transition-all duration-300"
+          onClick={() => setIsOpen(false)}
+        />
+      )}
+      
+      {/* Fixed Chat Widget at bottom-right */}
+      <div className="fixed right-4 bottom-4 z-50">
+        {/* Floating Chat Button */}
+        <Dialog open={isOpen} onOpenChange={setIsOpen}>
+            <DialogTrigger asChild>
+              <Button 
+                size="icon"
+                className="w-14 h-14 rounded-full bg-gradient-to-r from-primary to-primary/80 hover:from-primary/90 hover:to-primary/70 shadow-2xl hover:shadow-3xl transform hover:scale-110 transition-all duration-300 border-2 border-primary/20"
+                data-testid="button-ai-chat"
+              >
+                <MessageCircle className="w-6 h-6 text-primary-foreground" />
+              </Button>
+            </DialogTrigger>
           
-          <DialogContent className="max-w-md h-[600px] flex flex-col p-0">
+            <DialogContent className="max-w-md h-[600px] flex flex-col p-0 border-2 border-primary shadow-2xl">
             <DialogHeader className="p-4 pb-2 border-b">
               <DialogTitle className="flex items-center space-x-2">
                 <div className="w-8 h-8 bg-gradient-to-r from-primary to-accent rounded-full flex items-center justify-center">
@@ -275,7 +285,8 @@ export default function AIChatAssistant() {
               </p>
             </div>
           </DialogContent>
-        </Dialog>
-    </div>
+          </Dialog>
+      </div>
+    </>
   );
 }

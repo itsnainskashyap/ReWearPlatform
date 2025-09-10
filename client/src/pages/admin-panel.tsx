@@ -11,6 +11,9 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { EnhancedAddProductModal } from "@/components/ui/enhanced-add-product-modal";
 import ShopSettings from "@/components/ui/shop-settings";
+import TaxManagement from "@/components/admin/TaxManagement";
+import BrandManagement from "@/components/admin/BrandManagement";
+import OrderWorkflow from "@/components/admin/OrderWorkflow";
 import { useLocation } from "wouter";
 import { useToast } from "@/hooks/use-toast";
 import { useQuery, useMutation } from "@tanstack/react-query";
@@ -575,7 +578,15 @@ export default function AdminPanel() {
               </TabsTrigger>
               <TabsTrigger value="orders" className="gap-2">
                 <ShoppingCart className="w-4 h-4" />
-                Orders
+                Order Workflow
+              </TabsTrigger>
+              <TabsTrigger value="taxes" className="gap-2">
+                <DollarSign className="w-4 h-4" />
+                Tax Control
+              </TabsTrigger>
+              <TabsTrigger value="brands" className="gap-2">
+                <Tag className="w-4 h-4" />
+                Brands
               </TabsTrigger>
               <TabsTrigger value="products" className="gap-2">
                 <Package className="w-4 h-4" />
@@ -741,8 +752,23 @@ export default function AdminPanel() {
             </div>
           </TabsContent>
 
-          {/* Orders Tab */}
+          {/* Order Workflow Tab */}
           <TabsContent value="orders" className="space-y-4">
+            <OrderWorkflow />
+          </TabsContent>
+
+          {/* Tax Management Tab */}
+          <TabsContent value="taxes" className="space-y-4">
+            <TaxManagement />
+          </TabsContent>
+
+          {/* Brand Management Tab */}
+          <TabsContent value="brands" className="space-y-4">
+            <BrandManagement />
+          </TabsContent>
+
+          {/* Legacy Orders Tab - Keeping for reference */}
+          <TabsContent value="old-orders" className="space-y-4 hidden">
             <Card>
               <CardHeader>
                 <div className="flex items-center justify-between">

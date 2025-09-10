@@ -4,6 +4,48 @@
 @tailwind components;
 @tailwind utilities;
 
+/* ======================== */
+/* GLOBAL STYLE RULES */
+/* ======================== */
+
+/* Default text color = black */
+@layer base {
+  body, * {
+    color: black;
+  }
+  
+  /* Bold text = green */
+  b, strong, 
+  .font-bold, .font-semibold, .font-extrabold,
+  [class*="font-bold"], [class*="font-semibold"], [class*="font-extrabold"] {
+    color: #0B5A3A !important;
+    font-weight: 700;
+  }
+  
+  /* Selected text = bold + green */
+  ::selection {
+    background-color: #0B5A3A;
+    color: white;
+    font-weight: 700;
+  }
+  
+  ::-moz-selection {
+    background-color: #0B5A3A;
+    color: white;
+    font-weight: 700;
+  }
+  
+  /* Ensure headers are also green when bold */
+  h1, h2, h3, h4, h5, h6 {
+    color: black;
+  }
+  
+  h1.font-bold, h2.font-bold, h3.font-bold,
+  h4.font-bold, h5.font-bold, h6.font-bold {
+    color: #0B5A3A !important;
+  }
+}
+
 /* LIGHT MODE */
 :root {
   --button-outline: rgba(0,0,0, .10);
