@@ -57,8 +57,10 @@ export interface IStorage {
     offset?: number;
     featured?: boolean;
     hotSelling?: boolean;
+    isThrift?: boolean;
+    isOriginal?: boolean;
     search?: string;
-  }): Promise<Product[]>;
+  }): Promise<any[]>;
   getProductById(id: string): Promise<Product | undefined>;
   getProductBySlug(slug: string): Promise<Product | undefined>;
   createProduct(product: InsertProduct): Promise<Product>;
@@ -197,7 +199,7 @@ export class DatabaseStorage implements IStorage {
     isThrift?: boolean;
     isOriginal?: boolean;
     search?: string;
-  } = {}): Promise<Product[]> {
+  } = {}): Promise<any[]> {
     const conditions = [eq(products.isActive, true)];
 
     if (options.categoryId) {
@@ -231,8 +233,14 @@ export class DatabaseStorage implements IStorage {
     }
 
     let query = db
-      .select()
+      .select({
+        ...products,
+        brandName: brands.name,
+        categoryName: categories.name,
+      })
       .from(products)
+      .leftJoin(brands, eq(products.brandId, brands.id))
+      .leftJoin(categories, eq(products.categoryId, categories.id))
       .where(and(...conditions))
       .orderBy(desc(products.createdAt));
 

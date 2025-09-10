@@ -135,9 +135,15 @@ export default function Shop() {
     
     // Filter for ReWeara originals when shopType is 'originals'
     if (shopType === 'originals') {
-      // Check if product brand is "ReWeara" or has isOriginal flag
-      const isReWearaOriginal = p.brandName === 'ReWeara' || p.isOriginal === true;
+      // Check if product has isOriginal flag or is from category "Sustainable Dresses"
+      const isReWearaOriginal = p.isOriginal === true || (p as any).categoryName === 'Sustainable Dresses';
       return priceInRange && isReWearaOriginal;
+    }
+    
+    // Filter for thrift products when shopType is 'thrift'
+    if (shopType === 'thrift') {
+      const isThriftProduct = p.isThrift === true || (p as any).categoryName === 'Originals';
+      return priceInRange && isThriftProduct;
     }
     
     return priceInRange;
