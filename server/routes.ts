@@ -102,6 +102,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
         brand,
         featured,
         hotSelling,
+        isThrift,
+        isOriginal,
         search,
         limit = "20",
         offset = "0"
@@ -112,6 +114,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
         brandId: brand as string,
         featured: featured === 'true',
         hotSelling: hotSelling === 'true',
+        isThrift: isThrift === 'true',
+        isOriginal: isOriginal === 'true',
         search: search as string,
         limit: parseInt(limit as string),
         offset: parseInt(offset as string),

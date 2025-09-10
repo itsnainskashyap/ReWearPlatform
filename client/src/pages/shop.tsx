@@ -56,8 +56,8 @@ export default function Shop() {
       if (searchQuery) params.append('search', searchQuery);
       params.append('limit', '12');
       params.append('offset', (page * 12).toString());
-      if (shopType === 'thrift') params.append('hotSelling', 'true');
-      if (shopType === 'originals') params.append('featured', 'true');
+      if (shopType === 'thrift') params.append('isThrift', 'true');
+      if (shopType === 'originals') params.append('isOriginal', 'true');
       
       const response = await fetch(`/api/products?${params.toString()}`);
       if (!response.ok) throw new Error('Failed to fetch products');
