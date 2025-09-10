@@ -17,8 +17,15 @@ interface GeminiResponse {
 }
 
 export class GeminiService {
-  private apiKey: string = "AIzaSyAi2AQXRFGimgYr0rfAzbAuoORXVHbqqNo";
+  private apiKey: string;
   private apiUrl: string = "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent";
+
+  constructor() {
+    this.apiKey = process.env.GEMINI_API_KEY || '';
+    if (!this.apiKey) {
+      console.warn('GEMINI_API_KEY environment variable not set');
+    }
+  }
 
   async generateContent(prompt: string): Promise<string> {
     try {
