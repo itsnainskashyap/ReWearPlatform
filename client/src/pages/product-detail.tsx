@@ -13,9 +13,7 @@ import { apiRequest } from "@/lib/queryClient";
 import { useCartStore } from "@/store/cart-store";
 import VirtualTryOn from "@/components/ai/virtual-tryon";
 import AIRecommendations from "@/components/ai/recommendations";
-import type { products } from "@shared/schema";
-
-type Product = typeof products.$inferSelect;
+import type { Product } from "@shared/schema";
 
 export default function ProductDetail() {
   const [, params] = useRoute("/product/:id");
@@ -40,10 +38,11 @@ export default function ProductDetail() {
   // Ensure we have a valid product ID
   const productId = params?.id as string;
 
-  const { data: product, isLoading } = useQuery<Product>({
+  const { data: product, isLoading, error } = useQuery<Product>({
     queryKey: [`/api/products/${productId}`],
     enabled: !!productId && typeof productId === 'string',
   });
+
 
   const { data: reviews } = useQuery({
     queryKey: [`/api/products/${productId}/reviews`],
@@ -129,11 +128,30 @@ export default function ProductDetail() {
     );
   }
 
-  if (!product) {
+  // Show error state for failed queries
+  if (error) {
+    console.error('Product query error:', error);
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="text-center">
+          <h2 className="text-2xl font-bold mb-4">Error loading product</h2>
+          <p className="text-muted-foreground mb-4">Failed to load product details</p>
+          <Button onClick={() => navigate("/")} className="button-glow">
+            <ArrowLeft className="w-4 h-4 mr-2" />
+            Back to Shop
+          </Button>
+        </div>
+      </div>
+    );
+  }
+
+  // Show not found only after loading is complete and no product is found
+  if (!isLoading && !product) {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <div className="text-center">
           <h2 className="text-2xl font-bold mb-4">Product not found</h2>
+          <p className="text-muted-foreground mb-4">The product you're looking for doesn't exist</p>
           <Button onClick={() => navigate("/")} className="button-glow">
             <ArrowLeft className="w-4 h-4 mr-2" />
             Back to Shop
