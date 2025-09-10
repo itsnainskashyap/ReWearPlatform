@@ -31,6 +31,29 @@ import fs from "fs";
 import path from "path";
 
 export async function registerRoutes(app: Express): Promise<Server> {
+  // Health check endpoint for deployment monitoring
+  app.get('/api/health', async (req, res) => {
+    try {
+      // Test database connectivity with direct database query
+      const { sql } = await import('drizzle-orm');
+      await db.execute(sql`SELECT 1 as health_check`);
+      res.status(200).json({ 
+        status: 'healthy', 
+        timestamp: new Date().toISOString(),
+        environment: process.env.NODE_ENV || 'development',
+        database: 'connected'
+      });
+    } catch (error) {
+      console.error('Health check failed:', error);
+      res.status(503).json({ 
+        status: 'unhealthy', 
+        timestamp: new Date().toISOString(),
+        database: 'disconnected',
+        error: error instanceof Error ? error.message : 'Unknown error'
+      });
+    }
+  });
+
   // Auth middleware
   await setupAuth(app);
 
