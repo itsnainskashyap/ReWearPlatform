@@ -640,17 +640,20 @@
     color: hsl(0, 0%, 95%) !important;
   }
 
-  /* Ensure proper contrast for all text elements */
-  .dark .text-accent-foreground {
-    color: hsl(0, 0%, 0%) !important;
+  /* Keep gradient button text visible in dark mode - MUST BE BLACK */
+  .dark .bg-gradient-to-r.text-accent-foreground,
+  .dark .bg-gradient-to-r.text-primary-foreground {
+    color: hsl(0, 0%, 0%) !important; /* Black text on colored gradients for maximum contrast */
+    font-weight: 600 !important; /* Make text bolder for better visibility */
   }
   
-  /* Keep gradient button text visible in dark mode */
-  .dark .bg-gradient-to-r .text-accent-foreground,
-  .dark .bg-gradient-to-r.text-accent-foreground,
-  .dark .bg-gradient-to-r .text-primary-foreground,
-  .dark .bg-gradient-to-r.text-primary-foreground {
-    color: hsl(0, 0%, 0%) !important; /* Black text on colored gradients */
+  /* Default text contrast for non-gradient elements */
+  .dark .text-accent-foreground:not(.bg-gradient-to-r) {
+    color: hsl(0, 0%, 90%) !important;
+  }
+  
+  .dark .text-primary-foreground:not(.bg-gradient-to-r) {
+    color: hsl(0, 0%, 90%) !important;
   }
 
   /* DARK MODE: WHITE TEXT ON BLACK BACKGROUNDS */
