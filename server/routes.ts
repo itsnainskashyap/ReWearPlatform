@@ -633,27 +633,38 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       try {
+        // Convert uploaded image to base64
+        const imageBuffer = fs.readFileSync(req.file.path);
+        const userImageBase64 = imageBuffer.toString('base64');
+        
         // Use the stored AI prompt or generate one
         const tryOnPrompt = product.aiTryOnPrompt || geminiService.generateTryOnPrompt(product.name);
         const finalPrompt = prompt || tryOnPrompt;
         
-        const aiResponse = await geminiService.generateTryOnResponse(product.name, finalPrompt);
+        // Generate try-on image using Gemini image generation
+        const generatedImageResult = await geminiService.generateTryOnImage(product.name, userImageBase64, finalPrompt);
         
-        // Auto-delete uploaded file for privacy
-        fs.unlinkSync(req.file.path);
+        // Auto-delete uploaded file for privacy using async method
+        await fs.promises.unlink(req.file.path);
 
         res.json({ 
           success: true,
-          message: 'Try-on visualization created',
-          description: aiResponse,
-          // In a full implementation, this would return the generated image
-          image: null 
+          message: 'Try-on image generated successfully',
+          image: {
+            data: generatedImageResult.data,
+            mimeType: generatedImageResult.mimeType
+          },
+          description: `Virtual try-on of ${product.name} generated using AI`
         });
 
       } catch (aiError) {
         console.error('AI try-on error:', aiError);
         // Clean up uploaded file
-        fs.unlinkSync(req.file.path);
+        try {
+          await fs.promises.unlink(req.file.path);
+        } catch (unlinkError) {
+          console.error('Error deleting uploaded file:', unlinkError);
+        }
         res.status(500).json({ error: 'Try-on generation failed. Please try with a clearer photo.' });
       }
 
@@ -661,7 +672,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
       console.error("Error in try-on API:", error);
       // Clean up uploaded file if it exists
       if (req.file && fs.existsSync(req.file.path)) {
-        fs.unlinkSync(req.file.path);
+        try {
+          await fs.promises.unlink(req.file.path);
+        } catch (unlinkError) {
+          console.error('Error deleting uploaded file:', unlinkError);
+        }
       }
       res.status(500).json({ error: 'Try-on service unavailable' });
     }

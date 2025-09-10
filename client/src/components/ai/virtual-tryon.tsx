@@ -19,6 +19,7 @@ export default function VirtualTryOn({ productId, productName, productImage }: V
   const [selectedImage, setSelectedImage] = useState<File | null>(null);
   const [imagePreview, setImagePreview] = useState<string | null>(null);
   const [tryOnResult, setTryOnResult] = useState<string | null>(null);
+  const [generatedImage, setGeneratedImage] = useState<{data: string; mimeType: string} | null>(null);
   const [sessionCount, setSessionCount] = useState(0);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const { toast } = useToast();
@@ -30,7 +31,12 @@ export default function VirtualTryOn({ productId, productName, productImage }: V
     },
     onSuccess: (data) => {
       if (data.success) {
-        setTryOnResult(data.description);
+        if (data.image && data.image.data) {
+          setGeneratedImage(data.image);
+          setTryOnResult(data.description || "Virtual try-on generated successfully!");
+        } else {
+          setTryOnResult(data.description);
+        }
         setSessionCount(prev => prev + 1);
         toast({
           title: "Virtual Try-On Complete!",
@@ -110,6 +116,7 @@ export default function VirtualTryOn({ productId, productName, productImage }: V
     setSelectedImage(null);
     setImagePreview(null);
     setTryOnResult(null);
+    setGeneratedImage(null);
     if (fileInputRef.current) {
       fileInputRef.current.value = '';
     }
@@ -239,27 +246,40 @@ export default function VirtualTryOn({ productId, productName, productImage }: V
                       </div>
                     </div>
                   ) : tryOnResult ? (
-                    <div className="aspect-square rounded-xl bg-gradient-to-br from-green-50 to-blue-50 flex items-center justify-center p-4">
-                      <div className="text-center space-y-2">
-                        <div className="w-12 h-12 bg-green-100 rounded-full flex items-center justify-center mx-auto">
-                          <Sparkles className="w-6 h-6 text-green-600" />
+                    generatedImage ? (
+                      <div className="space-y-2">
+                        <div className="aspect-square rounded-xl overflow-hidden">
+                          <img 
+                            src={`data:${generatedImage.mimeType};base64,${generatedImage.data}`}
+                            alt="AI Generated Try-On" 
+                            className="w-full h-full object-cover"
+                            data-testid="img-tryon-result"
+                          />
                         </div>
-                        <h4 className="font-semibold text-green-800">Try-On Complete!</h4>
-                        <p className="text-sm text-green-700">
-                          {tryOnResult}
-                        </p>
-                        <div className="flex space-x-2 pt-2">
-                          <Button size="sm" variant="outline" className="rounded-xl">
+                        <div className="flex space-x-2">
+                          <Button size="sm" variant="outline" className="rounded-xl flex-1">
                             <Download className="w-3 h-3 mr-1" />
                             Save
                           </Button>
-                          <Button size="sm" variant="outline" className="rounded-xl">
+                          <Button size="sm" variant="outline" className="rounded-xl flex-1">
                             <Share2 className="w-3 h-3 mr-1" />
                             Share
                           </Button>
                         </div>
                       </div>
-                    </div>
+                    ) : (
+                      <div className="aspect-square rounded-xl bg-gradient-to-br from-green-50 to-blue-50 flex items-center justify-center p-4">
+                        <div className="text-center space-y-2">
+                          <div className="w-12 h-12 bg-green-100 rounded-full flex items-center justify-center mx-auto">
+                            <Sparkles className="w-6 h-6 text-green-600" />
+                          </div>
+                          <h4 className="font-semibold text-green-800">Try-On Complete!</h4>
+                          <p className="text-sm text-green-700">
+                            {tryOnResult}
+                          </p>
+                        </div>
+                      </div>
+                    )
                   ) : (
                     <div className="aspect-square rounded-xl border-2 border-dashed border-muted-foreground/30 flex items-center justify-center">
                       <p className="text-sm text-muted-foreground text-center">

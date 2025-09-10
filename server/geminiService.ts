@@ -1,7 +1,11 @@
 interface GeminiRequest {
   contents: Array<{
     parts: Array<{
-      text: string;
+      text?: string;
+      inlineData?: {
+        mimeType: string;
+        data: string;
+      };
     }>;
   }>;
 }
@@ -10,7 +14,24 @@ interface GeminiResponse {
   candidates: Array<{
     content: {
       parts: Array<{
-        text: string;
+        text?: string;
+        inlineData?: {
+          mimeType: string;
+          data: string;
+        };
+      }>;
+    };
+  }>;
+}
+
+interface GeminiImageGenerationResponse {
+  candidates: Array<{
+    content: {
+      parts: Array<{
+        inlineData: {
+          mimeType: string;
+          data: string;
+        };
       }>;
     };
   }>;
@@ -18,7 +39,8 @@ interface GeminiResponse {
 
 export class GeminiService {
   private apiKey: string;
-  private apiUrl: string = "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent";
+  private textApiUrl: string = "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent";
+  private imageApiUrl: string = "https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent";
 
   constructor() {
     this.apiKey = process.env.GEMINI_API_KEY || '';
@@ -41,7 +63,7 @@ export class GeminiService {
         ]
       };
 
-      const response = await fetch(this.apiUrl, {
+      const response = await fetch(this.textApiUrl, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -60,7 +82,11 @@ export class GeminiService {
         throw new Error('No response from Gemini API');
       }
 
-      return data.candidates[0].content.parts[0].text;
+      const textResponse = data.candidates[0].content.parts[0].text;
+      if (!textResponse) {
+        throw new Error('No text response from Gemini API');
+      }
+      return textResponse;
     } catch (error) {
       console.error('Gemini API error:', error);
       throw error;
@@ -95,6 +121,66 @@ Context: ReWeara is a sustainable fashion platform offering both thrift store fi
 Please provide a detailed, encouraging description that helps the customer visualize wearing this sustainable fashion piece.`;
 
     return this.generateContent(enhancedPrompt);
+  }
+
+  // Generate virtual try-on image with user photo
+  async generateTryOnImage(productName: string, userImageBase64: string, customPrompt?: string): Promise<{ data: string; mimeType: string }> {
+    try {
+      // Create try-on prompt using the product's try-on prompt or default
+      const prompt = customPrompt || this.generateTryOnPrompt(productName);
+      
+      const requestBody = {
+        contents: [
+          {
+            parts: [
+              { text: prompt },
+              { 
+                inlineData: { 
+                  mimeType: 'image/jpeg', 
+                  data: userImageBase64 
+                } 
+              },
+            ],
+          },
+        ],
+        generationConfig: {
+          response_mime_type: 'image/png'
+        }
+      };
+
+      const response = await fetch(this.imageApiUrl, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'X-goog-api-key': this.apiKey
+        },
+        body: JSON.stringify(requestBody)
+      });
+
+      if (!response.ok) {
+        const errorText = await response.text();
+        throw new Error(`Gemini Image API error: ${response.status} ${response.statusText} - ${errorText}`);
+      }
+
+      const data: GeminiImageGenerationResponse = await response.json();
+      
+      if (!data.candidates || data.candidates.length === 0) {
+        throw new Error('No image response from Gemini API');
+      }
+
+      const imageData = data.candidates[0].content.parts[0].inlineData;
+      if (!imageData || !imageData.data) {
+        throw new Error('No image data in Gemini API response');
+      }
+
+      return { 
+        data: imageData.data, 
+        mimeType: imageData.mimeType || 'image/png' 
+      };
+    } catch (error) {
+      console.error('Gemini Image Generation error:', error);
+      throw error;
+    }
   }
 
   // Generate chat response
