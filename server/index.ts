@@ -132,26 +132,6 @@ app.use((req, res, next) => {
 
 (async () => {
   try {
-    // Validate database connection before starting the server (non-fatal)
-    console.log('[STARTUP] Validating database connection...');
-    try {
-      await validateDatabaseConnection();
-      console.log('[STARTUP] Database validation completed successfully');
-      
-      // Seed database in production to ensure data is available
-      if (IS_PRODUCTION) {
-        console.log('[STARTUP] Seeding production database...');
-        await seedDatabase();
-      }
-    } catch (dbError: any) {
-      if (dbError.message && dbError.message.includes('endpoint has been disabled')) {
-        console.warn('[STARTUP] DB unavailable (Neon endpoint disabled). Continuing with in-memory storage.');
-      } else {
-        console.warn('[STARTUP] DB connection failed. Continuing with in-memory storage. Error:', dbError.message);
-      }
-    }
-    
-
     console.log('[STARTUP] Registering routes...');
     const server = await registerRoutes(app);
     console.log('[STARTUP] Routes registered successfully');
@@ -201,6 +181,28 @@ app.use((req, res, next) => {
       console.log(`[STARTUP] Health check: http://0.0.0.0:${port}/`);
       console.log(`[STARTUP] API health check: http://0.0.0.0:${port}/api/health`);
       log(`serving on port ${port}`);
+      
+      // Run database operations after server starts (non-blocking)
+      setImmediate(async () => {
+        console.log('[STARTUP] Validating database connection...');
+        try {
+          await validateDatabaseConnection();
+          console.log('[STARTUP] Database validation completed successfully');
+          
+          // Seed database in production to ensure data is available
+          if (IS_PRODUCTION) {
+            console.log('[STARTUP] Seeding production database...');
+            await seedDatabase();
+            console.log('[STARTUP] Database seeding completed');
+          }
+        } catch (dbError: any) {
+          if (dbError.message && dbError.message.includes('endpoint has been disabled')) {
+            console.warn('[STARTUP] DB unavailable (Neon endpoint disabled). Continuing with in-memory storage.');
+          } else {
+            console.warn('[STARTUP] DB connection failed. Continuing with in-memory storage. Error:', dbError.message);
+          }
+        }
+      });
     });
 
     // Graceful shutdown handling (no process.exit in production)
