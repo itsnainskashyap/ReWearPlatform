@@ -498,7 +498,7 @@ export class DatabaseStorage implements IStorage {
 
     const results = await query;
     
-    return results.map(({ order, user }) => ({
+    return results.map(({ order, user }: { order: any; user: any }) => ({
       ...order,
       user: user || undefined
     }));

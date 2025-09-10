@@ -21,7 +21,8 @@ import {
   orders,
   orderTracking,
   orderItems,
-  cartItems
+  cartItems,
+  users
 } from "@shared/schema";
 import { geminiService } from "./geminiService";
 import { z } from "zod";
