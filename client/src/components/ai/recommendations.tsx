@@ -12,7 +12,7 @@ interface Product {
   name: string;
   description: string;
   price: number;
-  imageUrl: string;
+  images: string[];
   isFeatured: boolean;
   condition: string;
   categoryId: string;
@@ -51,7 +51,7 @@ export default function AIRecommendations({
       id: product.id,
       name: product.name,
       price: product.price,
-      imageUrl: product.imageUrl,
+      imageUrl: product.images?.[0] || '',
       quantity: 1,
     });
   };
@@ -130,9 +130,9 @@ export default function AIRecommendations({
             <CardContent className="p-0">
               <div className="relative">
                 <div className="aspect-square rounded-t-3xl overflow-hidden">
-                  {product.imageUrl ? (
+                  {product.images && product.images.length > 0 ? (
                     <img 
-                      src={product.imageUrl}
+                      src={product.images[0]}
                       alt={product.name}
                       className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-300"
                     />

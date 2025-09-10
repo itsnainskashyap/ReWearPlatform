@@ -301,10 +301,10 @@ export default function ProductDetail() {
                   key={size}
                   variant={selectedSize === size ? "default" : "outline"}
                   onClick={() => setSelectedSize(size)}
-                  className={`w-12 h-12 rounded-xl hover-lift ${
+                  className={`w-12 h-12 rounded-xl hover-lift transition-all duration-200 ${
                     selectedSize === size 
-                      ? "bg-primary text-primary-foreground border-primary" 
-                      : ""
+                      ? "bg-gray-900 dark:bg-gray-100 text-white dark:text-gray-900 border-gray-900 dark:border-gray-100 shadow-lg" 
+                      : "hover:bg-gray-100 dark:hover:bg-gray-800"
                   }`}
                   data-testid={`size-${size}`}
                 >

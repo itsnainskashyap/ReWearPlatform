@@ -532,6 +532,28 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Payment settings for checkout (public endpoint)
+  app.get('/api/payment-settings', async (req, res) => {
+    try {
+      const { paymentSettings } = await import("@shared/schema");
+      const { eq } = await import("drizzle-orm");
+      const [settings] = await db
+        .select()
+        .from(paymentSettings)
+        .where(eq(paymentSettings.isActive, true))
+        .limit(1);
+
+      res.json(settings || {
+        upiId: "",
+        qrCodeUrl: "",
+        isActive: false
+      });
+    } catch (error) {
+      console.error("Payment settings fetch error:", error);
+      res.status(500).json({ message: "Failed to fetch payment settings" });
+    }
+  });
+
   // Initialize Gemini AI
 
   // Configure multer for file uploads

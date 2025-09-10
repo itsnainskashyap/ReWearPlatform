@@ -40,13 +40,17 @@ export default function Checkout() {
     queryKey: ["/api/cart"],
   });
 
+  const { data: paymentSettings } = useQuery({
+    queryKey: ["/api/payment-settings"],
+  });
+
   const placeOrderMutation = useMutation({
     mutationFn: async () => {
       const orderData = {
         shippingAddress: shippingInfo,
         paymentMethod,
         totalAmount: calculateTotal(),
-        paymentDetails: paymentMethod === 'upi' ? { upiId } : {}
+        paymentDetails: paymentMethod === 'upi' ? { upiId } : paymentMethod === 'cod' ? { securityAdvance: 99 } : {}
       };
       
       return await apiRequest("POST", "/api/orders", orderData);
@@ -330,10 +334,24 @@ export default function Checkout() {
                             placeholder="Enter UPI ID (e.g., yourname@upi)"
                             className="rounded-xl"
                           />
+                          {paymentSettings?.upiId && (
+                            <div className="p-3 bg-primary/5 border border-primary/20 rounded-xl">
+                              <p className="text-sm font-medium text-primary mb-1">Pay to:</p>
+                              <p className="text-sm font-mono">{paymentSettings.upiId}</p>
+                            </div>
+                          )}
                           <div className="text-center p-4 bg-muted rounded-xl">
                             <p className="text-sm text-muted-foreground mb-2">Or scan QR code</p>
                             <div className="w-32 h-32 bg-white rounded-xl mx-auto flex items-center justify-center">
-                              <span className="text-xs">QR Code</span>
+                              {paymentSettings?.qrCodeUrl ? (
+                                <img 
+                                  src={paymentSettings.qrCodeUrl} 
+                                  alt="UPI QR Code" 
+                                  className="w-full h-full object-contain rounded-xl"
+                                />
+                              ) : (
+                                <span className="text-xs text-muted-foreground">QR Code not configured</span>
+                              )}
                             </div>
                           </div>
                         </div>
@@ -345,9 +363,20 @@ export default function Checkout() {
                         <RadioGroupItem value="cod" />
                         <div className="flex-1">
                           <div className="font-medium">Cash on Delivery</div>
-                          <div className="text-sm text-muted-foreground">Pay when you receive your order</div>
+                          <div className="text-sm text-muted-foreground">Pay ₹99 security advance + remaining on delivery</div>
                         </div>
                       </label>
+                      {paymentMethod === 'cod' && (
+                        <div className="mt-4 p-3 bg-amber-50 border border-amber-200 rounded-xl">
+                          <div className="flex items-center space-x-2">
+                            <Shield className="w-5 h-5 text-amber-600" />
+                            <div>
+                              <p className="text-sm font-medium text-amber-800">Security Advance Required</p>
+                              <p className="text-xs text-amber-600">Pay ₹99 now, remaining amount on delivery</p>
+                            </div>
+                          </div>
+                        </div>
+                      )}
                     </Card>
                   </RadioGroup>
                   
