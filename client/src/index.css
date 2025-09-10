@@ -645,54 +645,54 @@
     color: hsl(0, 0%, 0%) !important;
   }
 
-  /* Comprehensive dark mode text visibility fixes */
+  /* DARK MODE: WHITE TEXT ON BLACK BACKGROUNDS */
   .dark .text-primary {
-    color: hsl(158, 82%, 40%) !important;
+    color: hsl(0, 0%, 100%) !important; /* White text */
   }
 
   .dark .text-black {
-    color: hsl(0, 0%, 95%) !important;
+    color: hsl(0, 0%, 100%) !important; /* White text */
   }
 
   .dark .text-gray-600,
   .dark .text-gray-700,
   .dark .text-gray-800,
   .dark .text-gray-900 {
-    color: hsl(0, 0%, 80%) !important;
+    color: hsl(0, 0%, 100%) !important; /* White text */
   }
 
   .dark .text-slate-600,
   .dark .text-slate-700,
   .dark .text-slate-800 {
-    color: hsl(0, 0%, 75%) !important;
+    color: hsl(0, 0%, 100%) !important; /* White text */
   }
 
-  /* Fix all potential invisible text scenarios */
+  /* DARK MODE: WHITE TEXT ON BLACK BACKGROUNDS */
   .dark .text-foreground {
-    color: hsl(0, 0%, 95%) !important;
+    color: hsl(0, 0%, 100%) !important; /* White text */
   }
 
   .dark .text-card-foreground {
-    color: hsl(0, 0%, 95%) !important;
+    color: hsl(0, 0%, 100%) !important; /* White text */
   }
 
   /* Fix labels and form text */
   .dark label {
-    color: hsl(0, 0%, 90%) !important;
+    color: hsl(0, 0%, 100%) !important; /* White text */
   }
 
   .dark .font-medium {
-    color: hsl(0, 0%, 92%) !important;
+    color: hsl(0, 0%, 100%) !important; /* White text */
   }
 
   .dark .font-bold {
-    color: hsl(0, 0%, 95%) !important;
+    color: hsl(0, 0%, 100%) !important; /* White text */
   }
 
   /* Fix navigation and menu text */
   .dark nav,
   .dark .nav-item {
-    color: hsl(0, 0%, 90%) !important;
+    color: hsl(0, 0%, 100%) !important; /* White text */
   }
 
   /* Fix table and list text */
@@ -700,19 +700,19 @@
   .dark td,
   .dark th,
   .dark li {
-    color: hsl(0, 0%, 85%) !important;
+    color: hsl(0, 0%, 100%) !important; /* White text */
   }
 
   /* Fix modal and dialog text */
   .dark .dialog-content,
   .dark .modal-content {
-    background-color: hsl(0, 0%, 3%) !important;
-    color: hsl(0, 0%, 95%) !important;
+    background-color: hsl(0, 0%, 0%) !important; /* Black background */
+    color: hsl(0, 0%, 100%) !important; /* White text */
   }
 
   /* Fix any remaining paragraph text */
   .dark p {
-    color: hsl(0, 0%, 85%) !important;
+    color: hsl(0, 0%, 100%) !important; /* White text */
   }
 
   /* Fix span elements */
@@ -753,8 +753,33 @@
     border-color: hsl(0, 0%, 15%) !important;
   }
 
+  /* REMOVE GREEN FROM BOTTOM BAR IN DARK MODE */
+  .dark .bottom-nav-fixed {
+    background-color: hsl(0, 0%, 0%) !important; /* Black background */
+    border-color: hsl(0, 0%, 20%) !important; /* Dark border */
+  }
+
+  .dark .bottom-nav-fixed * {
+    color: hsl(0, 0%, 100%) !important; /* White text */
+  }
+
+  /* Remove green colors from bottom navigation in dark mode */
+  .dark .bottom-nav-fixed .text-primary,
+  .dark .bottom-nav-fixed .bg-primary {
+    color: hsl(0, 0%, 100%) !important; /* White instead of green */
+    background-color: hsl(0, 0%, 20%) !important; /* Dark gray instead of green */
+  }
+
+  /* ALL TEXT WHITE IN DARK MODE */
   .dark *:not([class*="bg-"]):not(button):not(input):not(select):not(textarea) {
-    color: hsl(0, 0%, 85%) !important;
+    color: hsl(0, 0%, 100%) !important; /* White text */
+  }
+
+  /* BACKGROUNDS BLACK IN DARK MODE */
+  .dark .bg-background,
+  .dark .bg-card {
+    background-color: hsl(0, 0%, 0%) !important; /* Black background */
+    color: hsl(0, 0%, 100%) !important; /* White text */
   }
 
   /* If there's a 1px border, adjust the inset so that it covers that parent's border */
