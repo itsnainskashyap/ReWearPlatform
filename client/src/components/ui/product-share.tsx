@@ -138,7 +138,7 @@ export function ProductShare({ product, className = "", variant = "icon" }: Prod
         <DropdownMenuSeparator />
         
         {/* Native Share (if supported) */}
-        {typeof navigator !== 'undefined' && navigator.share && (
+        {typeof navigator !== 'undefined' && 'share' in navigator && (
           <>
             <DropdownMenuItem onClick={() => handleShare("native")}>
               <Share2 className="w-4 h-4 mr-2" />

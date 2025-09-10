@@ -120,6 +120,9 @@ export function EnhancedAddProductModal({ open, onOpenChange }: EnhancedAddProdu
     }
   });
 
+  // Watch categoryId to conditionally show brand selection
+  const selectedCategory = watch("categoryId");
+
   const createProductMutation = useMutation({
     mutationFn: async (data: EnhancedProductForm) => {
       return await apiRequest("POST", "/api/admin/products", data);
@@ -281,23 +284,26 @@ export function EnhancedAddProductModal({ open, onOpenChange }: EnhancedAddProdu
               </div>
 
               <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <Label htmlFor="brandId">Brand/Logo</Label>
-                  <Select onValueChange={(value) => setValue("brandId", value)}>
-                    <SelectTrigger>
-                      <SelectValue placeholder="Select brand" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {Array.isArray(brands) && brands.map((brand: any) => (
-                        <SelectItem key={brand.id} value={brand.id}>
-                          {brand.name}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
+                {/* Only show brand selection if not ReWeara Originals */}
+                {selectedCategory !== "originals" && (
+                  <div>
+                    <Label htmlFor="brandId">Brand/Logo</Label>
+                    <Select onValueChange={(value) => setValue("brandId", value)}>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select brand (optional)" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {Array.isArray(brands) && brands.map((brand: any) => (
+                          <SelectItem key={brand.id} value={brand.id}>
+                            {brand.name}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                )}
 
-                <div>
+                <div className={selectedCategory === "originals" ? "col-span-2" : ""}>
                   <Label htmlFor="condition">Condition *</Label>
                   <Select 
                     defaultValue="new"

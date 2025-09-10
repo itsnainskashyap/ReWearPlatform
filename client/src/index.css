@@ -429,7 +429,6 @@
 /* Enhanced backdrop blur for all dialog overlays */
 .dialog-overlay {
   backdrop-filter: blur(60px) saturate(180%) !important;
-  background: rgba(0,0,0,0.85) !important;
 }
 
 .drawer-overlay {
