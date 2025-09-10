@@ -194,6 +194,8 @@ export class DatabaseStorage implements IStorage {
     offset?: number;
     featured?: boolean;
     hotSelling?: boolean;
+    isThrift?: boolean;
+    isOriginal?: boolean;
     search?: string;
   } = {}): Promise<Product[]> {
     const conditions = [eq(products.isActive, true)];
@@ -212,6 +214,14 @@ export class DatabaseStorage implements IStorage {
 
     if (options.hotSelling) {
       conditions.push(eq(products.isHotSelling, true));
+    }
+
+    if (options.isThrift) {
+      conditions.push(eq(products.isThrift, true));
+    }
+
+    if (options.isOriginal) {
+      conditions.push(eq(products.isOriginal, true));
     }
 
     if (options.search) {
