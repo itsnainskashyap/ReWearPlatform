@@ -1,0 +1,321 @@
+I’ll provide a detailed, step-by-step guide to implement the virtual try-on feature for the ReWeara e-commerce platform using Google’s Nano Banana model (Gemini 2.5 Flash Image) for image generation, powered by the provided API. The solution will use TypeScript for type safety and clarity, focusing on generating realistic try-on images when a user uploads their photo and selects a product (e.g., jeans). I’ll describe the implementation thoroughly, including code snippets for key components, a plan to integrate the API, and assumptions to ensure a production-ready feature. This response addresses the core requirement of using the Nano Banana model for image generation while aligning with the broader context of the provided prompt.
+Assumptions
+Tech Stack: The platform uses React with TypeScript for the frontend, Node.js/Express with TypeScript for the backend, and MongoDB for the database.
+API Access: The provided Gemini API key (AIzaSyAi2AQXRFGimgYr0rfAzbAuoORXVHbqqNo) is valid and has access to the gemini-2.0-flash model for image generation.
+Nano Banana Model: Although the provided curl command references gemini-2.0-flash, I’ll assume it’s intended to work with the Nano Banana model (Gemini 2.5 Flash Image) as per the search results, adjusting the endpoint or model name if needed.
+User Flow: The admin uploads a product (e.g., jeans) with an image in the admin panel, and a prefixed prompt is generated (e.g., “Wear this jeans on me realistically”). The user uploads their photo on the product page, clicks a “Try On” button, and the Nano Banana model generates an image of the user wearing the product.
+Image Storage: Generated images are temporarily stored (e.g., in-memory or cloud storage like AWS S3) and displayed to the user without pop-ups.
+Security: API keys are stored securely in environment variables on the backend, not exposed in the frontend.
+Error Handling: The solution handles API errors (e.g., rate limits, invalid inputs) gracefully.
+Implementation Plan
+Backend Setup:
+Create an API endpoint to handle image generation requests using the Gemini API.
+Store product-specific try-on prompts in the MongoDB product schema.
+Process user-uploaded images securely and pass them to the Gemini API with the appropriate prompt.
+Frontend Setup:
+Build a React component for the product page with a “Try On” button and image upload input.
+Display the generated try-on image without pop-ups.
+Add admin panel UI to manage product uploads with auto-generated try-on prompts.
+API Integration:
+Use the provided curl command structure, adapted to TypeScript/Node.js, to call the Gemini API.
+Parse the API response to extract the generated image.
+Testing and Validation:
+Test the try-on feature with various user images and product types.
+Ensure the generated images are realistic and the UI is responsive.
+Step-by-Step Code Implementation
+1. Backend (Node.js/Express with TypeScript)
+Create an API endpoint to handle try-on image generation using the Gemini API.
+File: src/controllers/tryOnController.ts
+import { Request, Response } from 'express';
+import axios from 'axios';
+import { Product } from '../models/productModel'; // MongoDB model for products
+import { BadRequestError, InternalServerError } from '../utils/errors';
+
+interface GeminiApiResponse {
+  contents: {
+    parts: {
+      data: string; // Base64 encoded image or similar
+    }[];
+  }[];
+}
+
+// Environment variable for API key
+const GEMINI_API_KEY = process.env.GEMINI_API_KEY || 'AIzaSyAi2AQXRFGimgYr0rfAzbAuoORXVHbqqNo';
+const GEMINI_API_URL = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent';
+
+export const generateTryOnImage = async (req: Request, res: Response) => {
+  try {
+    const { productId, userImageBase64 } = req.body;
+
+    // Fetch product from MongoDB
+    const product = await Product.findById(productId);
+    if (!product) {
+      throw new BadRequestError('Product not found');
+    }
+
+    // Construct the prompt using the product's try-on prompt
+    const prompt = ${product.tryOnPrompt} using this user image;
+    
+    // Prepare the API payload
+    const payload = {
+      contents: [
+        {
+          parts: [
+            { text: prompt },
+            { inlineData: { mimeType: 'image/jpeg', data: userImageBase64 } },
+          ],
+        },
+      ],
+    };
+
+    // Call Gemini API
+    const response = await axios.post<GeminiApiResponse>(
+      GEMINI_API_URL,
+      payload,
+      {
+        headers: {
+          'Content-Type': 'application/json',
+          'X-goog-api-key': GEMINI_API_KEY,
+        },
+      }
+    );
+
+    // Extract generated image (assuming base64 data in response)
+    const generatedImage = response.data.contents[0]?.parts[0]?.data;
+    if (!generatedImage) {
+      throw new InternalServerError('Failed to generate image');
+    }
+
+    res.json({ image: generatedImage });
+  } catch (error) {
+    console.error('Error generating try-on image:', error);
+    throw new InternalServerError('Image generation failed');
+  }
+};
+File: src/models/productModel.ts
+import mongoose, { Schema, Document } from 'mongoose';
+
+export interface IProduct extends Document {
+  name: string;
+  imageUrl: string;
+  category: 'thrift' | 'reweara';
+  tryOnPrompt: string;
+}
+
+const ProductSchema = new Schema<IProduct>({
+  name: { type: String, required: true },
+  imageUrl: { type: String, required: true },
+  category: { type: String, enum: ['thrift', 'reweara'], required: true },
+  tryOnPrompt: { type: String, required: true }, // e.g., "Wear this jeans on me realistically"
+}, { timestamps: true });
+
+export const Product = mongoose.model<IProduct>('Product', ProductSchema);
+File: src/routes/tryOnRoutes.ts
+import express from 'express';
+import { generateTryOnImage } from '../controllers/tryOnController';
+
+const router = express.Router();
+
+router.post('/try-on', generateTryOnImage);
+
+export default router;
+File: src/index.ts
+import express from 'express';
+import mongoose from 'mongoose';
+import tryOnRoutes from './routes/tryOnRoutes';
+import dotenv from 'dotenv';
+
+dotenv.config();
+
+const app = express();
+app.use(express.json());
+
+// Connect to MongoDB
+mongoose.connect(process.env.MONGO_URI || 'mongodb://localhost/reweara');
+
+app.use('/api', tryOnRoutes);
+
+app.listen(3000, () => console.log('Server running on port 3000'));
+2. Frontend (React with TypeScript)
+Create a product page component to handle user image uploads and display the try-on result.
+File: src/components/ProductPage.tsx
+import React, { useState } from 'react';
+import axios from 'axios';
+
+interface Product {
+  _id: string;
+  name: string;
+  imageUrl: string;
+  tryOnPrompt: string;
+}
+
+interface TryOnProps {
+  product: Product;
+}
+
+const ProductPage: React.FC<TryOnProps> = ({ product }) => {
+  const [userImage, setUserImage] = useState<File | null>(null);
+  const [generatedImage, setGeneratedImage] = useState<string | null>(null);
+  const [loading, setLoading] = useState(false);
+
+  const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files && e.target.files[0]) {
+      setUserImage(e.target.files[0]);
+    }
+  };
+
+  const handleTryOn = async () => {
+    if (!userImage) {
+      alert('Please upload an image');
+      return;
+    }
+
+    setLoading(true);
+    try {
+      // Convert user image to base64
+      const reader = new FileReader();
+      reader.readAsDataURL(userImage);
+      reader.onload = async () => {
+        const base64Image = (reader.result as string).split(',')[1]; // Remove data:image/jpeg;base64,
+
+        const response = await axios.post('/api/try-on', {
+          productId: product._id,
+          userImageBase64: base64Image,
+        });
+
+        setGeneratedImage(response.data.image);
+      };
+    } catch (error) {
+      console.error('Error generating try-on image:', error);
+      alert('Failed to generate try-on image');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return (
+    <div className="product-page">
+      <h1>{product.name}</h1>
+      <img src={product.imageUrl} alt={product.name} style={{ maxWidth: '300px' }} />
+      <div>
+        <input type="file" accept="image/*" onChange={handleImageUpload} />
+        <button onClick={handleTryOn} disabled={loading}>
+          {loading ? 'Generating...' : 'Try On'}
+        </button>
+      </div>
+      {generatedImage && (
+        <div>
+          <h2>Try-On Result</h2>
+          <img src={data:image/jpeg;base64,${generatedImage}} alt="Try-on result" style={{ maxWidth: '300px' }} />
+        </div>
+      )}
+    </div>
+  );
+};
+
+export default ProductPage;
+3. Admin Panel (Product Upload)
+Add a form to upload products with auto-generated try-on prompts.
+File: src/components/admin/ProductUploadForm.tsx
+import React, { useState } from 'react';
+import axios from 'axios';
+
+const ProductUploadForm: React.FC = () => {
+  const [name, setName] = useState('');
+  const [imageUrl, setImageUrl] = useState('');
+  const [category, setCategory] = useState<'thrift' | 'reweara'>('thrift');
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    try {
+      // Auto-generate try-on prompt
+      const tryOnPrompt = Wear this ${name.toLowerCase()} on me realistically;
+      
+      await axios.post('/api/products', {
+        name,
+        imageUrl,
+        category,
+        tryOnPrompt,
+      });
+      alert('Product uploaded successfully');
+    } catch (error) {
+      console.error('Error uploading product:', error);
+      alert('Failed to upload product');
+    }
+  };
+
+  return (
+    <form onSubmit={handleSubmit}>
+      <h2>Upload Product</h2>
+      <div>
+        <label>Name:</label>
+        <input type="text" value={name} onChange={(e) => setName(e.target.value)} required />
+      </div>
+      <div>
+        <label>Image URL:</label>
+        <input type="text" value={imageUrl} onChange={(e) => setImageUrl(e.target.value)} required />
+      </div>
+      <div>
+        <label>Category:</label>
+        <select value={category} onChange={(e) => setCategory(e.target.value as 'thrift' | 'reweara')}>
+          <option value="thrift">Thrift Store</option>
+          <option value="reweara">ReWeara Originals</option>
+        </select>
+      </div>
+      <button type="submit">Upload</button>
+    </form>
+  );
+};
+
+export default ProductUploadForm;
+File: src/controllers/productController.ts
+import { Request, Response } from 'express';
+import { Product } from '../models/productModel';
+
+export const createProduct = async (req: Request, res: Response) => {
+  try {
+    const product = new Product(req.body);
+    await product.save();
+    res.status(201).json(product);
+  } catch (error) {
+    console.error('Error creating product:', error);
+    res.status(500).json({ message: 'Failed to create product' });
+  }
+};
+File: src/routes/productRoutes.ts
+import express from 'express';
+import { createProduct } from '../controllers/productController';
+
+const router = express.Router();
+
+router.post('/products', createProduct);
+
+export default router;
+4. Gemini API Integration Notes
+Model Clarification: The provided curl command references gemini-2.0-flash, but Nano Banana is gemini-2.5-flash. I’ve updated the endpoint to gemini-2.5-flash based on search results.
+Prompt Design: The try-on prompt is prefixed as “Wear this [product] on me realistically” to ensure realistic image generation. Additional parameters (e.g., lighting, background) can be added for better results.
+Image Handling: The user’s uploaded image is sent as base64-encoded data, and the product image or description is included in the prompt. The API response is expected to return a base64-encoded image.
+Security: The API key is stored in .env and accessed via process.env.GEMINI_API_KEY. Avoid hardcoding in production.
+Test Cases
+Product Upload:
+Scenario: Admin uploads a product (e.g., “Blue Jeans”, image URL, category: thrift).
+Expected: Product is saved in MongoDB with a try-on prompt like “Wear this blue jeans on me realistically”.
+Test: Check MongoDB and admin panel UI.
+Try-On Feature:
+Scenario: User uploads a photo and clicks “Try On” on the jeans product page.
+Expected: Gemini API generates an image of the user wearing jeans, displayed without a pop-up.
+Test: Upload various user images and verify realistic output.
+API Error Handling:
+Scenario: Invalid API key or malformed image input.
+Expected: User-friendly error message (e.g., “Failed to generate image”).
+Test: Simulate API failures and check response.
+Category Filtering:
+Scenario: User selects “Thrift Store” or “ReWeara Originals”.
+Expected: Only relevant products are displayed.
+Test: Query MongoDB with category: 'thrift' or category: 'reweara'.
+Additional Notes
+Scalability: For production, use a cloud storage service (e.g., AWS S3) for images instead of base64 to reduce payload size.
+Rate Limits: Monitor Gemini API rate limits and implement retry logic if needed.
+UI/UX: Ensure the try-on image loads progressively and is responsive across devices.
+Future Enhancements: Add support for multi-image inputs or iterative refinement as described in the Nano Banana documentation.
+This implementation provides a robust, type-safe solution for the virtual try-on feature using the Nano Banana model, addressing the core requirements of the prompt. Let me know if you need further clarification or additional features implemented
