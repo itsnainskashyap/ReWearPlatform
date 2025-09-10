@@ -6,11 +6,21 @@ import path from "path";
 
 // Load snapshot data for consistent seeding
 function loadSnapshot() {
-  const snapshotPath = path.resolve(import.meta.dirname, 'snapshot.json');
-  if (!fs.existsSync(snapshotPath)) {
-    throw new Error(`Snapshot file not found: ${snapshotPath}`);
+  // Try multiple locations for snapshot.json
+  const possiblePaths = [
+    path.resolve(import.meta.dirname, 'snapshot.json'), // Same directory as built bundle
+    path.resolve(process.cwd(), 'server', 'snapshot.json'), // Original server directory  
+    path.resolve(process.cwd(), 'snapshot.json'), // Root directory
+  ];
+  
+  for (const snapshotPath of possiblePaths) {
+    if (fs.existsSync(snapshotPath)) {
+      console.log(`[SEED] Using snapshot from: ${snapshotPath}`);
+      return JSON.parse(fs.readFileSync(snapshotPath, 'utf-8'));
+    }
   }
-  return JSON.parse(fs.readFileSync(snapshotPath, 'utf-8'));
+  
+  throw new Error(`Snapshot file not found in any of these locations: ${possiblePaths.join(', ')}`);
 }
 
 // Seed data for production deployment

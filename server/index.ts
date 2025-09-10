@@ -20,62 +20,6 @@ console.log(`[STARTUP] Platform: ${process.platform}`);
 let startupHealthy = true;
 let startupError = '';
 
-// Helper function to recursively copy files
-function copyRecursive(src: string, dest: string) {
-  const stat = fs.lstatSync(src);
-  if (stat.isDirectory()) {
-    fs.mkdirSync(dest, { recursive: true });
-    const files = fs.readdirSync(src);
-    for (const file of files) {
-      copyRecursive(path.join(src, file), path.join(dest, file));
-    }
-  } else {
-    fs.copyFileSync(src, dest);
-  }
-}
-
-// Function to ensure static assets are available for production deployment
-function ensureStaticAssets() {
-  const serverPublic = path.resolve(import.meta.dirname, 'public');
-  const distPublic = path.resolve(process.cwd(), 'dist/public');
-  
-  console.log('[STARTUP] Checking static assets...');
-  console.log('[STARTUP] Server public path:', serverPublic);
-  console.log('[STARTUP] Dist public path:', distPublic);
-  
-  // If server/public already exists, we're good
-  if (fs.existsSync(serverPublic)) {
-    console.log('[STARTUP] Static assets already available at server/public');
-    return;
-  }
-  
-  // If dist/public exists, create symlink or copy
-  if (fs.existsSync(distPublic)) {
-    try {
-      // Ensure parent directory exists
-      fs.mkdirSync(path.dirname(serverPublic), { recursive: true });
-      
-      // Try to create symlink (preferred for efficiency)
-      const symlinkType = process.platform === 'win32' ? 'junction' : 'dir';
-      fs.symlinkSync(path.relative(path.dirname(serverPublic), distPublic), serverPublic, symlinkType);
-      console.log('[STARTUP] Created symlink from server/public to dist/public');
-    } catch (symlinkError) {
-      try {
-        // Fallback to copying files
-        copyRecursive(distPublic, serverPublic);
-        console.log('[STARTUP] Copied static assets from dist/public to server/public');
-      } catch (copyError) {
-        console.error('[STARTUP ERROR] Failed to setup static assets:', copyError);
-        startupHealthy = false;
-        startupError = 'Failed to setup static assets for deployment';
-      }
-    }
-  } else {
-    console.warn('[STARTUP WARNING] No built static assets found at dist/public. Run npm run build first.');
-    startupHealthy = false;
-    startupError = 'Static assets not built - run npm run build';
-  }
-}
 
 // Validate required environment variables for production
 if (IS_PRODUCTION) {
@@ -220,8 +164,8 @@ app.use((req, res, next) => {
   if (app.get("env") === "development") {
     await setupVite(app, server);
   } else {
-    // Ensure static assets are available before serving them
-    ensureStaticAssets();
+    // In production, serve static files directly from the build location
+    console.log('[STARTUP] Production mode: serving static files from dist/public');
     serveStatic(app);
   }
 
@@ -256,7 +200,25 @@ app.use((req, res, next) => {
             await seedDatabase();
             console.log('[STARTUP] Database seeding completed');
           }
+          
+          // Add deployment diagnostics
+          console.log('[STARTUP] Deployment diagnostics:');
+          console.log(`[STARTUP] - NODE_ENV: ${NODE_ENV}`);
+          console.log(`[STARTUP] - Database connected: Yes`);
+          console.log(`[STARTUP] - Static assets path: ${path.resolve(import.meta.dirname, 'public')}`);
+          console.log(`[STARTUP] - Static assets exist: ${fs.existsSync(path.resolve(import.meta.dirname, 'public'))}`);
+          console.log(`[STARTUP] - Working directory: ${process.cwd()}`);
+          console.log(`[STARTUP] - Import dirname: ${import.meta.dirname}`);
         } catch (dbError: any) {
+          console.log('[STARTUP] Deployment diagnostics (DB Error):');
+          console.log(`[STARTUP] - NODE_ENV: ${NODE_ENV}`);
+          console.log(`[STARTUP] - Database connected: No`);
+          console.log(`[STARTUP] - DB Error: ${dbError.message}`);
+          console.log(`[STARTUP] - Static assets path: ${path.resolve(import.meta.dirname, 'public')}`);
+          console.log(`[STARTUP] - Static assets exist: ${fs.existsSync(path.resolve(import.meta.dirname, 'public'))}`);
+          console.log(`[STARTUP] - Working directory: ${process.cwd()}`);
+          console.log(`[STARTUP] - Import dirname: ${import.meta.dirname}`);
+          
           if (dbError.message && dbError.message.includes('endpoint has been disabled')) {
             console.warn('[STARTUP] DB unavailable (Neon endpoint disabled). Continuing with in-memory storage.');
           } else {
