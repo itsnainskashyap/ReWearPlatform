@@ -7,7 +7,7 @@ export default function HeroSection() {
   return (
     <section className="relative px-4 py-8">
       {/* Hero with background */}
-      <div className="relative bg-gradient-to-br from-primary/10 to-accent/10 rounded-2xl p-8 mb-6 overflow-hidden">
+      <div className="relative bg-gradient-to-br from-primary/20 to-accent/20 dark:from-primary/10 dark:to-accent/10 rounded-2xl p-8 mb-6 overflow-hidden">
         <div className="absolute inset-0 opacity-20">
           <img 
             src="https://images.unsplash.com/photo-1558769132-cb1aea458c5e?ixlib=rb-4.0.3&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=1200&h=800"

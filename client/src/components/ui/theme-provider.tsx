@@ -24,7 +24,7 @@ const ThemeProviderContext = createContext<ThemeProviderState>(initialState);
 
 export function ThemeProvider({
   children,
-  defaultTheme = "system",
+  defaultTheme = "dark",
   storageKey = "reweara-ui-theme",
   ...props
 }: ThemeProviderProps) {
@@ -66,70 +66,46 @@ export function ThemeProvider({
 
     if (computedTheme === "dark") {
       style.textContent = `
-        body, * {
-          color: hsl(0, 0%, 98%) !important;
+        body {
+          background-color: hsl(0, 0%, 0%) !important;
+          color: hsl(0, 0%, 95%) !important;
         }
         
-        b, strong, 
-        .font-bold, .font-semibold, .font-extrabold,
-        [class*="font-bold"], [class*="font-semibold"], [class*="font-extrabold"] {
+        .bg-background {
+          background-color: hsl(0, 0%, 0%) !important;
+        }
+        
+        .text-primary {
           color: hsl(158, 82%, 48%) !important;
-          font-weight: 700;
         }
         
-        h1, h2, h3, h4, h5, h6 {
-          color: hsl(0, 0%, 98%) !important;
+        .bg-card {
+          background-color: hsl(0, 0%, 1%) !important;
         }
         
-        h1.font-bold, h2.font-bold, h3.font-bold,
-        h4.font-bold, h5.font-bold, h6.font-bold {
-          color: hsl(158, 82%, 48%) !important;
+        .bg-muted {
+          background-color: hsl(0, 0%, 5%) !important;
         }
 
         ::selection {
           background-color: hsl(158, 82%, 48%);
-          color: hsl(240, 10%, 3.9%);
-          font-weight: 700;
-        }
-        
-        ::-moz-selection {
-          background-color: hsl(158, 82%, 48%);
-          color: hsl(240, 10%, 3.9%);
-          font-weight: 700;
+          color: hsl(0, 0%, 0%);
         }
       `;
     } else {
       style.textContent = `
-        body, * {
-          color: black !important;
-        }
-        
-        b, strong, 
-        .font-bold, .font-semibold, .font-extrabold,
-        [class*="font-bold"], [class*="font-semibold"], [class*="font-extrabold"] {
+        body {
+          background-color: hsl(40, 25%, 97%) !important;
           color: #0B5A3A !important;
-          font-weight: 700;
         }
         
-        h1, h2, h3, h4, h5, h6 {
-          color: black !important;
-        }
-        
-        h1.font-bold, h2.font-bold, h3.font-bold,
-        h4.font-bold, h5.font-bold, h6.font-bold {
+        .text-primary {
           color: #0B5A3A !important;
         }
 
         ::selection {
           background-color: #0B5A3A;
           color: white;
-          font-weight: 700;
-        }
-        
-        ::-moz-selection {
-          background-color: #0B5A3A;
-          color: white;
-          font-weight: 700;
         }
       `;
     }

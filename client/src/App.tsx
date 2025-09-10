@@ -87,7 +87,7 @@ function AppContent() {
   }, [isLoading]);
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-background via-background to-primary/5 text-foreground font-sans">
+    <div className="min-h-screen bg-background text-foreground font-sans">
       {/* Loading Screen */}
       {isLoading && (
         <div className="fixed inset-0 bg-gradient-to-br from-primary/10 via-background to-accent/10 flex items-center justify-center z-50">
@@ -135,7 +135,7 @@ function AppContent() {
 function App() {
   return (
     <QueryClientProvider client={queryClient}>
-      <ThemeProvider defaultTheme="system" storageKey="reweara-theme">
+      <ThemeProvider defaultTheme="dark" storageKey="reweara-theme">
         <TooltipProvider>
           <AppContent />
           <Toaster />
