@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -35,6 +35,12 @@ export default function Checkout() {
   });
 
   const [upiId, setUpiId] = useState("");
+  const [taxInfo, setTaxInfo] = useState({ taxRate: 0, taxAmount: 0 });
+  const [codAdvanceData, setCodAdvanceData] = useState({
+    transactionId: "",
+    screenshotProof: null as File | null,
+    isPaid: false
+  });
 
   const { data: cart, isLoading } = useQuery({
     queryKey: ["/api/cart"],
@@ -44,13 +50,39 @@ export default function Checkout() {
     queryKey: ["/api/payment-settings"],
   });
 
+  const calculateTaxMutation = useMutation({
+    mutationFn: async (subtotal: number) => {
+      return await apiRequest("POST", "/api/calculate-tax", {
+        subtotal,
+        country: "India",
+        state: shippingInfo.state,
+        city: shippingInfo.city,
+        zipCode: shippingInfo.pincode
+      });
+    },
+    onSuccess: (data: any) => {
+      setTaxInfo({
+        taxRate: data.taxRate || 0,
+        taxAmount: data.taxAmount || 0
+      });
+    }
+  });
+
   const placeOrderMutation = useMutation({
     mutationFn: async () => {
       const orderData = {
         shippingAddress: shippingInfo,
         paymentMethod,
         totalAmount: calculateTotal(),
-        paymentDetails: paymentMethod === 'upi' ? { upiId } : paymentMethod === 'cod' ? { securityAdvance: 99 } : {}
+        paymentDetails: paymentMethod === 'upi' 
+          ? { upiId } 
+          : paymentMethod === 'cod' 
+            ? { 
+                securityAdvance: 99,
+                transactionId: codAdvanceData.transactionId,
+                paymentProofUploaded: !!codAdvanceData.screenshotProof
+              } 
+            : {}
       };
       
       return await apiRequest("POST", "/api/orders", orderData);
@@ -77,8 +109,7 @@ export default function Checkout() {
       total + (parseFloat(item.product.price) * item.quantity), 0
     );
     const shipping = subtotal > 500 ? 0 : 50;
-    // Tax removed - will be managed from admin panel in future
-    return (subtotal + shipping).toFixed(2);
+    return (subtotal + shipping + taxInfo.taxAmount).toFixed(2);
   };
 
   const calculateSubtotal = () => {
@@ -88,8 +119,30 @@ export default function Checkout() {
     ).toFixed(2);
   };
 
+  // Calculate tax when shipping address changes
+  useEffect(() => {
+    if (shippingInfo.state && shippingInfo.city && cart && Array.isArray((cart as any)?.items)) {
+      const subtotal = (cart as any).items.reduce((total: number, item: any) => 
+        total + (parseFloat(item.product.price) * item.quantity), 0
+      );
+      if (subtotal > 0) {
+        calculateTaxMutation.mutate(subtotal);
+      }
+    }
+  }, [shippingInfo.state, shippingInfo.city, shippingInfo.pincode, cart]);
+
   const handlePlaceOrder = () => {
     if (step === 3) {
+      // Validate COD advance payment
+      if (paymentMethod === 'cod' && !codAdvanceData.transactionId.trim()) {
+        toast({
+          title: "Transaction ID Required",
+          description: "Please enter the transaction ID for the ₹99 security advance payment.",
+          variant: "destructive",
+        });
+        return;
+      }
+      
       placeOrderMutation.mutate();
     }
   };
@@ -367,12 +420,77 @@ export default function Checkout() {
                         </div>
                       </label>
                       {paymentMethod === 'cod' && (
-                        <div className="mt-4 p-3 bg-amber-50 border border-amber-200 rounded-xl">
-                          <div className="flex items-center space-x-2">
-                            <Shield className="w-5 h-5 text-amber-600" />
-                            <div>
-                              <p className="text-sm font-medium text-amber-800">Security Advance Required</p>
-                              <p className="text-xs text-amber-600">Pay ₹99 now, remaining amount on delivery</p>
+                        <div className="mt-4 space-y-4">
+                          <div className="p-3 bg-amber-50 border border-amber-200 rounded-xl">
+                            <div className="flex items-center space-x-2">
+                              <Shield className="w-5 h-5 text-amber-600" />
+                              <div>
+                                <p className="text-sm font-medium text-amber-800">Security Advance Payment</p>
+                                <p className="text-xs text-amber-600">Pay ₹99 security advance now using UPI</p>
+                              </div>
+                            </div>
+                          </div>
+                          
+                          {/* UPI Payment for COD Advance */}
+                          <div className="p-4 bg-primary/5 border border-primary/20 rounded-xl">
+                            <h4 className="font-medium mb-3 text-primary">Pay ₹99 Security Advance</h4>
+                            
+                            {paymentSettings?.upiId && (
+                              <div className="mb-4">
+                                <p className="text-sm font-medium mb-2">UPI ID:</p>
+                                <div className="p-3 bg-white rounded-lg border text-center">
+                                  <p className="font-mono text-sm text-primary">{paymentSettings.upiId}</p>
+                                  <p className="text-xs text-muted-foreground mt-1">Amount: ₹99</p>
+                                </div>
+                              </div>
+                            )}
+                            
+                            {paymentSettings?.qrCodeUrl && (
+                              <div className="text-center mb-4">
+                                <p className="text-sm font-medium mb-2">Or scan QR code:</p>
+                                <div className="w-32 h-32 bg-white rounded-lg mx-auto p-2 border">
+                                  <img 
+                                    src={paymentSettings.qrCodeUrl} 
+                                    alt="UPI QR Code for ₹99" 
+                                    className="w-full h-full object-contain"
+                                  />
+                                </div>
+                                <p className="text-xs text-muted-foreground mt-2">Scan to pay ₹99</p>
+                              </div>
+                            )}
+                            
+                            <div className="space-y-3">
+                              <div>
+                                <Label htmlFor="transactionId">Transaction ID/Reference Number</Label>
+                                <Input
+                                  id="transactionId"
+                                  value={codAdvanceData.transactionId}
+                                  onChange={(e) => setCodAdvanceData({...codAdvanceData, transactionId: e.target.value})}
+                                  placeholder="Enter transaction ID"
+                                  className="rounded-xl mt-1"
+                                  data-testid="input-transaction-id"
+                                />
+                              </div>
+                              
+                              <div>
+                                <Label htmlFor="paymentProof">Payment Screenshot (Optional)</Label>
+                                <Input
+                                  id="paymentProof"
+                                  type="file"
+                                  accept="image/*"
+                                  onChange={(e) => setCodAdvanceData({...codAdvanceData, screenshotProof: e.target.files?.[0] || null})}
+                                  className="rounded-xl mt-1"
+                                  data-testid="input-payment-proof"
+                                />
+                                <p className="text-xs text-muted-foreground mt-1">Upload screenshot of successful payment</p>
+                              </div>
+                              
+                              {codAdvanceData.transactionId && (
+                                <div className="flex items-center space-x-2 p-3 bg-green-50 border border-green-200 rounded-xl">
+                                  <CheckCircle className="w-4 h-4 text-green-600" />
+                                  <p className="text-sm text-green-800">Payment details captured. You can proceed.</p>
+                                </div>
+                              )}
                             </div>
                           </div>
                         </div>

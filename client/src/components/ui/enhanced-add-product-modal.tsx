@@ -231,15 +231,15 @@ export function EnhancedAddProductModal({ open, onOpenChange }: EnhancedAddProdu
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+      <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto bg-white text-black">
         <DialogHeader>
-          <DialogTitle className="text-2xl font-bold flex items-center gap-2">
+          <DialogTitle className="text-2xl font-bold flex items-center gap-2 text-black">
             <Package className="w-6 h-6 text-primary" />
             Add New Product (Enhanced)
           </DialogTitle>
         </DialogHeader>
 
-        <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
+        <form onSubmit={handleSubmit(onSubmit)} className="space-y-6 text-black">
           <Tabs defaultValue="basic" className="w-full">
             <TabsList className="grid w-full grid-cols-5">
               <TabsTrigger value="basic">Basic Info</TabsTrigger>

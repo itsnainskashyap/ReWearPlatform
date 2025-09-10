@@ -30,25 +30,28 @@ export default function ProductDetail() {
     setIsVisible(true);
   }, []);
 
+  // Ensure we have a valid product ID
+  const productId = params?.id as string;
+
   const { data: product, isLoading } = useQuery({
-    queryKey: ["/api/products", params?.id],
-    enabled: !!params?.id,
+    queryKey: ["/api/products", productId],
+    enabled: !!productId && typeof productId === 'string',
   });
 
   const { data: reviews } = useQuery({
-    queryKey: ["/api/products", params?.id, "reviews"],
-    enabled: !!params?.id,
+    queryKey: ["/api/products", productId, "reviews"],
+    enabled: !!productId && typeof productId === 'string',
   });
 
   const { data: related } = useQuery({
-    queryKey: ["/api/products", params?.id, "related"],
-    enabled: !!params?.id,
+    queryKey: ["/api/products", productId, "related"],
+    enabled: !!productId && typeof productId === 'string',
   });
 
   const addToCartMutation = useMutation({
     mutationFn: async () => {
       await apiRequest("POST", "/api/cart/items", { 
-        productId: params?.id, 
+        productId: productId, 
         quantity,
         size: selectedSize 
       });
@@ -64,7 +67,7 @@ export default function ProductDetail() {
 
   const addToWishlistMutation = useMutation({
     mutationFn: async () => {
-      await apiRequest("POST", "/api/wishlist", { productId: params?.id });
+      await apiRequest("POST", "/api/wishlist", { productId: productId });
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/wishlist"] });
@@ -133,7 +136,7 @@ export default function ProductDetail() {
           <Button
             variant="ghost"
             size="icon"
-            onClick={() => navigate(-1)}
+            onClick={() => window.history.back()}
             className="hover-lift rounded-2xl"
             data-testid="button-back"
           >

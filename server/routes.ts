@@ -330,70 +330,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Add new product (Admin only)
-  app.post('/api/admin/products', isAuthenticated, async (req: any, res) => {
-    try {
-      const userEmail = req.user?.claims?.email;
-      
-      if (userEmail !== "itsnainskashyap@gmail.com") {
-        return res.status(403).json({ message: "Access denied" });
-      }
-
-      const productData = req.body;
-      
-      // Generate a slug from the name
-      const slug = productData.name.toLowerCase()
-        .replace(/[^a-z0-9 -]/g, '')
-        .replace(/\s+/g, '-')
-        .replace(/-+/g, '-');
-
-      const newProduct = await storage.createProduct({
-        ...productData,
-        slug,
-        images: productData.images || [],
-        sizes: productData.sizes || [],
-        isActive: true,
-        viewCount: 0
-      });
-
-      res.json(newProduct);
-    } catch (error) {
-      console.error("Error creating product:", error);
-      res.status(500).json({ message: "Failed to create product" });
-    }
-  });
+  // Admin product creation moved to adminRoutes.ts
 
   // Update product (Admin only)
-  app.put('/api/admin/products/:id', isAuthenticated, async (req: any, res) => {
-    try {
-      const userEmail = req.user?.claims?.email;
-      
-      if (userEmail !== "itsnainskashyap@gmail.com") {
-        return res.status(403).json({ message: "Access denied" });
-      }
-
-      const productId = req.params.id;
-      const updates = req.body;
-      
-      // Generate a new slug if name is being updated
-      if (updates.name) {
-        updates.slug = updates.name.toLowerCase()
-          .replace(/[^a-z0-9 -]/g, '')
-          .replace(/\s+/g, '-')
-          .replace(/-+/g, '-');
-      }
-
-      const updatedProduct = await storage.updateProduct(productId, updates);
-      
-      if (!updatedProduct) {
-        return res.status(404).json({ message: "Product not found" });
-      }
-
-      res.json(updatedProduct);
-    } catch (error) {
-      console.error("Error updating product:", error);
-      res.status(500).json({ message: "Failed to update product" });
-    }
-  });
+  // Admin product update moved to adminRoutes.ts
 
   // Get active coupons for checkout
   app.get('/api/coupons/active', async (req, res) => {
@@ -487,29 +427,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Delete product (Admin only) - Soft delete by setting isActive to false
-  app.delete('/api/admin/products/:id', isAuthenticated, async (req: any, res) => {
-    try {
-      const userEmail = req.user?.claims?.email;
-      
-      if (userEmail !== "itsnainskashyap@gmail.com") {
-        return res.status(403).json({ message: "Access denied" });
-      }
-
-      const productId = req.params.id;
-      
-      // Soft delete by setting isActive to false
-      const deletedProduct = await storage.updateProduct(productId, { isActive: false });
-      
-      if (!deletedProduct) {
-        return res.status(404).json({ message: "Product not found" });
-      }
-
-      res.json({ message: "Product deleted successfully" });
-    } catch (error) {
-      console.error("Error deleting product:", error);
-      res.status(500).json({ message: "Failed to delete product" });
-    }
-  });
+  // Admin product delete moved to adminRoutes.ts
 
   // Update order status (Admin only)
   app.put('/api/admin/orders/:orderId/status', isAuthenticated, async (req: any, res) => {
@@ -909,83 +827,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // ========================
   // ENHANCED PRODUCT MANAGEMENT
   // ========================
-  
-  // Admin: Create product with media
-  app.post('/api/admin/products', isAuthenticated, async (req, res) => {
-    try {
-      const validated = insertProductSchema.parse(req.body);
-      const [product] = await db.insert(products).values(validated).returning();
-      
-      // Add media if provided
-      if (req.body.media && req.body.media.length > 0) {
-        const mediaEntries = req.body.media.map((media: any, index: number) => ({
-          productId: product.id,
-          type: media.type || 'image',
-          url: media.url,
-          alt: media.alt,
-          sortOrder: index,
-          isMain: index === 0
-        }));
-        await db.insert(productMedia).values(mediaEntries);
-      }
-      
-      res.json(product);
-    } catch (error) {
-      console.error('Error creating product:', error);
-      res.status(500).json({ message: 'Failed to create product' });
-    }
-  });
+  // Note: Admin product CRUD is handled in adminRoutes.ts to avoid conflicts
 
-  // Admin: Update product
-  app.put('/api/admin/products/:id', isAuthenticated, async (req, res) => {
-    try {
-      const [product] = await db
-        .update(products)
-        .set({ ...req.body, updatedAt: new Date() })
-        .where(eq(products.id, req.params.id))
-        .returning();
-      
-      // Update media if provided
-      if (req.body.media) {
-        // Delete existing media
-        await db.delete(productMedia).where(eq(productMedia.productId, req.params.id));
-        
-        // Add new media
-        if (req.body.media.length > 0) {
-          const mediaEntries = req.body.media.map((media: any, index: number) => ({
-            productId: product.id,
-            type: media.type || 'image',
-            url: media.url,
-            alt: media.alt,
-            sortOrder: index,
-            isMain: index === 0
-          }));
-          await db.insert(productMedia).values(mediaEntries);
-        }
-      }
-      
-      res.json(product);
-    } catch (error) {
-      console.error('Error updating product:', error);
-      res.status(500).json({ message: 'Failed to update product' });
-    }
-  });
-
-  // Admin: Toggle featured product
-  app.patch('/api/admin/products/:id/featured', isAuthenticated, async (req, res) => {
-    try {
-      const { isFeatured } = req.body;
-      const [product] = await db
-        .update(products)
-        .set({ isFeatured, updatedAt: new Date() })
-        .where(eq(products.id, req.params.id))
-        .returning();
-      res.json(product);
-    } catch (error) {
-      console.error('Error toggling featured product:', error);
-      res.status(500).json({ message: 'Failed to update product' });
-    }
-  });
+  // Note: Admin product featured toggle moved to adminRoutes.ts
 
   // Get product with media
   app.get('/api/products/:id/media', async (req, res) => {
