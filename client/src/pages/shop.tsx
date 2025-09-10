@@ -106,9 +106,9 @@ export default function Shop() {
   });
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-background via-background to-primary/5 pb-20">
+    <div className="min-h-screen pb-20">
       {/* Header */}
-      <div className="sticky top-14 z-30 glassmorphism border-b border-white/20">
+      <div className="bg-white dark:bg-card border-b border-border shadow-sm">
         {/* Shop Type Toggle */}
         <div className="p-4 border-b border-white/10">
           <div className="flex items-center justify-between">

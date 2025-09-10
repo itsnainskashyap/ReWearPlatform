@@ -110,10 +110,10 @@ function AppContent() {
 
       {!isLoading && appReady && (
         <>
-          <div className="animate-fadeInUp">
+          <div className="animate-fadeInUp relative">
             <Drawer />
             <Header />
-            <main className={isAuthenticated ? "pb-24" : ""}>
+            <main className={isAuthenticated ? "pt-16 md:pt-20 pb-24" : ""}>
               <Router />
             </main>
             {isAuthenticated && (

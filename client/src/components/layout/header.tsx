@@ -36,7 +36,7 @@ export default function Header() {
   if (!isAuthenticated) return null;
 
   return (
-    <header className={`sticky top-0 z-50 glassmorphism border-b border-white/20 transition-all duration-500 ${isVisible ? 'animate-slideInLeft' : 'opacity-0'}`}>
+    <header className={`fixed top-0 left-0 right-0 z-50 bg-white dark:bg-card shadow-lg border-b border-border transition-all duration-500 ${isVisible ? 'animate-slideInLeft' : 'opacity-0'}`}>
       <div className="flex items-center justify-between p-4">
         <Button 
           variant="ghost" 
