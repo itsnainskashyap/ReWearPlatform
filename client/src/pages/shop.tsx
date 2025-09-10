@@ -21,8 +21,8 @@ export default function Shop() {
   
   const [view, setView] = useState<'grid' | 'list'>('grid');
   const [searchQuery, setSearchQuery] = useState("");
-  const [selectedCategory, setSelectedCategory] = useState<string>("");
-  const [selectedBrand, setSelectedBrand] = useState<string>("");
+  const [selectedCategory, setSelectedCategory] = useState<string>("all");
+  const [selectedBrand, setSelectedBrand] = useState<string>("all");
   const [priceRange, setPriceRange] = useState([0, 10000]);
   const [sortBy, setSortBy] = useState("newest");
   const [showFilters, setShowFilters] = useState(false);
@@ -51,8 +51,8 @@ export default function Shop() {
     queryKey: ["/api/products", selectedCategory, selectedBrand, searchQuery, page, shopType],
     queryFn: async () => {
       const params = new URLSearchParams();
-      if (selectedCategory) params.append('category', selectedCategory);
-      if (selectedBrand) params.append('brand', selectedBrand);
+      if (selectedCategory && selectedCategory !== 'all') params.append('category', selectedCategory);
+      if (selectedBrand && selectedBrand !== 'all') params.append('brand', selectedBrand);
       if (searchQuery) params.append('search', searchQuery);
       params.append('limit', '12');
       params.append('offset', (page * 12).toString());
@@ -96,8 +96,8 @@ export default function Shop() {
   };
 
   const clearFilters = () => {
-    setSelectedCategory("");
-    setSelectedBrand("");
+    setSelectedCategory("all");
+    setSelectedBrand("all");
     setPriceRange([0, 10000]);
     setSearchQuery("");
     setSortBy("newest");
@@ -193,7 +193,7 @@ export default function Shop() {
                         <SelectValue placeholder="All Categories" />
                       </SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="">All Categories</SelectItem>
+                        <SelectItem value="all">All Categories</SelectItem>
                         {Array.isArray(categories) && categories.map((cat: any) => (
                           <SelectItem key={cat.id} value={cat.id}>
                             {cat.name}
@@ -211,7 +211,7 @@ export default function Shop() {
                         <SelectValue placeholder="All Brands" />
                       </SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="">All Brands</SelectItem>
+                        <SelectItem value="all">All Brands</SelectItem>
                         {Array.isArray(brands) && brands.map((brand: any) => (
                           <SelectItem key={brand.id} value={brand.id}>
                             {brand.name}
