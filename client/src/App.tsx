@@ -53,9 +53,10 @@ function Router() {
         <Route path="/admin-panel" component={AdminPanel} />
         
         {/* Public routes accessible without login */}
-        <Route path="/" component={isAuthenticated ? Home : Landing} />
+        <Route path="/" component={Home} />
         <Route path="/shop" component={Shop} />
         <Route path="/product/:id" component={ProductDetail} />
+        <Route path="/cart" component={Cart} />
         <Route path="/about" component={About} />
         <Route path="/contact" component={Contact} />
         <Route path="/faqs" component={FAQs} />
@@ -68,7 +69,6 @@ function Router() {
           <>
             <Route path="/wishlist" component={Wishlist} />
             <Route path="/profile" component={Profile} />
-            <Route path="/cart" component={Cart} />
             <Route path="/checkout" component={Checkout} />
             <Route path="/orders/:id" component={Orders} />
             <Route path="/orders" component={Orders} />
@@ -120,14 +120,14 @@ function AppContent() {
           <div className="animate-fadeInUp relative">
             <Drawer />
             <Header />
-            <main className={isAuthenticated ? "pt-16 md:pt-20 pb-24" : ""}>
+            <main className="pt-16 md:pt-20 pb-24">
               <Router />
             </main>
-            {isAuthenticated && <FloatingCartButton />}
+            <FloatingCartButton />
             <AIChatAssistant />
           </div>
           {/* Bottom Navigation - outside animated container for proper fixed positioning */}
-          {isAuthenticated && <BottomNavigation />}
+          <BottomNavigation />
         </>
       )}
     </div>
