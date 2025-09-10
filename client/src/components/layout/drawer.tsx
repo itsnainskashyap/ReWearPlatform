@@ -32,10 +32,10 @@ export default function Drawer() {
 
   return (
     <div id="drawer" className="fixed inset-0 z-50 hidden">
-      <div className="drawer-overlay absolute inset-0" onClick={closeDrawer}></div>
+      <div className="drawer-overlay absolute inset-0 bg-black/50" onClick={closeDrawer}></div>
       <div 
         id="drawer-content"
-        className="absolute left-0 top-0 h-full w-80 max-w-[85vw] bg-card shadow-2xl transform -translate-x-full transition-transform duration-300 ease-out"
+        className="fixed left-0 top-0 h-full w-64 bg-white dark:bg-card opacity-100 shadow-2xl transform -translate-x-full transition-transform duration-300 ease-out z-50"
       >
         <div className="p-6">
           <div className="flex items-center justify-between mb-8">
@@ -56,7 +56,7 @@ export default function Drawer() {
               <button
                 key={item.label}
                 onClick={() => handleNavigation(item.path)}
-                className="flex items-center space-x-3 p-3 hover-elevate rounded-lg transition-colors w-full text-left"
+                className="flex items-center space-x-3 p-4 hover-elevate rounded-lg transition-colors w-full text-left text-[#0B5A3A] dark:text-foreground"
                 data-testid={`link-${item.label.toLowerCase()}`}
               >
                 <item.icon className="w-5 h-5 text-muted-foreground" />
