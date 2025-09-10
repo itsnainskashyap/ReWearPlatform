@@ -1,8 +1,10 @@
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
+import { useLocation } from "wouter";
 
 export default function HeroSection() {
   const [activeTab, setActiveTab] = useState<"thrift" | "originals">("thrift");
+  const [, navigate] = useLocation();
 
   return (
     <section className="relative px-4 py-8">
@@ -24,6 +26,7 @@ export default function HeroSection() {
             Discover pre-loved treasures and original eco-friendly designs that make a difference.
           </p>
           <Button 
+            onClick={() => navigate("/shop")}
             className="bg-accent text-accent-foreground px-8 py-3 rounded-xl font-semibold hover:bg-accent/90 transition-colors"
             data-testid="button-start-shopping"
           >
