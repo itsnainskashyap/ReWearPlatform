@@ -76,15 +76,7 @@ export default function OrderWorkflow() {
 
   // Fetch orders
   const { data: orders = [], isLoading } = useQuery({
-    queryKey: ["/api/admin/orders", statusFilter],
-    queryFn: async () => {
-      const params = statusFilter !== "all" ? `?status=${statusFilter}` : "";
-      const response = await fetch(`/api/admin/orders${params}`, {
-        credentials: 'include'
-      });
-      if (!response.ok) throw new Error("Failed to fetch orders");
-      return response.json();
-    }
+    queryKey: [statusFilter !== "all" ? `/api/admin/orders?status=${statusFilter}` : "/api/admin/orders"],
   });
 
   // Update order status mutation

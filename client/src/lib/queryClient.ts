@@ -43,7 +43,7 @@ export const getQueryFn: <T>(options: {
 }) => QueryFunction<T> =
   ({ on401: unauthorizedBehavior }) =>
   async ({ queryKey }) => {
-    const url = queryKey.join("/") as string;
+    const url = queryKey[0] as string; // Only use first element as URL
     const headers: Record<string, string> = {};
     
     // Add Authorization header for admin routes

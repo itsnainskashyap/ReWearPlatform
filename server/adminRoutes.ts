@@ -518,14 +518,18 @@ export function setupAdminRoutes(app: Express) {
         .replace(/\s+/g, '-')
         .replace(/-+/g, '-');
 
-      const newProduct = await storage.createProduct({
+      // Handle missing brand_id by setting to null if empty
+      const productToCreate = {
         ...productData,
         slug,
         images: productData.images || [],
         sizes: productData.sizes || [],
+        brandId: productData.brandId && productData.brandId.trim() !== '' ? productData.brandId : null,
         isActive: true,
         viewCount: 0
-      });
+      };
+
+      const newProduct = await storage.createProduct(productToCreate);
 
       await logAuditAction(
         req.admin!.id,
