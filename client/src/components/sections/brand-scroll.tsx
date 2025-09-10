@@ -1,13 +1,19 @@
 import { useQuery } from "@tanstack/react-query";
 import { Sparkles } from "lucide-react";
 import { useState, useEffect } from "react";
+import { useLocation } from "wouter";
 
 export default function BrandScroll() {
   const { data: brands, isLoading } = useQuery({
     queryKey: ["/api/brands/featured"],
   });
   
+  const [, navigate] = useLocation();
   const [isVisible, setIsVisible] = useState(false);
+
+  const handleBrandClick = (brandId: string) => {
+    navigate(`/shop?brand=${brandId}`);
+  };
 
   useEffect(() => {
     setIsVisible(true);
@@ -53,6 +59,7 @@ export default function BrandScroll() {
               key={brand.id}
               className={`flex-shrink-0 w-20 h-20 card-premium rounded-2xl flex items-center justify-center hover-lift cursor-pointer group transition-all duration-500 ${isVisible ? 'animate-scaleIn' : 'opacity-0'}`}
               style={{ animationDelay: `${index * 100}ms` }}
+              onClick={() => handleBrandClick(brand.id)}
               data-testid={`brand-${brand.id}`}
             >
               {brand.logoUrl ? (

@@ -30,6 +30,15 @@ export default function Shop() {
   const [page, setPage] = useState(0);
   const [hasMore, setHasMore] = useState(true);
 
+  // Handle URL query parameters for brand filtering
+  useEffect(() => {
+    const urlParams = new URLSearchParams(window.location.search);
+    const brandFromUrl = urlParams.get('brand');
+    if (brandFromUrl && brandFromUrl !== selectedBrand) {
+      setSelectedBrand(brandFromUrl);
+    }
+  }, []);
+
   const { data: categories } = useQuery({
     queryKey: ["/api/categories"],
   });

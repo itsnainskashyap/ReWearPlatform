@@ -613,6 +613,38 @@
     background-color: hsl(0, 0%, 8%) !important;
   }
 
+  /* Fix Add to Cart button text in dark mode - use black text */
+  .dark .bg-gradient-to-r {
+    color: hsl(0, 0%, 0%) !important;
+  }
+
+  /* Fix white backgrounds to have black text in dark mode */
+  .dark .bg-white {
+    background-color: hsl(0, 0%, 5%) !important;
+    color: hsl(0, 0%, 95%) !important;
+  }
+
+  /* Fix specific button text colors */
+  .dark button.bg-gradient-to-r {
+    color: hsl(0, 0%, 0%) !important;
+  }
+
+  /* Fix checkout and form backgrounds */
+  .dark .bg-background {
+    color: hsl(0, 0%, 95%) !important;
+  }
+
+  /* Fix any remaining white text on white backgrounds */
+  .dark [class*="bg-white"] {
+    background-color: hsl(0, 0%, 5%) !important;
+    color: hsl(0, 0%, 95%) !important;
+  }
+
+  /* Ensure proper contrast for all text elements */
+  .dark .text-accent-foreground {
+    color: hsl(0, 0%, 0%) !important;
+  }
+
   /* If there's a 1px border, adjust the inset so that it covers that parent's border */
   .border.hover-elevate:not(.no-hover-interaction-elevate)::after,
   .border.active-elevate:not(.no-active-interaction-elevate)::after,
