@@ -606,3 +606,12 @@ export type InsertTaxRate = z.infer<typeof insertTaxRateSchema>;
 export type InsertProductMedia = z.infer<typeof insertProductMediaSchema>;
 export type InsertOrderTracking = z.infer<typeof insertOrderTrackingSchema>;
 export type InsertPromotionalPopup = z.infer<typeof insertPromotionalPopupSchema>;
+
+export const insertPaymentSettingsSchema = createInsertSchema(paymentSettings).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
+export type InsertPaymentSettings = z.infer<typeof insertPaymentSettingsSchema>;
+export type PaymentSettings = typeof paymentSettings.$inferSelect;

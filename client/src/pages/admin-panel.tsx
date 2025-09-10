@@ -16,6 +16,7 @@ import TaxManagement from "@/components/admin/TaxManagement";
 import BrandManagement from "@/components/admin/BrandManagement";
 import OrderWorkflow from "@/components/admin/OrderWorkflow";
 import { PromotionalPopupManagement } from "@/components/admin/promotional-popup-management";
+import { PaymentSettingsForm } from "@/components/admin/PaymentSettings";
 import { useLocation } from "wouter";
 import { useToast } from "@/hooks/use-toast";
 import { useQuery, useMutation } from "@tanstack/react-query";
@@ -586,6 +587,10 @@ export default function AdminPanel() {
                 <ShoppingCart className="w-4 h-4" />
                 Order Workflow
               </TabsTrigger>
+              <TabsTrigger value="payments" className="gap-2">
+                <CreditCard className="w-4 h-4" />
+                Payment Settings
+              </TabsTrigger>
               <TabsTrigger value="taxes" className="gap-2">
                 <DollarSign className="w-4 h-4" />
                 Tax Control
@@ -765,6 +770,24 @@ export default function AdminPanel() {
           {/* Order Workflow Tab */}
           <TabsContent value="orders" className="space-y-4">
             <OrderWorkflow />
+          </TabsContent>
+
+          {/* Payment Settings Tab */}
+          <TabsContent value="payments" className="space-y-4">
+            <Card className="card-premium rounded-3xl">
+              <CardHeader className="border-b border-border/50">
+                <CardTitle className="flex items-center gap-2">
+                  <CreditCard className="w-5 h-5" />
+                  Payment Configuration
+                </CardTitle>
+                <CardDescription>
+                  Manage UPI IDs, QR codes, and payment verification settings
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="p-6 space-y-6">
+                <PaymentSettingsForm />
+              </CardContent>
+            </Card>
           </TabsContent>
 
           {/* Tax Management Tab */}
