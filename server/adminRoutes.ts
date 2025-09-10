@@ -15,7 +15,8 @@ import {
   aiConfig,
   storeSettings,
   notifications,
-  orderItems
+  orderItems,
+  paymentSettings
 } from "@shared/schema";
 import { eq, desc, and, sql, gte, lte, or, like } from "drizzle-orm";
 import {
@@ -890,6 +891,64 @@ export function setupAdminRoutes(app: Express) {
     } catch (error) {
       console.error("Setting update error:", error);
       res.status(500).json({ message: "Failed to update setting" });
+    }
+  });
+
+  // Payment Settings API endpoints
+  app.get("/api/admin/payment-settings", isAdminAuthenticated, async (req: AdminRequest, res) => {
+    try {
+      const [settings] = await db
+        .select()
+        .from(paymentSettings)
+        .where(eq(paymentSettings.isActive, true))
+        .limit(1);
+
+      res.json(settings || {
+        upiId: "",
+        qrCodeUrl: "",
+        bankDetails: {},
+        isActive: false
+      });
+    } catch (error) {
+      console.error("Payment settings fetch error:", error);
+      res.status(500).json({ message: "Failed to fetch payment settings" });
+    }
+  });
+
+  app.put("/api/admin/payment-settings", isAdminAuthenticated, async (req: AdminRequest, res) => {
+    try {
+      const { upiId, qrCodeUrl, bankDetails, isActive } = req.body;
+
+      // Deactivate all existing settings first
+      await db
+        .update(paymentSettings)
+        .set({ isActive: false });
+
+      // Insert new settings
+      const [newSettings] = await db
+        .insert(paymentSettings)
+        .values({
+          upiId,
+          qrCodeUrl,
+          bankDetails,
+          isActive
+        })
+        .returning();
+
+      await logAuditAction(
+        req.admin!.id,
+        "UPDATE_PAYMENT_SETTINGS",
+        "payment_settings",
+        newSettings.id,
+        { upiId, qrCodeUrl, bankDetails, isActive },
+        req.ip,
+        req.headers["user-agent"]
+      );
+
+      res.json(newSettings);
+    } catch (error) {
+      console.error("Payment settings update error:", error);
+      res.status(500).json({ message: "Failed to update payment settings" });
     }
   });
 

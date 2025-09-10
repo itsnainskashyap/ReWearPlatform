@@ -11,7 +11,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
-import { Package, Truck, CheckCircle, Clock, AlertCircle, Eye } from "lucide-react";
+import { Package, Truck, CheckCircle, Clock, AlertCircle, Eye, CreditCard, XCircle, Check, X } from "lucide-react";
 import { apiRequest } from "@/lib/queryClient";
 
 interface Order {
@@ -26,6 +26,9 @@ interface Order {
   totalAmount: string;
   paymentMethod?: string;
   paymentStatus: string;
+  paymentProof?: string;
+  paymentVerifiedBy?: string;
+  paymentVerifiedAt?: string;
   trackingNumber?: string;
   estimatedDelivery?: string;
   createdAt: string;
@@ -46,11 +49,13 @@ interface OrderTracking {
 }
 
 const ORDER_STATUSES = [
-  { value: "pending", label: "Pending", icon: Clock, color: "bg-yellow-100 text-yellow-800" },
+  { value: "pending", label: "Pending Payment", icon: Clock, color: "bg-yellow-100 text-yellow-800" },
+  { value: "payment_verified", label: "Payment Verified", icon: CreditCard, color: "bg-green-100 text-green-800" },
   { value: "confirmed", label: "Confirmed", icon: CheckCircle, color: "bg-blue-100 text-blue-800" },
   { value: "shipped", label: "Shipped", icon: Truck, color: "bg-purple-100 text-purple-800" },
   { value: "delivered", label: "Delivered", icon: Package, color: "bg-green-100 text-green-800" },
-  { value: "cancelled", label: "Cancelled", icon: AlertCircle, color: "bg-red-100 text-red-800" }
+  { value: "cancelled", label: "Cancelled", icon: AlertCircle, color: "bg-red-100 text-red-800" },
+  { value: "payment_failed", label: "Payment Failed", icon: XCircle, color: "bg-red-100 text-red-800" }
 ];
 
 export default function OrderWorkflow() {
@@ -96,6 +101,37 @@ export default function OrderWorkflow() {
     onError: () => {
       toast({ 
         title: "Failed to update order status", 
+        variant: "destructive" 
+      });
+    }
+  });
+
+  // Payment verification mutations
+  const verifyPaymentMutation = useMutation({
+    mutationFn: (orderId: string) => 
+      apiRequest("PUT", `/api/admin/orders/${orderId}/verify-payment`),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/admin/orders"] });
+      toast({ title: "Payment verified successfully" });
+    },
+    onError: () => {
+      toast({ 
+        title: "Failed to verify payment", 
+        variant: "destructive" 
+      });
+    }
+  });
+
+  const rejectPaymentMutation = useMutation({
+    mutationFn: (orderId: string) => 
+      apiRequest("PUT", `/api/admin/orders/${orderId}/reject-payment`),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/admin/orders"] });
+      toast({ title: "Payment rejected" });
+    },
+    onError: () => {
+      toast({ 
+        title: "Failed to reject payment", 
         variant: "destructive" 
       });
     }
@@ -251,6 +287,29 @@ export default function OrderWorkflow() {
                     </TableCell>
                     <TableCell>
                       <div className="flex gap-2">
+                        {order.status === "pending" && order.paymentStatus === "pending" && (
+                          <>
+                            <Button
+                              size="sm"
+                              variant="default"
+                              className="bg-green-600 hover:bg-green-700"
+                              onClick={() => verifyPaymentMutation.mutate(order.id)}
+                              disabled={verifyPaymentMutation.isPending}
+                            >
+                              <Check className="w-4 h-4 mr-1" />
+                              Verify
+                            </Button>
+                            <Button
+                              size="sm"
+                              variant="destructive"
+                              onClick={() => rejectPaymentMutation.mutate(order.id)}
+                              disabled={rejectPaymentMutation.isPending}
+                            >
+                              <X className="w-4 h-4 mr-1" />
+                              Reject
+                            </Button>
+                          </>
+                        )}
                         <Button
                           size="sm"
                           variant="outline"
