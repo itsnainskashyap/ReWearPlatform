@@ -116,7 +116,10 @@ export default function Orders() {
                     <div>
                       <p className="text-sm text-muted-foreground flex items-center">
                         <Calendar className="w-4 h-4 mr-1" />
-                        {format(new Date(order.createdAt), 'dd MMM yyyy')}
+                        {order.createdAt 
+                          ? format(new Date(order.createdAt), 'dd MMM yyyy')
+                          : 'Date not available'
+                        }
                       </p>
                       <p className="font-bold">Order #{order.id}</p>
                     </div>
