@@ -137,7 +137,7 @@ function AppContent() {
 function App() {
   return (
     <QueryClientProvider client={queryClient}>
-      <ThemeProvider defaultTheme="dark" storageKey="reweara-theme">
+      <ThemeProvider defaultTheme="light" storageKey="reweara-theme">
         <TooltipProvider>
           <AppContent />
           <Toaster />
