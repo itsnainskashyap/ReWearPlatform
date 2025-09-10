@@ -2,11 +2,28 @@ import type { Express } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
 import { setupAuth, isAuthenticated } from "./replitAuth";
-import { insertProductSchema, insertCategorySchema, insertBrandSchema, coupons, banners } from "@shared/schema";
+import { 
+  insertProductSchema, 
+  insertCategorySchema, 
+  insertBrandSchema, 
+  insertTaxRateSchema,
+  insertProductMediaSchema,
+  insertOrderTrackingSchema,
+  coupons, 
+  banners,
+  taxRates,
+  products,
+  brands,
+  categories,
+  productMedia,
+  orders,
+  orderTracking,
+  orderItems
+} from "@shared/schema";
 import { GoogleGenerativeAI } from "@google/generative-ai";
 import { setupAdminRoutes } from "./adminRoutes";
 import { db } from "./db";
-import { eq, and, or, gte, isNull, asc } from "drizzle-orm";
+import { eq, and, or, gte, isNull, asc, desc, sql } from "drizzle-orm";
 import multer from "multer";
 import fs from "fs";
 import path from "path";
@@ -698,6 +715,375 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error("Error in background generation API:", error);
       res.status(500).json({ error: 'Background generation service unavailable' });
+    }
+  });
+
+  // ========================
+  // TAX MANAGEMENT ROUTES
+  // ========================
+  
+  // Get all tax rates
+  app.get('/api/admin/tax-rates', isAuthenticated, async (req, res) => {
+    try {
+      const rates = await db.select().from(taxRates).orderBy(asc(taxRates.priority));
+      res.json(rates);
+    } catch (error) {
+      console.error('Error fetching tax rates:', error);
+      res.status(500).json({ message: 'Failed to fetch tax rates' });
+    }
+  });
+
+  // Create tax rate
+  app.post('/api/admin/tax-rates', isAuthenticated, async (req, res) => {
+    try {
+      const validated = insertTaxRateSchema.parse(req.body);
+      const [rate] = await db.insert(taxRates).values(validated).returning();
+      res.json(rate);
+    } catch (error) {
+      console.error('Error creating tax rate:', error);
+      res.status(500).json({ message: 'Failed to create tax rate' });
+    }
+  });
+
+  // Update tax rate
+  app.put('/api/admin/tax-rates/:id', isAuthenticated, async (req, res) => {
+    try {
+      const [rate] = await db
+        .update(taxRates)
+        .set({ ...req.body, updatedAt: new Date() })
+        .where(eq(taxRates.id, req.params.id))
+        .returning();
+      res.json(rate);
+    } catch (error) {
+      console.error('Error updating tax rate:', error);
+      res.status(500).json({ message: 'Failed to update tax rate' });
+    }
+  });
+
+  // Delete tax rate
+  app.delete('/api/admin/tax-rates/:id', isAuthenticated, async (req, res) => {
+    try {
+      await db.delete(taxRates).where(eq(taxRates.id, req.params.id));
+      res.json({ success: true });
+    } catch (error) {
+      console.error('Error deleting tax rate:', error);
+      res.status(500).json({ message: 'Failed to delete tax rate' });
+    }
+  });
+
+  // Calculate tax for checkout
+  app.post('/api/calculate-tax', async (req, res) => {
+    try {
+      const { subtotal, country, state, city, zipCode } = req.body;
+      
+      // Get applicable tax rates
+      const applicableRates = await db
+        .select()
+        .from(taxRates)
+        .where(
+          and(
+            eq(taxRates.isActive, true),
+            or(
+              eq(taxRates.country, country),
+              isNull(taxRates.country)
+            )
+          )
+        )
+        .orderBy(desc(taxRates.priority));
+
+      let totalTaxRate = 0;
+      for (const rate of applicableRates) {
+        if (!rate.state || rate.state === state) {
+          if (!rate.city || rate.city === city) {
+            if (!rate.zipCode || rate.zipCode === zipCode) {
+              totalTaxRate += parseFloat(rate.rate);
+            }
+          }
+        }
+      }
+
+      const taxAmount = (subtotal * totalTaxRate) / 100;
+      res.json({ 
+        taxRate: totalTaxRate,
+        taxAmount,
+        total: subtotal + taxAmount 
+      });
+    } catch (error) {
+      console.error('Error calculating tax:', error);
+      res.status(500).json({ message: 'Failed to calculate tax' });
+    }
+  });
+
+  // ========================
+  // BRAND MANAGEMENT ROUTES
+  // ========================
+  
+  // Admin: Create brand
+  app.post('/api/admin/brands', isAuthenticated, async (req, res) => {
+    try {
+      const validated = insertBrandSchema.parse(req.body);
+      const [brand] = await db.insert(brands).values(validated).returning();
+      res.json(brand);
+    } catch (error) {
+      console.error('Error creating brand:', error);
+      res.status(500).json({ message: 'Failed to create brand' });
+    }
+  });
+
+  // Admin: Update brand
+  app.put('/api/admin/brands/:id', isAuthenticated, async (req, res) => {
+    try {
+      const [brand] = await db
+        .update(brands)
+        .set({ ...req.body, updatedAt: new Date() })
+        .where(eq(brands.id, req.params.id))
+        .returning();
+      res.json(brand);
+    } catch (error) {
+      console.error('Error updating brand:', error);
+      res.status(500).json({ message: 'Failed to update brand' });
+    }
+  });
+
+  // Admin: Delete brand
+  app.delete('/api/admin/brands/:id', isAuthenticated, async (req, res) => {
+    try {
+      await db.delete(brands).where(eq(brands.id, req.params.id));
+      res.json({ success: true });
+    } catch (error) {
+      console.error('Error deleting brand:', error);
+      res.status(500).json({ message: 'Failed to delete brand' });
+    }
+  });
+
+  // Admin: Toggle featured brand
+  app.patch('/api/admin/brands/:id/featured', isAuthenticated, async (req, res) => {
+    try {
+      const { isFeatured } = req.body;
+      const [brand] = await db
+        .update(brands)
+        .set({ isFeatured, updatedAt: new Date() })
+        .where(eq(brands.id, req.params.id))
+        .returning();
+      res.json(brand);
+    } catch (error) {
+      console.error('Error toggling featured brand:', error);
+      res.status(500).json({ message: 'Failed to update brand' });
+    }
+  });
+
+  // ========================
+  // ENHANCED PRODUCT MANAGEMENT
+  // ========================
+  
+  // Admin: Create product with media
+  app.post('/api/admin/products', isAuthenticated, async (req, res) => {
+    try {
+      const validated = insertProductSchema.parse(req.body);
+      const [product] = await db.insert(products).values(validated).returning();
+      
+      // Add media if provided
+      if (req.body.media && req.body.media.length > 0) {
+        const mediaEntries = req.body.media.map((media: any, index: number) => ({
+          productId: product.id,
+          type: media.type || 'image',
+          url: media.url,
+          alt: media.alt,
+          sortOrder: index,
+          isMain: index === 0
+        }));
+        await db.insert(productMedia).values(mediaEntries);
+      }
+      
+      res.json(product);
+    } catch (error) {
+      console.error('Error creating product:', error);
+      res.status(500).json({ message: 'Failed to create product' });
+    }
+  });
+
+  // Admin: Update product
+  app.put('/api/admin/products/:id', isAuthenticated, async (req, res) => {
+    try {
+      const [product] = await db
+        .update(products)
+        .set({ ...req.body, updatedAt: new Date() })
+        .where(eq(products.id, req.params.id))
+        .returning();
+      
+      // Update media if provided
+      if (req.body.media) {
+        // Delete existing media
+        await db.delete(productMedia).where(eq(productMedia.productId, req.params.id));
+        
+        // Add new media
+        if (req.body.media.length > 0) {
+          const mediaEntries = req.body.media.map((media: any, index: number) => ({
+            productId: product.id,
+            type: media.type || 'image',
+            url: media.url,
+            alt: media.alt,
+            sortOrder: index,
+            isMain: index === 0
+          }));
+          await db.insert(productMedia).values(mediaEntries);
+        }
+      }
+      
+      res.json(product);
+    } catch (error) {
+      console.error('Error updating product:', error);
+      res.status(500).json({ message: 'Failed to update product' });
+    }
+  });
+
+  // Admin: Toggle featured product
+  app.patch('/api/admin/products/:id/featured', isAuthenticated, async (req, res) => {
+    try {
+      const { isFeatured } = req.body;
+      const [product] = await db
+        .update(products)
+        .set({ isFeatured, updatedAt: new Date() })
+        .where(eq(products.id, req.params.id))
+        .returning();
+      res.json(product);
+    } catch (error) {
+      console.error('Error toggling featured product:', error);
+      res.status(500).json({ message: 'Failed to update product' });
+    }
+  });
+
+  // Get product with media
+  app.get('/api/products/:id/media', async (req, res) => {
+    try {
+      const media = await db
+        .select()
+        .from(productMedia)
+        .where(eq(productMedia.productId, req.params.id))
+        .orderBy(asc(productMedia.sortOrder));
+      res.json(media);
+    } catch (error) {
+      console.error('Error fetching product media:', error);
+      res.status(500).json({ message: 'Failed to fetch product media' });
+    }
+  });
+
+  // ========================
+  // ORDER WORKFLOW MANAGEMENT
+  // ========================
+  
+  // Admin: Update order status with tracking
+  app.put('/api/admin/orders/:id/status', isAuthenticated, async (req, res) => {
+    try {
+      const { status, trackingNumber, carrier, estimatedDelivery, message } = req.body;
+      
+      // Update order
+      const [order] = await db
+        .update(orders)
+        .set({ 
+          status,
+          trackingNumber,
+          estimatedDelivery,
+          updatedAt: new Date() 
+        })
+        .where(eq(orders.id, req.params.id))
+        .returning();
+      
+      // Add tracking entry
+      await db.insert(orderTracking).values({
+        orderId: req.params.id,
+        status,
+        message,
+        trackingNumber,
+        carrier,
+        estimatedDelivery
+      });
+      
+      res.json(order);
+    } catch (error) {
+      console.error('Error updating order status:', error);
+      res.status(500).json({ message: 'Failed to update order status' });
+    }
+  });
+
+  // Get order tracking history
+  app.get('/api/orders/:id/tracking', isAuthenticated, async (req, res) => {
+    try {
+      const tracking = await db
+        .select()
+        .from(orderTracking)
+        .where(eq(orderTracking.orderId, req.params.id))
+        .orderBy(desc(orderTracking.createdAt));
+      res.json(tracking);
+    } catch (error) {
+      console.error('Error fetching order tracking:', error);
+      res.status(500).json({ message: 'Failed to fetch order tracking' });
+    }
+  });
+
+  // Admin: Get all orders with filters
+  app.get('/api/admin/orders', isAuthenticated, async (req, res) => {
+    try {
+      const { status, from, to, limit = '20', offset = '0' } = req.query;
+      
+      let query = db.select().from(orders).$dynamic();
+      
+      if (status) {
+        query = query.where(eq(orders.status, status as string));
+      }
+      
+      const ordersList = await query
+        .orderBy(desc(orders.createdAt))
+        .limit(parseInt(limit as string))
+        .offset(parseInt(offset as string));
+      
+      // Get order items for each order
+      const ordersWithItems = await Promise.all(
+        ordersList.map(async (order) => {
+          const items = await db
+            .select()
+            .from(orderItems)
+            .where(eq(orderItems.orderId, order.id));
+          return { ...order, items };
+        })
+      );
+      
+      res.json(ordersWithItems);
+    } catch (error) {
+      console.error('Error fetching orders:', error);
+      res.status(500).json({ message: 'Failed to fetch orders' });
+    }
+  });
+
+  // ========================
+  // PRODUCT SHARING
+  // ========================
+  
+  // Generate shareable link
+  app.get('/api/products/:id/share', async (req, res) => {
+    try {
+      const product = await storage.getProductById(req.params.id);
+      if (!product) {
+        return res.status(404).json({ message: 'Product not found' });
+      }
+      
+      const baseUrl = `https://${req.get('host')}`;
+      const shareUrl = `${baseUrl}/product/${product.id}`;
+      const shareText = `Check out ${product.name} on ReWeara - Sustainable Fashion!`;
+      
+      res.json({
+        url: shareUrl,
+        text: shareText,
+        socials: {
+          whatsapp: `https://wa.me/?text=${encodeURIComponent(shareText + ' ' + shareUrl)}`,
+          facebook: `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(shareUrl)}`,
+          twitter: `https://twitter.com/intent/tweet?text=${encodeURIComponent(shareText)}&url=${encodeURIComponent(shareUrl)}`,
+          pinterest: `https://pinterest.com/pin/create/button/?url=${encodeURIComponent(shareUrl)}&description=${encodeURIComponent(shareText)}`,
+        }
+      });
+    } catch (error) {
+      console.error('Error generating share links:', error);
+      res.status(500).json({ message: 'Failed to generate share links' });
     }
   });
 
