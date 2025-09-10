@@ -53,6 +53,12 @@ export default function Admin() {
   const [showEditProduct, setShowEditProduct] = useState(false);
   const [selectedProduct, setSelectedProduct] = useState<any>(null);
 
+  // Handle edit product
+  const handleEditProduct = (product: any) => {
+    setSelectedProduct(product);
+    setShowEditProduct(true);
+  };
+
   // Dashboard stats
   const { data: stats } = useQuery({
     queryKey: ["/api/admin/stats"],
@@ -319,7 +325,13 @@ export default function Admin() {
                           <div className="flex items-center justify-between">
                             <span className="font-bold text-primary">₹{product.price}</span>
                             <div className="flex space-x-2">
-                              <Button variant="ghost" size="icon" className="rounded-xl">
+                              <Button 
+                                variant="ghost" 
+                                size="icon" 
+                                className="rounded-xl"
+                                onClick={() => handleEditProduct(product)}
+                                data-testid={`button-edit-product-${product.id}`}
+                              >
                                 <Edit className="w-4 h-4" />
                               </Button>
                               <Button variant="ghost" size="icon" className="rounded-xl text-red-600">
@@ -415,6 +427,13 @@ export default function Admin() {
       <AddProductModal 
         open={showAddProduct} 
         onOpenChange={setShowAddProduct} 
+      />
+
+      {/* Edit Product Modal */}
+      <EditProductModal 
+        open={showEditProduct} 
+        onOpenChange={setShowEditProduct}
+        product={selectedProduct}
       />
     </div>
   );
