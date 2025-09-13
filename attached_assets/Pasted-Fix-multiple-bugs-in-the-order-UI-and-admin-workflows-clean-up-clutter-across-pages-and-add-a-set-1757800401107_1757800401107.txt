@@ -1,0 +1,265 @@
+Fix multiple bugs in the order, UI and admin workflows, clean up clutter across pages, and add a set of new product/admin/shop features so the Replit app is stable, clean, and polished. Keep QR and UPI payment options. Produce a neat, minimal user-facing UI and a powerful admin control panel with full API integration and controls.
+
+
+---
+
+1) High-level Acceptance Criteria
+
+Orders can be placed reliably and appear immediately in user Order History and Admin Orders with full details.
+
+Old database data must be safely removed (migration plan) and a fresh DB schema created. No leftover stale records should break views.
+
+All dropdowns and toggles work consistently across app and admin.
+
+Shop/product pages are clean and show only required fields (name, condition, price, brand/logo, featured flag). Descriptions hidden in shop listing.
+
+Cart button removed from all shop home/list pages.
+
+Admin can fully manage products, banners, pop-ups, featured products, categories, and API connections.
+
+UI is visually clean: common clutter removed; modal & dropdown backgrounds blurred; toggles turned yellow in admin; font color changes applied as requested.
+
+Payment screen shows single, clear layout (no double lines) with QR and UPI visible.
+
+Video support for product pages (admin uploads) works.
+
+Featured product panel appears under featured brand, auto-vertical-scroll, one product per row, smooth animations.
+
+Redirects between pages auto-scroll to top.
+
+
+
+---
+
+2) Database / Data Migration
+
+Task: Wipe old data and provision a fresh DB for production/dev (only after backup).
+
+Steps:
+
+1. Export and backup all current data to an archive (JSON/SQL dump).
+
+
+2. Create new schema with these core tables: users, products, orders, order_items, categories, brands, banners, popups, featured_products, product_videos, admin_logs.
+
+
+3. Seed DB with required default categories/brands if needed.
+
+
+4. Migrate only essential verified data (if any). If requirement is complete removal, document the backup location and delete production tables then recreate schema.
+
+
+
+Acceptance: New DB ready; no legacy null reference errors in UI/API.
+
+
+
+---
+
+3) Order Flow & Fixes
+
+Problem: “Order placing error” + orders not showing in history.
+
+Fixes required:
+
+Ensure order creation endpoint writes to orders and order_items in a single ACID transaction.
+
+Immediately return the saved order object in API response (status, id, totals, items, payment info).
+
+After successful response, update user's order_history view (client-side state + server fetch).
+
+Ensure webhooks / payment callbacks mark order as paid and that status is reflected in the admin UI.
+
+
+New features:
+
+Order slip PDF: Add a button to Admin and User order view to Download Slip (PDF). PDF must include order id, date, items, price, user details, payment method, and QR/UPI reference.
+
+Edit Order: Admin should have an Edit option to change order status, shipping address, and correct item quantities — with audit log. (Editing must not break transactions or historical integrity; store edits in admin_logs.)
+
+
+Acceptance: Place order manually & via payment flow → order appears in user history and admin list; PDF downloads; admin edit works and is logged.
+
+
+
+---
+
+4) UI / UX Clean-up
+
+Shop pages:
+
+Remove Add to Cart button from shop home/list pages. (Cart feature may still exist in product detail pages if needed.)
+
+In listing cards show only: Product Name, Condition, Price, Brand/Logo, Featured Flag. Remove description and extra text. Keep layout minimal and neat.
+
+
+Product detail pages:
+
+Keep full description on product detail page only (if product detail is required). Optionally hide long text behind “Read more.”
+
+Add Video Support: Admin can upload a short product video; product page shows video player (autoplay off).
+
+
+Dropdowns & Popups:
+
+Fix all dropdowns so they open reliably. Ensure category, brand, logo, and condition dropdowns function on product add/edit.
+
+Add background blur behind all dropdowns and normal popups/modals. Blur intensity: subtle — keeps focus on modal.
+
+
+Payment page:
+
+Remove duplicated lines / duplicated UI elements. Keep single clean section for payment amount, method selection, and QR/UPI display. Preserve QR and UPI prominently.
+
+
+Profile page:
+
+Change user's name and Gmail font color to green in light theme (light green — ensure accessibility contrast).
+
+
+Animations & Redirects:
+
+On redirect between pages auto-scroll to top (window.scrollTo(0,0)) or focus main container.
+
+On clicking “ReWeara Originals” from any listing, show a small pleasant animation (fade + scale) and then navigate to ReWeara Official Shop page.
+
+
+Acceptance: UI is neat, dropdowns blurred, cart removed from listings, payment page single-lined, profile name/email green.
+
+
+
+---
+
+5) Admin Panel Enhancements
+
+New Category: Add a full Categories section in Admin with create/edit/delete and visibility toggle. Categories used for filters and featured brand panels.
+
+Toggles Color: Change all admin toggles (on state) to yellow. Ensure consistent CSS variables.
+
+Featured Option: When adding/editing a product, provide a Featured checkbox. If selected, allow choosing a Featured Brand group.
+
+Featured Panel: Create a Featured Products panel under each featured brand on the shop home:
+
+One product per row, vertical auto-scroll (autoplay), neat card, attractive animations (enter/exit slide).
+
+Admin toggles which products belong to each featured brand / panel.
+
+
+Banners & Popups: Make Admin controls for banners and pop-ups fully functional (CRUD, scheduling, targeting). Ensure preview works and clicking a banner/popup can redirect to target pages.
+
+API Controls: Admin panel should allow configuring API connections (e.g. payment gateway keys, analytics, external inventory APIs) with test connection and option to enable/disable.
+
+Filter Fixes: Fix shop filters — currently two invisible filters auto-apply. Find and remove the logic applying invisible filters. Ensure filters are visible, labeled, and work correctly (category, brand, condition, price range). Filters should be performant and have clear UI.
+
+Acceptance: Admin can manage categories, featured products, banners/popups, API configs; toggles yellow; filters visible and working; no invisible filters applied.
+
+
+
+---
+
+6) Product Add / Edit Improvements
+
+Ensure dropdown menus for: Category, Brand, Logo, Condition work and are keyboard accessible.
+
+Add Featured checkbox at product creation.
+
+Add Video Upload field (store URL or blob reference). Validate size and format.
+
+Add server-side validation and sensible error messages.
+
+After product added, if featured selected — it should immediately show under featured panel in the shop.
+
+Acceptance: Adding a product with video + featured flag shows correctly on shop home and admin lists.
+
+
+
+---
+
+7) Shop Behavior & Thrift / Originals Switch
+
+Thrift selection: If user selects “Thrift”, stay on the same page and keep the same filters/sort. (No redirect.)
+
+ReWeara Originals: When clicked, animate then navigate to a brand-new ReWeara Official Shop page that shows ONLY ReWeara products. Create a new route/page for this with smooth animations and independent filters. Admin can toggle whether ReWeara products can also be purchased from thrift shop. (User should be able to purchase ReWeara products from thrift if admin enables “Allow purchase from thrift”.)
+
+Acceptance: Thrift keeps state; Originals goes to new page with animation; purchases allowed according to admin settings.
+
+
+
+---
+
+8) Accessibility & Visual Polishing
+
+Add background blur for dropdowns and modals.
+
+Use consistent spacing, font sizes, and a clean typographic scale.
+
+Ensure color contrast meets AA (especially green font change).
+
+Animations must be smooth and not overwhelming; provide motion-reduce fallback for users who prefer reduced motion.
+
+Ensure one product-per-row in featured vertical carousel with auto-scroll pause on hover.
+
+10) QA Checklist (must pass before merge)
+
+Order placed via UI → appears in user history + admin within 5s.
+
+Payment page shows single, clear layout; QR/UPI visible and scannable.
+
+Download slip creates correct PDF.
+
+Admin edit logs changes in audit table.
+
+All dropdowns open reliably; blur present behind modals and dropdowns.
+
+Shop list has no Add to Cart buttons; product cards show only allowed fields.
+
+Featured product panel appears and auto-scrolls vertically one item per row.
+
+Filters visible and functioning. No hidden filters auto-applying.
+
+Admin toggles are yellow.
+
+Video plays on product page (admin uploaded).
+
+Thrift & Originals behavior as described.
+
+No console errors; mobile & desktop responsive.
+
+
+
+---
+
+11) Non-functional Requirements
+
+Secure admin endpoints (auth + role checks).
+
+Server-side validation for all product/order changes.
+
+Rate-limiting for PDF generation and video uploads.
+
+Logs for every admin action (who changed what and when).
+
+Backups before wiping old DB.
+
+
+
+---
+
+12) Deliverables to include with PR
+
+1. Code changes (frontend + backend).
+
+
+2. DB migration scripts + seed.
+
+
+3. API docs update describing new endpoints/fields.
+
+
+4. Admin UI screenshots & short demo GIFs of: dropdowns, featured panel, banner popup, ReWeara Originals animation, order slip download.
+
+
+5. QA test results checklist.
+
+
+6. Rollback plan if anything goes wrong after deploy.
