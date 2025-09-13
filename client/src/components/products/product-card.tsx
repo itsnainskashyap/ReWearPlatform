@@ -1,6 +1,7 @@
 import { Heart, ShoppingBag, Sparkles } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { AspectRatio } from "@/components/ui/aspect-ratio";
 import { ProductShare } from "@/components/ui/product-share";
 import type { Product } from "@shared/schema";
 import { useState, useEffect } from "react";
@@ -8,13 +9,20 @@ import { useLocation } from "wouter";
 import { useCartStore } from "@/store/cart-store";
 
 interface ProductCardProps {
-  product: Product;
+  product: Product & {
+    brand?: {
+      id: string;
+      name: string;
+      logoUrl?: string;
+    };
+  };
   onAddToCart?: (productId: string) => void;
   onAddToWishlist?: (productId: string) => void;
   index?: number;
+  variant?: 'default' | 'minimal';
 }
 
-export default function ProductCard({ product, onAddToCart, onAddToWishlist, index = 0 }: ProductCardProps) {
+export default function ProductCard({ product, onAddToCart, onAddToWishlist, index = 0, variant = 'default' }: ProductCardProps) {
   const [isVisible, setIsVisible] = useState(false);
   const [isLiked, setIsLiked] = useState(false);
   const [, navigate] = useLocation();
@@ -57,6 +65,84 @@ export default function ProductCard({ product, onAddToCart, onAddToWishlist, ind
     }
   };
 
+  if (variant === 'minimal') {
+    return (
+      <div 
+        className={`bg-white dark:bg-card border border-border hover:border-primary/20 hover:shadow-sm rounded-2xl overflow-hidden group transition-all duration-300 cursor-pointer ${isVisible ? 'animate-fadeInUp opacity-100' : 'opacity-0'}`}
+        style={{ animationDelay: `${index * 50}ms` }}
+        onClick={handleProductClick}
+        data-testid={`card-product-${product.id}`}
+      >
+        {/* Image Container */}
+        <div className="relative">
+          <AspectRatio ratio={1}>
+            {product.images?.[0] ? (
+              <img 
+                src={product.images[0]}
+                alt={product.name}
+                className="w-full h-full object-cover"
+                data-testid={`img-product-${product.id}`}
+              />
+            ) : (
+              <div className="w-full h-full skeleton"></div>
+            )}
+          </AspectRatio>
+          
+          {/* Featured Badge Only */}
+          {product.isFeatured && (
+            <div className="absolute top-2 left-2">
+              <Badge className="bg-accent/90 text-accent-foreground border-0 rounded-full px-2 py-1 text-xs font-semibold">
+                <Sparkles className="w-3 h-3 mr-1" />
+                Featured
+              </Badge>
+            </div>
+          )}
+        </div>
+
+        {/* Content */}
+        <div className="p-3 space-y-2">
+          {/* Product Name */}
+          <h3 className="font-medium text-sm leading-tight line-clamp-2" data-testid={`text-name-${product.id}`}>
+            {product.name}
+          </h3>
+          
+          {/* Condition and Brand Row */}
+          <div className="flex items-center justify-between gap-2">
+            <Badge 
+              className={`text-xs font-medium px-2 py-0.5 rounded-full border ${getConditionColor(product.condition || 'Good')}`}
+              data-testid={`badge-condition-${product.id}`}
+            >
+              {product.condition || "Good"}
+            </Badge>
+            
+            {/* Brand Logo */}
+            {product.brand?.logoUrl && (
+              <img 
+                src={product.brand.logoUrl}
+                alt={product.brand.name}
+                className="h-4 w-auto object-contain"
+                data-testid={`img-brand-${product.id}`}
+              />
+            )}
+          </div>
+          
+          {/* Price */}
+          <div className="flex items-center gap-2">
+            <span className="font-bold text-base text-primary" data-testid={`text-price-${product.id}`}>
+              ₹{product.price}
+            </span>
+            {product.originalPrice && parseFloat(product.originalPrice) > parseFloat(product.price) && (
+              <span className="text-xs text-muted-foreground line-through" data-testid={`text-original-price-${product.id}`}>
+                ₹{product.originalPrice}
+              </span>
+            )}
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // Default variant with full functionality
   return (
     <div 
       className={`card-premium hover-lift hover-zoom rounded-3xl overflow-hidden group transition-all duration-500 cursor-pointer ${isVisible ? 'animate-fadeInUp opacity-100' : 'opacity-0'}`}
@@ -66,16 +152,18 @@ export default function ProductCard({ product, onAddToCart, onAddToWishlist, ind
     >
       {/* Image Container with Overlay */}
       <div className="relative overflow-hidden">
-        {product.images?.[0] ? (
-          <img 
-            src={product.images[0]}
-            alt={product.name}
-            className="w-full h-48 object-cover transition-transform duration-700 group-hover:scale-110"
-            data-testid={`img-product-${product.id}`}
-          />
-        ) : (
-          <div className="w-full h-48 skeleton"></div>
-        )}
+        <AspectRatio ratio={1}>
+          {product.images?.[0] ? (
+            <img 
+              src={product.images[0]}
+              alt={product.name}
+              className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
+              data-testid={`img-product-${product.id}`}
+            />
+          ) : (
+            <div className="w-full h-full skeleton"></div>
+          )}
+        </AspectRatio>
         
         {/* Overlay Gradient */}
         <div className="absolute inset-0 bg-gradient-to-t from-black/20 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>

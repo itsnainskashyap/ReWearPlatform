@@ -77,17 +77,17 @@ export default function ProductGrid() {
       </div>
 
       {isLoading ? (
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
           {Array.from({ length: 4 }).map((_, index) => (
-            <div key={index} className="card-premium rounded-3xl overflow-hidden">
-              <div className="w-full h-48 skeleton rounded-t-3xl"></div>
-              <div className="p-5 space-y-3">
+            <div key={index} className="bg-white dark:bg-card border border-border rounded-2xl overflow-hidden">
+              <div className="aspect-square skeleton"></div>
+              <div className="p-3 space-y-2">
                 <div className="h-4 skeleton rounded-full w-3/4"></div>
-                <div className="h-3 skeleton rounded-full w-1/2"></div>
-                <div className="flex items-center justify-between pt-2">
-                  <div className="h-6 skeleton rounded-full w-1/3"></div>
-                  <div className="h-11 skeleton rounded-2xl w-24"></div>
+                <div className="flex items-center justify-between">
+                  <div className="h-3 skeleton rounded-full w-1/3"></div>
+                  <div className="h-4 skeleton rounded w-6"></div>
                 </div>
+                <div className="h-5 skeleton rounded-full w-1/2"></div>
               </div>
             </div>
           ))}
@@ -97,13 +97,12 @@ export default function ProductGrid() {
           No hot selling products available at the moment.
         </div>
       ) : (
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4" data-testid="grid-hot-selling-products">
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-3" data-testid="grid-hot-selling-products">
           {Array.isArray(products) && products.map((product: Product, index: number) => (
             <ProductCard
               key={product.id}
               product={product}
-              onAddToCart={handleAddToCart}
-              onAddToWishlist={handleAddToWishlist}
+              variant="minimal"
               index={index}
             />
           ))}

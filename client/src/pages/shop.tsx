@@ -383,24 +383,14 @@ export default function Shop() {
           </div>
         ) : (
           <>
-            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
               {sortedProducts.map((product: Product, index: number) => (
-                <div
+                <ProductCard
                   key={product.id}
-                  onClick={() => handleProductClick(product.id)}
-                  className="cursor-pointer"
-                >
-                  <ProductCard
-                    product={product}
-                    onAddToCart={(id) => {
-                      addToCartMutation.mutate(id);
-                    }}
-                    onAddToWishlist={(id) => {
-                      addToWishlistMutation.mutate(id);
-                    }}
-                    index={index}
-                  />
-                </div>
+                  product={product}
+                  variant="minimal"
+                  index={index}
+                />
               ))}
             </div>
 
