@@ -1081,6 +1081,42 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Download order slip PDF (GET /api/orders/:id/pdf)
+  app.get('/api/orders/:id/pdf', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user?.claims?.sub;
+      const order = await storage.getOrderById(req.params.id);
+      
+      if (!order) {
+        return res.status(404).json({ message: 'Order not found' });
+      }
+
+      // Check if order belongs to the user (security check)
+      if (order.userId !== userId) {
+        return res.status(403).json({ message: 'Access denied' });
+      }
+
+      // Get user data for the PDF
+      const user = order.userId ? await storage.getUser(order.userId) : undefined;
+      const orderWithUser = { ...order, user };
+
+      // Generate actual PDF using PDFService
+      const { PDFService } = await import('./pdf-service');
+      const pdfBuffer = await PDFService.generateOrderPDF(orderWithUser, false);
+
+      // Set headers for PDF download
+      const orderId = order.id.slice(0, 8).toUpperCase();
+      res.setHeader('Content-Type', 'application/pdf');
+      res.setHeader('Content-Disposition', `attachment; filename="ReWeara-Order-${orderId}.pdf"`);
+      res.setHeader('Content-Length', pdfBuffer.length);
+      
+      res.send(pdfBuffer);
+    } catch (error) {
+      console.error('Error generating order PDF:', error);
+      res.status(500).json({ message: 'Failed to generate order PDF' });
+    }
+  });
+
   // Admin orders endpoint consolidated in adminRoutes.ts
 
   // ========================

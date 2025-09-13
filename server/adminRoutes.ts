@@ -1185,4 +1185,125 @@ export function setupAdminRoutes(app: Express) {
       res.status(500).json({ message: "Failed to update page" });
     }
   });
+
+  // Admin download order slip PDF (GET /api/admin/orders/:id/pdf)
+  app.get("/api/admin/orders/:id/pdf", isAdminAuthenticated, async (req: AdminRequest, res) => {
+    try {
+      const order = await storage.getOrderById(req.params.id);
+      
+      if (!order) {
+        return res.status(404).json({ message: 'Order not found' });
+      }
+
+      // Get user data for the PDF
+      const user = order.userId ? await storage.getUser(order.userId) : undefined;
+      const orderWithUser = { ...order, user };
+
+      // Generate actual PDF using PDFService (admin version)
+      const { PDFService } = await import('./pdf-service');
+      const pdfBuffer = await PDFService.generateOrderPDF(orderWithUser, true);
+
+      // Set headers for PDF download
+      const orderId = order.id.slice(0, 8).toUpperCase();
+      res.setHeader('Content-Type', 'application/pdf');
+      res.setHeader('Content-Disposition', `attachment; filename="ReWeara-Admin-Order-${orderId}.pdf"`);
+      res.setHeader('Content-Length', pdfBuffer.length);
+      
+      res.send(pdfBuffer);
+    } catch (error) {
+      console.error('Error generating admin order PDF:', error);
+      res.status(500).json({ message: 'Failed to generate order PDF' });
+    }
+  });
+
+  // Admin edit order (PUT /api/admin/orders/:id/edit)
+  app.put("/api/admin/orders/:id/edit", isAdminAuthenticated, async (req: AdminRequest, res) => {
+    try {
+      const { id } = req.params;
+      const adminId = req.admin!.id;
+      const { status, shippingAddress, notes, itemQuantities } = req.body;
+
+      // Get current order for audit log
+      const [currentOrder] = await db
+        .select()
+        .from(orders)
+        .where(eq(orders.id, id));
+
+      if (!currentOrder) {
+        return res.status(404).json({ message: "Order not found" });
+      }
+
+      const changes: any = {};
+
+      // Update order fields
+      const updateData: any = { updatedAt: new Date() };
+      
+      if (status && status !== currentOrder.status) {
+        updateData.status = status;
+        changes.status = { from: currentOrder.status, to: status };
+      }
+
+      if (shippingAddress) {
+        updateData.shippingAddress = shippingAddress;
+        changes.shippingAddress = { from: currentOrder.shippingAddress, to: shippingAddress };
+      }
+
+      if (notes !== undefined) {
+        updateData.notes = notes;
+        changes.notes = { from: currentOrder.notes, to: notes };
+      }
+
+      // Update order
+      const [updatedOrder] = await db
+        .update(orders)
+        .set(updateData)
+        .where(eq(orders.id, id))
+        .returning();
+
+      // Update item quantities if provided
+      if (itemQuantities && Array.isArray(itemQuantities)) {
+        for (const itemUpdate of itemQuantities) {
+          if (itemUpdate.id && itemUpdate.quantity !== undefined) {
+            const [currentItem] = await db
+              .select()
+              .from(orderItems)
+              .where(eq(orderItems.id, itemUpdate.id));
+
+            if (currentItem && currentItem.quantity !== itemUpdate.quantity) {
+              await db
+                .update(orderItems)
+                .set({ quantity: itemUpdate.quantity })
+                .where(eq(orderItems.id, itemUpdate.id));
+
+              changes[`item_${itemUpdate.id}_quantity`] = {
+                from: currentItem.quantity,
+                to: itemUpdate.quantity
+              };
+            }
+          }
+        }
+      }
+
+      // Log audit action
+      await logAuditAction(
+        adminId,
+        "EDIT_ORDER",
+        "order",
+        id,
+        changes,
+        req.ip,
+        req.headers["user-agent"]
+      );
+
+      // Return updated order with items
+      const orderWithItems = await storage.getOrderById(id);
+      res.json({
+        message: "Order updated successfully",
+        order: orderWithItems
+      });
+    } catch (error) {
+      console.error("Order edit error:", error);
+      res.status(500).json({ message: "Failed to edit order" });
+    }
+  });
 }
