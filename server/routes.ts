@@ -979,25 +979,34 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return newOrder;
       });
 
-      // Send order confirmation email
+      // Get complete order with items for response and email
+      let orderWithItems;
+      try {
+        orderWithItems = await storage.getOrderById(result.id);
+      } catch (retrievalError) {
+        console.error('Error retrieving created order for response:', retrievalError);
+        // Fallback to basic order if retrieval fails - order was still created successfully
+        orderWithItems = null;
+      }
+
+      // Send order confirmation email (only if we have complete order data)
       try {
         const user = req.user?.claims;
         const userEmail = user?.email || validatedOrderData.guestEmail;
         
-        if (userEmail) {
-          // Get order with items for email
-          const orderWithItems = await storage.getOrderById(result.id);
-          if (orderWithItems) {
-            const emailData = getOrderConfirmationEmail(orderWithItems, userEmail);
-            await sendEmail(emailData);
-          }
+        if (userEmail && orderWithItems) {
+          const emailData = getOrderConfirmationEmail(orderWithItems, userEmail);
+          await sendEmail(emailData);
+        } else if (userEmail && !orderWithItems) {
+          console.warn('Skipping confirmation email - order data retrieval failed');
         }
       } catch (emailError) {
         console.error('Error sending order confirmation email:', emailError);
         // Don't fail the order creation if email fails
       }
 
-      res.status(201).json(result);
+      // Return complete order with items for immediate display, fallback to basic order
+      res.status(201).json(orderWithItems || result);
     } catch (error: any) {
       console.error('Error creating order:', error);
       
