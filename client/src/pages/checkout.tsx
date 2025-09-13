@@ -10,7 +10,7 @@ import { Badge } from "@/components/ui/badge";
 import { ArrowLeft, CreditCard, Truck, MapPin, ChevronRight, Shield, CheckCircle } from "lucide-react";
 import { useLocation } from "wouter";
 import { useToast } from "@/hooks/use-toast";
-import { apiRequest } from "@/lib/queryClient";
+import { apiRequest, queryClient } from "@/lib/queryClient";
 import { useAuth } from "@/hooks/useAuth";
 import type { PaymentSettings } from "@shared/schema";
 
@@ -21,6 +21,7 @@ export default function Checkout() {
   const [step, setStep] = useState(1);
   const [paymentMethod, setPaymentMethod] = useState("upi");
   const [orderPlaced, setOrderPlaced] = useState(false);
+  const [createdOrder, setCreatedOrder] = useState<any>(null);
   
   const [shippingInfo, setShippingInfo] = useState({
     fullName: user && typeof user === 'object' && 'firstName' in user && 'lastName' in user 
@@ -76,6 +77,8 @@ export default function Checkout() {
         paymentMethod,
         subtotal: calculateSubtotal(),
         totalAmount: calculateTotal(),
+        taxAmount: taxInfo.taxAmount.toString(),
+        shippingAmount: parseFloat(calculateSubtotal()) > 500 ? "0" : "50",
         paymentDetails: paymentMethod === 'upi' 
           ? { upiId } 
           : paymentMethod === 'cod' 
@@ -90,16 +93,26 @@ export default function Checkout() {
       return await apiRequest("POST", "/api/orders", orderData);
     },
     onSuccess: (data: any) => {
+      // Store the created order with items for immediate display
+      setCreatedOrder(data);
       setOrderPlaced(true);
+      
+      // Invalidate relevant caches to ensure fresh data
+      queryClient.invalidateQueries({ queryKey: ["/api/orders"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/cart"] });
+      
       toast({
         title: "Order Placed Successfully!",
-        description: data?.id ? `Your order #${data.id.slice(0, 8).toUpperCase()} has been placed` : "Your order has been placed successfully",
+        description: data?.id 
+          ? `Your order #${data.id.slice(0, 8).toUpperCase()} has been placed with ${data.items?.length || 0} items` 
+          : "Your order has been placed successfully",
       });
     },
-    onError: () => {
+    onError: (error: any) => {
+      console.error('Order placement error:', error);
       toast({
         title: "Order Failed",
-        description: "There was an error placing your order. Please try again.",
+        description: error.message || "There was an error placing your order. Please try again.",
         variant: "destructive",
       });
     },

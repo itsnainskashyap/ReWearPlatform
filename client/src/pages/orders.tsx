@@ -1,17 +1,21 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Package, Truck, CheckCircle, Clock, X, ChevronRight, ArrowLeft, Calendar, Download, Printer } from "lucide-react";
+import { Package, Truck, CheckCircle, Clock, X, ChevronRight, ArrowLeft, Calendar, Download, Printer, RefreshCw } from "lucide-react";
 import { useLocation, useParams } from "wouter";
 import { format } from "date-fns";
+import { queryClient } from "@/lib/queryClient";
+import { useToast } from "@/hooks/use-toast";
 
 export default function Orders() {
   const [, navigate] = useLocation();
   const params = useParams<{ id?: string }>();
   const [selectedStatus, setSelectedStatus] = useState("all");
+  const [lastRefresh, setLastRefresh] = useState<Date>(new Date());
+  const { toast } = useToast();
 
   // Define helper functions first
   const getStatusIcon = (status: string) => {
@@ -69,14 +73,61 @@ export default function Orders() {
   };
 
 
+  // Manual refresh function
+  const handleManualRefresh = async () => {
+    try {
+      await queryClient.invalidateQueries({ queryKey: ["/api/orders"] });
+      setLastRefresh(new Date());
+      toast({
+        title: "Orders Refreshed",
+        description: "Order information has been updated",
+      });
+    } catch (error) {
+      console.error('Error refreshing orders:', error);
+    }
+  };
+
+  // Auto-refresh effect for polling (every 30 seconds when page is visible)
+  useEffect(() => {
+    if (typeof document === 'undefined') return;
+    
+    const interval = setInterval(() => {
+      if (!document.hidden) {
+        queryClient.invalidateQueries({ queryKey: ["/api/orders"] });
+        setLastRefresh(new Date());
+      }
+    }, 30000); // 30 seconds
+
+    const handleVisibilityChange = () => {
+      if (!document.hidden) {
+        // Refresh when user comes back to tab
+        queryClient.invalidateQueries({ queryKey: ["/api/orders"] });
+        setLastRefresh(new Date());
+      }
+    };
+
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+
+    return () => {
+      clearInterval(interval);
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
+    };
+  }, []);
+
   // If we have an order ID, fetch that specific order
-  const { data: orders, isLoading } = useQuery({
+  const { data: orders, isLoading, isFetching } = useQuery({
     queryKey: params.id ? ["/api/orders", params.id] : ["/api/orders"],
+    refetchInterval: 30000, // Auto-refresh every 30 seconds
+    refetchIntervalInBackground: false, // Only when tab is active
+    staleTime: 10000, // Consider data stale after 10 seconds
   });
 
-  const { data: orderDetails, isLoading: isLoadingDetails } = useQuery({
+  const { data: orderDetails, isLoading: isLoadingDetails, isFetching: isFetchingDetails } = useQuery({
     queryKey: ["/api/orders", params.id],
     enabled: !!params.id,
+    refetchInterval: 30000, // Auto-refresh every 30 seconds
+    refetchIntervalInBackground: false, // Only when tab is active
+    staleTime: 10000, // Consider data stale after 10 seconds
   });
 
   // If we're viewing a specific order, show order details
@@ -326,22 +377,47 @@ export default function Orders() {
     <div className="min-h-screen bg-gradient-to-br from-background via-background to-primary/5 pb-20">
       {/* Header */}
       <div className="sticky top-0 z-40 glassmorphism border-b border-white/20 p-4">
-        <div className="flex items-center space-x-3">
-          <Button
-            variant="ghost"
-            size="icon"
-            onClick={() => navigate("/")}
-            className="hover-lift rounded-2xl"
-          >
-            <ArrowLeft className="w-6 h-6" />
-          </Button>
-          <div>
-            <h1 className="text-2xl font-bold gradient-text">My Orders</h1>
-            <p className="text-sm text-muted-foreground">
-              {filteredOrders.length} {filteredOrders.length === 1 ? 'order' : 'orders'}
-            </p>
+        <div className="flex items-center justify-between">
+          <div className="flex items-center space-x-3">
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={() => navigate("/")}
+              className="hover-lift rounded-2xl"
+            >
+              <ArrowLeft className="w-6 h-6" />
+            </Button>
+            <div>
+              <h1 className="text-2xl font-bold gradient-text">My Orders</h1>
+              <p className="text-sm text-muted-foreground">
+                {filteredOrders.length} {filteredOrders.length === 1 ? 'order' : 'orders'}
+              </p>
+            </div>
+          </div>
+          <div className="flex items-center space-x-2">
+            {(isFetching || isFetchingDetails) && (
+              <div className="flex items-center space-x-2 text-sm text-muted-foreground">
+                <RefreshCw className="w-4 h-4 animate-spin" />
+                <span>Updating...</span>
+              </div>
+            )}
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={handleManualRefresh}
+              disabled={isFetching || isFetchingDetails}
+              className="hover-lift rounded-2xl"
+              title="Refresh orders"
+            >
+              <RefreshCw className={`w-5 h-5 ${isFetching ? 'animate-spin' : ''}`} />
+            </Button>
           </div>
         </div>
+        {lastRefresh && (
+          <p className="text-xs text-muted-foreground mt-2">
+            Last updated: {format(lastRefresh, 'HH:mm:ss')}
+          </p>
+        )}
       </div>
 
       {/* Content */}

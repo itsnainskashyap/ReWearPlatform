@@ -1216,93 +1216,51 @@ export function setupAdminRoutes(app: Express) {
     }
   });
 
-  // Admin edit order (PUT /api/admin/orders/:id/edit)
-  app.put("/api/admin/orders/:id/edit", isAdminAuthenticated, async (req: AdminRequest, res) => {
+  // Admin edit order (PATCH /api/admin/orders/:id)
+  app.patch("/api/admin/orders/:id", isAdminAuthenticated, async (req: AdminRequest, res) => {
     try {
       const { id } = req.params;
       const adminId = req.admin!.id;
-      const { status, shippingAddress, notes, itemQuantities } = req.body;
+      const { status, shippingAddress, notes, paymentStatus, trackingNumber, estimatedDelivery } = req.body;
 
-      // Get current order for audit log
-      const [currentOrder] = await db
-        .select()
-        .from(orders)
-        .where(eq(orders.id, id));
+      // Validate allowed order updates
+      const allowedUpdates = ['status', 'shippingAddress', 'notes', 'paymentStatus', 'trackingNumber', 'estimatedDelivery'];
+      const updates: any = {};
+      
+      // Only include provided fields that are allowed to be updated
+      if (status !== undefined) updates.status = status;
+      if (shippingAddress !== undefined) updates.shippingAddress = shippingAddress;
+      if (notes !== undefined) updates.notes = notes;
+      if (paymentStatus !== undefined) updates.paymentStatus = paymentStatus;
+      if (trackingNumber !== undefined) updates.trackingNumber = trackingNumber;
+      if (estimatedDelivery !== undefined) updates.estimatedDelivery = estimatedDelivery;
 
-      if (!currentOrder) {
+      if (Object.keys(updates).length === 0) {
+        return res.status(400).json({ message: "No valid updates provided" });
+      }
+
+      // Use the new transactional storage method with audit logging
+      const adminNotes = `Admin ${req.admin?.email || adminId} updated: ${Object.keys(updates).join(', ')}`;
+      const updatedOrder = await storage.updateOrderWithAudit(id, updates, adminId, adminNotes);
+
+      if (!updatedOrder) {
         return res.status(404).json({ message: "Order not found" });
       }
 
-      const changes: any = {};
-
-      // Update order fields
-      const updateData: any = { updatedAt: new Date() };
-      
-      if (status && status !== currentOrder.status) {
-        updateData.status = status;
-        changes.status = { from: currentOrder.status, to: status };
-      }
-
-      if (shippingAddress) {
-        updateData.shippingAddress = shippingAddress;
-        changes.shippingAddress = { from: currentOrder.shippingAddress, to: shippingAddress };
-      }
-
-      if (notes !== undefined) {
-        updateData.notes = notes;
-        changes.notes = { from: currentOrder.notes, to: notes };
-      }
-
-      // Update order
-      const [updatedOrder] = await db
-        .update(orders)
-        .set(updateData)
-        .where(eq(orders.id, id))
-        .returning();
-
-      // Update item quantities if provided
-      if (itemQuantities && Array.isArray(itemQuantities)) {
-        for (const itemUpdate of itemQuantities) {
-          if (itemUpdate.id && itemUpdate.quantity !== undefined) {
-            const [currentItem] = await db
-              .select()
-              .from(orderItems)
-              .where(eq(orderItems.id, itemUpdate.id));
-
-            if (currentItem && currentItem.quantity !== itemUpdate.quantity) {
-              await db
-                .update(orderItems)
-                .set({ quantity: itemUpdate.quantity })
-                .where(eq(orderItems.id, itemUpdate.id));
-
-              changes[`item_${itemUpdate.id}_quantity`] = {
-                from: currentItem.quantity,
-                to: itemUpdate.quantity
-              };
-            }
-          }
-        }
-      }
-
-      // Log audit action
-      await logAuditAction(
-        adminId,
-        "EDIT_ORDER",
-        "order",
-        id,
-        changes,
-        req.ip,
-        req.headers["user-agent"]
-      );
-
-      // Return updated order with items
+      // Get complete order with items for response
       const orderWithItems = await storage.getOrderById(id);
+
       res.json({
         message: "Order updated successfully",
-        order: orderWithItems
+        order: orderWithItems || updatedOrder
       });
-    } catch (error) {
+    } catch (error: any) {
       console.error("Order edit error:", error);
+      
+      if (error.message && error.message.includes('not found')) {
+        return res.status(404).json({ message: error.message });
+      }
+      
       res.status(500).json({ message: "Failed to edit order" });
     }
   });

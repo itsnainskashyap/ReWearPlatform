@@ -9,6 +9,8 @@ import {
   orders,
   orderItems,
   promotionalPopups,
+  adminLogs,
+  orderTracking,
   type User,
   type UpsertUser,
   type Category,
@@ -20,6 +22,7 @@ import {
   type Order,
   type OrderItem,
   type PromotionalPopup,
+  type AdminLog,
   type InsertCategory,
   type InsertBrand,
   type InsertProduct,
@@ -29,6 +32,8 @@ import {
   type InsertOrder,
   type InsertOrderItem,
   type InsertPromotionalPopup,
+  type InsertAdminLog,
+  type InsertOrderTracking,
 } from "@shared/schema";
 import { db } from "./db";
 import { eq, desc, and, sql, like, inArray, or } from "drizzle-orm";
@@ -82,6 +87,7 @@ export interface IStorage {
   
   // Order operations
   createOrder(order: InsertOrder): Promise<Order>;
+  createOrderWithItems(orderData: InsertOrder, items: InsertOrderItem[]): Promise<Order & { items: (OrderItem & { product: Product })[] }>;
   getOrders(userId?: string): Promise<Order[]>;
   getAllOrders(options?: {
     status?: string;
@@ -91,6 +97,8 @@ export interface IStorage {
   }): Promise<(Order & { user?: User })[]>;
   getOrderById(id: string): Promise<(Order & { items: (OrderItem & { product: Product })[] }) | undefined>;
   updateOrderStatus(id: string, status: string): Promise<Order | undefined>;
+  updatePaymentStatusWithTracking(orderId: string, paymentStatus: string, trackingData?: InsertOrderTracking): Promise<Order | undefined>;
+  updateOrderWithAudit(orderId: string, updates: Partial<InsertOrder>, adminId: string, notes?: string): Promise<Order | undefined>;
   
   // Promotional popup operations
   getPromotionalPopups(options?: { active?: boolean }): Promise<PromotionalPopup[]>;
@@ -536,6 +544,182 @@ export class DatabaseStorage implements IStorage {
       .returning();
     
     return updatedOrder;
+  }
+
+  async createOrderWithItems(orderData: InsertOrder, items: InsertOrderItem[]): Promise<Order & { items: (OrderItem & { product: Product })[] }> {
+    return await db.transaction(async (tx) => {
+      // First, validate and lock stock for all products
+      const productIds = items.map(item => item.productId);
+      const productsForUpdate = await tx
+        .select()
+        .from(products)
+        .where(inArray(products.id, productIds))
+        .for("update"); // SELECT FOR UPDATE lock
+
+      // Verify stock availability and calculate total
+      let calculatedSubtotal = 0;
+      const stockUpdates: { id: string; newStock: number }[] = [];
+
+      for (const item of items) {
+        const product = productsForUpdate.find(p => p.id === item.productId);
+        if (!product) {
+          throw new Error(`Product ${item.productId} not found`);
+        }
+        if (!product.isActive) {
+          throw new Error(`Product ${product.name} is not available`);
+        }
+        if (product.stock < item.quantity) {
+          throw new Error(`Insufficient stock for ${product.name}. Available: ${product.stock}, Requested: ${item.quantity}`);
+        }
+
+        // Calculate pricing (use current product price, not passed price for security)
+        const itemPrice = parseFloat(product.price.toString());
+        calculatedSubtotal += itemPrice * item.quantity;
+        
+        // Prepare stock update
+        stockUpdates.push({
+          id: product.id,
+          newStock: product.stock - item.quantity
+        });
+      }
+
+      // Recompute order totals to ensure accuracy
+      const recomputedOrder = {
+        ...orderData,
+        subtotal: calculatedSubtotal.toString(),
+        totalAmount: (calculatedSubtotal + 
+          parseFloat((orderData.taxAmount || "0").toString()) + 
+          parseFloat((orderData.shippingAmount || "0").toString()) - 
+          parseFloat((orderData.discountAmount || "0").toString())).toString()
+      };
+
+      // Create the order
+      const [newOrder] = await tx
+        .insert(orders)
+        .values(recomputedOrder)
+        .returning();
+
+      // Create order items with correct pricing
+      const orderItemsToInsert = items.map(item => {
+        const product = productsForUpdate.find(p => p.id === item.productId)!;
+        return {
+          ...item,
+          orderId: newOrder.id,
+          price: product.price.toString() // Use current product price
+        };
+      });
+
+      const newOrderItems = await tx
+        .insert(orderItems)
+        .values(orderItemsToInsert)
+        .returning();
+
+      // Update product stock
+      for (const stockUpdate of stockUpdates) {
+        await tx
+          .update(products)
+          .set({ stock: stockUpdate.newStock })
+          .where(eq(products.id, stockUpdate.id));
+      }
+
+      // Clear the user's cart if userId is provided
+      if (orderData.userId) {
+        const [userCart] = await tx
+          .select()
+          .from(carts)
+          .where(eq(carts.userId, orderData.userId));
+        
+        if (userCart) {
+          await tx.delete(cartItems).where(eq(cartItems.cartId, userCart.id));
+        }
+      }
+
+      // Fetch the complete order with items and product details
+      const completeOrderItems = await tx
+        .select({
+          id: orderItems.id,
+          orderId: orderItems.orderId,
+          productId: orderItems.productId,
+          quantity: orderItems.quantity,
+          price: orderItems.price,
+          createdAt: orderItems.createdAt,
+          product: products,
+        })
+        .from(orderItems)
+        .innerJoin(products, eq(orderItems.productId, products.id))
+        .where(eq(orderItems.orderId, newOrder.id));
+
+      return { ...newOrder, items: completeOrderItems };
+    });
+  }
+
+  async updatePaymentStatusWithTracking(orderId: string, paymentStatus: string, trackingData?: InsertOrderTracking): Promise<Order | undefined> {
+    return await db.transaction(async (tx) => {
+      // Update payment status
+      const [updatedOrder] = await tx
+        .update(orders)
+        .set({ 
+          paymentStatus, 
+          paymentVerifiedAt: paymentStatus === 'verified' ? new Date() : undefined,
+          status: paymentStatus === 'verified' ? 'confirmed' : undefined,
+          updatedAt: new Date() 
+        })
+        .where(eq(orders.id, orderId))
+        .returning();
+
+      if (!updatedOrder) {
+        throw new Error(`Order ${orderId} not found`);
+      }
+
+      // Add tracking information if provided
+      if (trackingData) {
+        await tx
+          .insert(orderTracking)
+          .values({ ...trackingData, orderId });
+      }
+
+      return updatedOrder;
+    });
+  }
+
+  async updateOrderWithAudit(orderId: string, updates: Partial<InsertOrder>, adminId: string, notes?: string): Promise<Order | undefined> {
+    return await db.transaction(async (tx) => {
+      // Get the current order state
+      const [currentOrder] = await tx
+        .select()
+        .from(orders)
+        .where(eq(orders.id, orderId));
+
+      if (!currentOrder) {
+        throw new Error(`Order ${orderId} not found`);
+      }
+
+      // Update the order
+      const [updatedOrder] = await tx
+        .update(orders)
+        .set({ ...updates, updatedAt: new Date() })
+        .where(eq(orders.id, orderId))
+        .returning();
+
+      // Create audit log entry
+      const changes = {
+        before: currentOrder,
+        after: updatedOrder,
+        fields_changed: Object.keys(updates)
+      };
+
+      await tx
+        .insert(adminLogs)
+        .values({
+          orderId,
+          actorId: adminId,
+          action: 'order_update',
+          changes,
+          notes: notes || `Admin updated order fields: ${Object.keys(updates).join(', ')}`
+        });
+
+      return updatedOrder;
+    });
   }
 
   // Promotional popup operations

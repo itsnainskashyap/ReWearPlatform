@@ -502,6 +502,17 @@ export const promotionalPopups = pgTable("promotional_popups", {
   updatedAt: timestamp("updated_at").defaultNow(),
 });
 
+// Admin logs table (specific for order audit logging)
+export const adminLogs = pgTable("admin_logs", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  orderId: varchar("order_id").notNull().references(() => orders.id, { onDelete: "cascade" }),
+  actorId: varchar("actor_id").notNull(), // Admin user ID who performed action
+  action: varchar("action").notNull(), // status_change, payment_verification, manual_edit, etc.
+  changes: jsonb("changes").notNull(), // What was changed (before/after values)
+  notes: text("notes"), // Optional admin notes
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
 // Insert schemas for new tables
 export const insertTaxRateSchema = createInsertSchema(taxRates).omit({
   id: true,
@@ -571,6 +582,11 @@ export const insertPromotionalPopupSchema = createInsertSchema(promotionalPopups
   updatedAt: true,
 });
 
+export const insertAdminLogSchema = createInsertSchema(adminLogs).omit({
+  id: true,
+  createdAt: true,
+});
+
 // Types
 export type UpsertUser = z.infer<typeof insertUserSchema>;
 export type User = typeof users.$inferSelect;
@@ -594,6 +610,7 @@ export type ContentPage = typeof contentPages.$inferSelect;
 export type AiConfig = typeof aiConfig.$inferSelect;
 export type StoreSetting = typeof storeSettings.$inferSelect;
 export type PromotionalPopup = typeof promotionalPopups.$inferSelect;
+export type AdminLog = typeof adminLogs.$inferSelect;
 
 export type InsertCategory = z.infer<typeof insertCategorySchema>;
 export type InsertBrand = z.infer<typeof insertBrandSchema>;
@@ -607,6 +624,7 @@ export type InsertTaxRate = z.infer<typeof insertTaxRateSchema>;
 export type InsertProductMedia = z.infer<typeof insertProductMediaSchema>;
 export type InsertOrderTracking = z.infer<typeof insertOrderTrackingSchema>;
 export type InsertPromotionalPopup = z.infer<typeof insertPromotionalPopupSchema>;
+export type InsertAdminLog = z.infer<typeof insertAdminLogSchema>;
 
 export const insertPaymentSettingsSchema = createInsertSchema(paymentSettings).omit({
   id: true,

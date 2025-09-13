@@ -911,108 +911,55 @@ export async function registerRoutes(app: Express): Promise<Server> {
         paymentStatus: 'pending',
       });
 
-      // Ensure required fields are present
-      if (!validatedOrderData.subtotal || Number(validatedOrderData.subtotal) <= 0) {
-        return res.status(400).json({ 
-          message: 'Invalid order data', 
-          errors: [{ field: 'subtotal', message: 'Subtotal is required and must be greater than 0' }]
-        });
-      }
-
-      if (!validatedOrderData.totalAmount || Number(validatedOrderData.totalAmount) <= 0) {
-        return res.status(400).json({ 
-          message: 'Invalid order data', 
-          errors: [{ field: 'totalAmount', message: 'Total amount is required and must be greater than 0' }]
-        });
-      }
-
       // Get user's cart and items before creating order (handle both authenticated and guest users)
       const sessionId = req.sessionID;
       const cart = await storage.getOrCreateCart(userId, sessionId);
       const userCart = await storage.getCartWithItems(cart.id);
+      
       if (!userCart || !userCart.items || userCart.items.length === 0) {
         return res.status(400).json({ 
           message: 'Cannot create order with empty cart' 
         });
       }
 
-      // Start database transaction for atomic operations
-      const result = await db.transaction(async (tx: any) => {
-        // Validate stock availability for all items before creating order
-        for (const cartItem of userCart.items) {
-          // Atomic stock check and update - only update if sufficient stock exists
-          const stockUpdate = await tx
-            .update(products)
-            .set({ 
-              stock: sql`${products.stock} - ${cartItem.quantity}`
-            })
-            .where(
-              and(
-                eq(products.id, cartItem.productId),
-                sql`${products.stock} >= ${cartItem.quantity}`
-              )
-            )
-            .returning();
+      // Prepare order items from cart items
+      const orderItemsData = userCart.items.map(cartItem => ({
+        productId: cartItem.productId,
+        quantity: cartItem.quantity,
+      }));
 
-          // If no rows were affected, stock was insufficient
-          if (stockUpdate.length === 0) {
-            throw new Error(`Insufficient stock for product ${cartItem.product?.name || cartItem.productId}. Please reduce quantity or remove from cart.`);
-          }
-        }
+      // Use the new transactional method
+      const orderWithItems = await storage.createOrderWithItems(validatedOrderData, orderItemsData);
 
-        // Create the order with validated data
-        const [newOrder] = await tx.insert(orders).values(validatedOrderData).returning();
-
-        // Create order items for each cart item
-        for (const cartItem of userCart.items) {
-          await tx.insert(orderItems).values({
-            orderId: newOrder.id,
-            productId: cartItem.productId,
-            quantity: cartItem.quantity,
-            price: cartItem.product?.price || '0'
-          });
-        }
-
-        // Clear the cart after successful order creation
-        await tx.delete(cartItems).where(eq(cartItems.cartId, userCart.id));
-
-        return newOrder;
-      });
-
-      // Get complete order with items for response and email
-      let orderWithItems;
-      try {
-        orderWithItems = await storage.getOrderById(result.id);
-      } catch (retrievalError) {
-        console.error('Error retrieving created order for response:', retrievalError);
-        // Fallback to basic order if retrieval fails - order was still created successfully
-        orderWithItems = null;
-      }
-
-      // Send order confirmation email (only if we have complete order data)
+      // Send order confirmation email
       try {
         const user = req.user?.claims;
         const userEmail = user?.email || validatedOrderData.guestEmail;
         
-        if (userEmail && orderWithItems) {
+        if (userEmail) {
           const emailData = getOrderConfirmationEmail(orderWithItems, userEmail);
           await sendEmail(emailData);
-        } else if (userEmail && !orderWithItems) {
-          console.warn('Skipping confirmation email - order data retrieval failed');
         }
       } catch (emailError) {
         console.error('Error sending order confirmation email:', emailError);
         // Don't fail the order creation if email fails
       }
 
-      // Return complete order with items for immediate display, fallback to basic order
-      res.status(201).json(orderWithItems || result);
+      // Return complete order with items for immediate display
+      res.status(201).json(orderWithItems);
     } catch (error: any) {
       console.error('Error creating order:', error);
       
       // Handle insufficient stock errors with proper status code
       if (error.message && error.message.includes('Insufficient stock')) {
         return res.status(409).json({ 
+          message: error.message 
+        });
+      }
+      
+      // Handle validation errors
+      if (error.message && error.message.includes('not found')) {
+        return res.status(400).json({ 
           message: error.message 
         });
       }
@@ -1029,6 +976,87 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
       
       res.status(500).json({ message: 'Failed to create order' });
+    }
+  });
+
+  // Payment webhook endpoint (POST /api/payments/webhook)
+  app.post('/api/payments/webhook', async (req, res) => {
+    try {
+      const { orderId, paymentStatus, trackingNumber, trackingMessage, carrier } = req.body;
+
+      if (!orderId || !paymentStatus) {
+        return res.status(400).json({ 
+          message: 'orderId and paymentStatus are required' 
+        });
+      }
+
+      // Validate payment status
+      const validPaymentStatuses = ['pending', 'verified', 'paid', 'failed'];
+      if (!validPaymentStatuses.includes(paymentStatus)) {
+        return res.status(400).json({ 
+          message: `Invalid payment status. Must be one of: ${validPaymentStatuses.join(', ')}` 
+        });
+      }
+
+      // Prepare tracking data if provided
+      let trackingData = undefined;
+      if (trackingNumber || trackingMessage || carrier) {
+        trackingData = {
+          status: paymentStatus === 'verified' ? 'confirmed' : paymentStatus,
+          message: trackingMessage || `Payment status updated to ${paymentStatus}`,
+          trackingNumber,
+          carrier
+        };
+      }
+
+      // Update payment status with tracking (transactional)
+      const updatedOrder = await storage.updatePaymentStatusWithTracking(orderId, paymentStatus, trackingData);
+
+      if (!updatedOrder) {
+        return res.status(404).json({ 
+          message: 'Order not found' 
+        });
+      }
+
+      // Send status update email
+      try {
+        const orderWithUser = await db
+          .select({
+            order: orders,
+            user: users
+          })
+          .from(orders)
+          .leftJoin(users, eq(orders.userId, users.id))
+          .where(eq(orders.id, orderId));
+        
+        if (orderWithUser.length > 0) {
+          const { order: orderData, user } = orderWithUser[0];
+          const userEmail = user?.email || orderData.guestEmail;
+          
+          if (userEmail && paymentStatus === 'verified') {
+            const emailData = getStatusUpdateEmail(orderData, userEmail, 'confirmed');
+            await sendEmail(emailData);
+          }
+        }
+      } catch (emailError) {
+        console.error('Error sending payment status update email:', emailError);
+        // Don't fail the webhook if email fails
+      }
+
+      res.json({ 
+        message: 'Payment status updated successfully', 
+        order: updatedOrder 
+      });
+    } catch (error: any) {
+      console.error('Error processing payment webhook:', error);
+      
+      if (error.message && error.message.includes('not found')) {
+        return res.status(404).json({ 
+          message: error.message 
+        });
+      }
+      
+      res.status(500).json({ message: 'Failed to process payment webhook' });
     }
   });
 
