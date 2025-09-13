@@ -17,6 +17,7 @@ import BrandManagement from "@/components/admin/BrandManagement";
 import OrderWorkflow from "@/components/admin/OrderWorkflow";
 import { PromotionalPopupManagement } from "@/components/admin/promotional-popup-management";
 import { PaymentSettingsForm } from "@/components/admin/PaymentSettings";
+import FeaturedProductsManagement from "@/components/admin/FeaturedProductsManagement";
 import { useLocation } from "wouter";
 import { useToast } from "@/hooks/use-toast";
 import { useQuery, useMutation } from "@tanstack/react-query";
@@ -620,6 +621,10 @@ export default function AdminPanel() {
               <TabsTrigger value="products" className="gap-2">
                 <Package className="w-4 h-4" />
                 Products
+              </TabsTrigger>
+              <TabsTrigger value="featured-products" className="gap-2">
+                <Star className="w-4 h-4" />
+                Featured Products
               </TabsTrigger>
               <TabsTrigger value="shop-settings" className="gap-2">
                 <Settings className="w-4 h-4" />
@@ -1290,6 +1295,11 @@ export default function AdminPanel() {
                 </div>
               </DialogContent>
             </Dialog>
+          </TabsContent>
+
+          {/* Featured Products Tab */}
+          <TabsContent value="featured-products" className="space-y-4">
+            <FeaturedProductsManagement />
           </TabsContent>
 
           {/* Shop Settings Tab */}

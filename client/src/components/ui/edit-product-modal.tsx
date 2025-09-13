@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -12,6 +12,7 @@ import { apiRequest, queryClient } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 import { z } from "zod";
 import { Plus, X } from "lucide-react";
+import { Switch } from "@/components/ui/switch";
 
 const editProductSchema = z.object({
   name: z.string().min(1, "Product name is required"),
@@ -22,6 +23,7 @@ const editProductSchema = z.object({
   condition: z.enum(["new", "like-new", "good", "fair"]),
   images: z.array(z.string()).min(1, "At least one image is required"),
   sizes: z.array(z.string()).min(1, "At least one size is required"),
+  isFeatured: z.boolean().default(false),
 });
 
 type EditProductForm = z.infer<typeof editProductSchema>;
@@ -48,7 +50,8 @@ export function EditProductModal({ open, onOpenChange, product }: EditProductMod
     defaultValues: {
       condition: "new",
       images: [],
-      sizes: []
+      sizes: [],
+      isFeatured: false
     }
   });
 
@@ -61,6 +64,7 @@ export function EditProductModal({ open, onOpenChange, product }: EditProductMod
       setValue("category", product.category || "");
       setValue("brand", product.brand || "");
       setValue("condition", product.condition || "new");
+      setValue("isFeatured", product.isFeatured || false);
       
       const productImages = product.images || [""];
       const productSizes = product.sizes || [""];
@@ -80,6 +84,7 @@ export function EditProductModal({ open, onOpenChange, product }: EditProductMod
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/admin/products"] });
       queryClient.invalidateQueries({ queryKey: ["/api/admin/stats"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/featured-products"] });
       toast({
         title: "Product Updated",
         description: "Product has been successfully updated.",
@@ -147,6 +152,9 @@ export function EditProductModal({ open, onOpenChange, product }: EditProductMod
       <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto" data-testid="modal-edit-product">
         <DialogHeader>
           <DialogTitle>Edit Product</DialogTitle>
+          <DialogDescription>
+            Update the product details and save your changes.
+          </DialogDescription>
         </DialogHeader>
         
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
@@ -325,6 +333,21 @@ export function EditProductModal({ open, onOpenChange, product }: EditProductMod
             {errors.sizes && (
               <p className="text-sm text-red-600">{errors.sizes.message}</p>
             )}
+          </div>
+
+          <div className="space-y-2">
+            <div className="flex items-center justify-between">
+              <Label htmlFor="edit-featured">Feature this product</Label>
+              <Switch
+                id="edit-featured"
+                {...register("isFeatured")}
+                onCheckedChange={(checked) => setValue("isFeatured", checked)}
+                data-testid="switch-edit-featured"
+              />
+            </div>
+            <p className="text-sm text-muted-foreground">
+              Featured products will appear in the featured carousel on the homepage
+            </p>
           </div>
 
           <div className="flex justify-end space-x-2 pt-4">

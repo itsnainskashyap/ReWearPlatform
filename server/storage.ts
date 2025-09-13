@@ -11,6 +11,7 @@ import {
   promotionalPopups,
   adminLogs,
   orderTracking,
+  storeSettings,
   type User,
   type UpsertUser,
   type Category,
@@ -35,6 +36,8 @@ import {
   type InsertPromotionalPopup,
   type InsertAdminLog,
   type InsertOrderTracking,
+  type FeaturedProductsPanelSettings,
+  featuredProductsPanelSettingsSchema,
 } from "@shared/schema";
 import { db } from "./db";
 import { eq, desc, and, sql, like, inArray, or } from "drizzle-orm";
@@ -113,6 +116,11 @@ export interface IStorage {
   createPromotionalPopup(popup: InsertPromotionalPopup): Promise<PromotionalPopup>;
   updatePromotionalPopup(id: string, updates: Partial<InsertPromotionalPopup>): Promise<PromotionalPopup | undefined>;
   deletePromotionalPopup(id: string): Promise<void>;
+  
+  // Featured products panel operations
+  getFeaturedProductsPanelSettings(): Promise<FeaturedProductsPanelSettings>;
+  saveFeaturedProductsPanelSettings(settings: FeaturedProductsPanelSettings): Promise<FeaturedProductsPanelSettings>;
+  getFeaturedProductsOrdered(): Promise<Product[]>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -961,6 +969,106 @@ export class DatabaseStorage implements IStorage {
     await db
       .delete(promotionalPopups)
       .where(eq(promotionalPopups.id, id));
+  }
+
+  // Featured products panel operations
+  async getFeaturedProductsPanelSettings(): Promise<FeaturedProductsPanelSettings> {
+    const [setting] = await db
+      .select()
+      .from(storeSettings)
+      .where(eq(storeSettings.key, 'featured_products_panel'));
+
+    if (!setting || !setting.value) {
+      // Return default settings
+      return {
+        order: [],
+        maxItems: 8,
+        autoScrollMs: 3000
+      };
+    }
+
+    const parsed = featuredProductsPanelSettingsSchema.safeParse(setting.value);
+    if (!parsed.success) {
+      // Return default settings if parsing fails
+      return {
+        order: [],
+        maxItems: 8,
+        autoScrollMs: 3000
+      };
+    }
+
+    return parsed.data;
+  }
+
+  async saveFeaturedProductsPanelSettings(settings: FeaturedProductsPanelSettings): Promise<FeaturedProductsPanelSettings> {
+    // Validate settings
+    const validatedSettings = featuredProductsPanelSettingsSchema.parse(settings);
+
+    const [existing] = await db
+      .select()
+      .from(storeSettings)
+      .where(eq(storeSettings.key, 'featured_products_panel'));
+
+    if (existing) {
+      await db
+        .update(storeSettings)
+        .set({
+          value: validatedSettings,
+          updatedAt: new Date()
+        })
+        .where(eq(storeSettings.key, 'featured_products_panel'));
+    } else {
+      await db
+        .insert(storeSettings)
+        .values({
+          key: 'featured_products_panel',
+          value: validatedSettings,
+          description: 'Featured products panel display settings including order, max items, and auto-scroll timing'
+        });
+    }
+
+    return validatedSettings;
+  }
+
+  async getFeaturedProductsOrdered(): Promise<Product[]> {
+    const settings = await this.getFeaturedProductsPanelSettings();
+    
+    // Get all featured products
+    const featuredProducts = await db
+      .select()
+      .from(products)
+      .where(and(
+        eq(products.isFeatured, true),
+        eq(products.isActive, true)
+      ));
+
+    // If no custom order is set, return featured products by creation date
+    if (!settings.order.length) {
+      return featuredProducts
+        .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
+        .slice(0, settings.maxItems);
+    }
+
+    // Sort products according to the custom order
+    const orderedProducts: Product[] = [];
+    const productMap = new Map(featuredProducts.map(p => [p.id, p]));
+
+    // First, add products in the specified order
+    for (const productId of settings.order) {
+      const product = productMap.get(productId);
+      if (product) {
+        orderedProducts.push(product);
+        productMap.delete(productId);
+      }
+    }
+
+    // Then add any remaining featured products
+    const remainingProducts = Array.from(productMap.values())
+      .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+    
+    orderedProducts.push(...remainingProducts);
+
+    return orderedProducts.slice(0, settings.maxItems);
   }
 }
 

@@ -633,6 +633,15 @@ export type InsertOrderTracking = z.infer<typeof insertOrderTrackingSchema>;
 export type InsertPromotionalPopup = z.infer<typeof insertPromotionalPopupSchema>;
 export type InsertAdminLog = z.infer<typeof insertAdminLogSchema>;
 
+// Featured Products Panel Settings Schema
+export const featuredProductsPanelSettingsSchema = z.object({
+  order: z.array(z.string()).default([]), // Array of product IDs in desired order
+  maxItems: z.number().min(1).max(50).default(8), // Maximum items to show in carousel
+  autoScrollMs: z.number().min(1000).max(30000).default(3000), // Auto-scroll interval in milliseconds
+});
+
+export type FeaturedProductsPanelSettings = z.infer<typeof featuredProductsPanelSettingsSchema>;
+
 export const insertPaymentSettingsSchema = createInsertSchema(paymentSettings).omit({
   id: true,
   createdAt: true,

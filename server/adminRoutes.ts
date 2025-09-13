@@ -38,7 +38,8 @@ import {
   insertCategorySchema,
   updateCategorySchema,
   type InsertCategory,
-  type UpdateCategory
+  type UpdateCategory,
+  featuredProductsPanelSettingsSchema
 } from "@shared/schema";
 import { z } from "zod";
 import { fromZodError } from "zod-validation-error";
@@ -615,6 +616,78 @@ export function setupAdminRoutes(app: Express) {
     } catch (error) {
       console.error("Product delete error:", error);
       res.status(500).json({ message: "Failed to delete product" });
+    }
+  });
+
+  // Featured Products Management Routes
+  
+  // Get featured products panel settings and current featured products
+  app.get("/api/admin/featured-products", isAdminAuthenticated, async (req: AdminRequest, res) => {
+    try {
+      const settings = await storage.getFeaturedProductsPanelSettings();
+      const featuredProducts = await storage.getFeaturedProductsOrdered();
+      
+      res.json({
+        settings,
+        products: featuredProducts
+      });
+    } catch (error) {
+      console.error("Featured products fetch error:", error);
+      res.status(500).json({ message: "Failed to fetch featured products" });
+    }
+  });
+
+  // Update featured products panel settings
+  app.put("/api/admin/featured-products", isAdminAuthenticated, async (req: AdminRequest, res) => {
+    try {
+      const { settings } = req.body;
+
+      if (!settings) {
+        return res.status(400).json({ message: "Settings are required" });
+      }
+
+      // Validate settings using Zod schema
+      const validationResult = featuredProductsPanelSettingsSchema.safeParse(settings);
+      if (!validationResult.success) {
+        return res.status(400).json({ 
+          message: "Invalid settings format", 
+          errors: validationResult.error.issues 
+        });
+      }
+
+      // Verify that all product IDs in the order array exist and are featured
+      if (settings.order && settings.order.length > 0) {
+        const featuredProducts = await storage.getProducts({ featured: true });
+        const featuredProductIds = new Set(featuredProducts.map(p => p.id));
+        
+        const invalidIds = settings.order.filter(id => !featuredProductIds.has(id));
+        if (invalidIds.length > 0) {
+          return res.status(400).json({
+            message: "Some product IDs in order are not featured products",
+            invalidIds
+          });
+        }
+      }
+
+      const savedSettings = await storage.saveFeaturedProductsPanelSettings(validationResult.data);
+      
+      await logAuditAction(
+        req.admin!.id,
+        "UPDATE_FEATURED_PRODUCTS_SETTINGS",
+        "featured_products",
+        "panel_settings",
+        validationResult.data,
+        req.ip,
+        req.headers["user-agent"]
+      );
+
+      res.json({ 
+        settings: savedSettings,
+        message: "Featured products settings updated successfully" 
+      });
+    } catch (error) {
+      console.error("Featured products settings update error:", error);
+      res.status(500).json({ message: "Failed to update featured products settings" });
     }
   });
 

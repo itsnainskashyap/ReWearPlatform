@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -12,6 +12,7 @@ import { apiRequest, queryClient } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 import { z } from "zod";
 import { Plus, X } from "lucide-react";
+import { Switch } from "@/components/ui/switch";
 
 const productSchema = z.object({
   name: z.string().min(1, "Product name is required"),
@@ -22,6 +23,7 @@ const productSchema = z.object({
   condition: z.enum(["new", "like-new", "good", "fair"]),
   images: z.array(z.string()).min(1, "At least one image is required"),
   sizes: z.array(z.string()).min(1, "At least one size is required"),
+  isFeatured: z.boolean().default(false),
 });
 
 type ProductForm = z.infer<typeof productSchema>;
@@ -48,7 +50,8 @@ export function AddProductModal({ open, onOpenChange }: AddProductModalProps) {
     defaultValues: {
       condition: "new",
       images: [],
-      sizes: []
+      sizes: [],
+      isFeatured: false
     }
   });
 
@@ -59,6 +62,7 @@ export function AddProductModal({ open, onOpenChange }: AddProductModalProps) {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/admin/products"] });
       queryClient.invalidateQueries({ queryKey: ["/api/admin/stats"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/featured-products"] });
       toast({
         title: "Product Added",
         description: "Product has been successfully added to your store.",
@@ -127,6 +131,9 @@ export function AddProductModal({ open, onOpenChange }: AddProductModalProps) {
       <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto" data-testid="modal-add-product">
         <DialogHeader>
           <DialogTitle>Add New Product</DialogTitle>
+          <DialogDescription>
+            Fill in the product details to add a new item to your catalog.
+          </DialogDescription>
         </DialogHeader>
         
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
@@ -305,6 +312,21 @@ export function AddProductModal({ open, onOpenChange }: AddProductModalProps) {
             {errors.sizes && (
               <p className="text-sm text-red-600">{errors.sizes.message}</p>
             )}
+          </div>
+
+          <div className="space-y-2">
+            <div className="flex items-center justify-between">
+              <Label htmlFor="featured">Feature this product</Label>
+              <Switch
+                id="featured"
+                {...register("isFeatured")}
+                onCheckedChange={(checked) => setValue("isFeatured", checked)}
+                data-testid="switch-featured"
+              />
+            </div>
+            <p className="text-sm text-muted-foreground">
+              Featured products will appear in the featured carousel on the homepage
+            </p>
           </div>
 
           <div className="flex justify-end space-x-2 pt-4">

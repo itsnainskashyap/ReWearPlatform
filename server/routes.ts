@@ -178,6 +178,25 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Featured products route (public)
+  app.get('/api/featured-products', async (req, res) => {
+    try {
+      const featuredProducts = await storage.getFeaturedProductsOrdered();
+      const settings = await storage.getFeaturedProductsPanelSettings();
+      
+      res.json({
+        products: featuredProducts,
+        settings: {
+          autoScrollMs: settings.autoScrollMs,
+          maxItems: settings.maxItems
+        }
+      });
+    } catch (error) {
+      console.error("Error fetching featured products:", error);
+      res.status(500).json({ message: "Failed to fetch featured products" });
+    }
+  });
+
   // Cart routes
   app.get('/api/cart', async (req: any, res) => {
     try {
