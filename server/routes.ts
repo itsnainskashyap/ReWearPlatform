@@ -103,7 +103,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Brand routes
   app.get('/api/brands', async (req, res) => {
     try {
-      const brands = await storage.getBrands();
+      const { categoryId } = req.query;
+      const brands = await storage.getBrands({ 
+        categoryId: categoryId as string 
+      });
       res.json(brands);
     } catch (error) {
       console.error("Error fetching brands:", error);
@@ -113,7 +116,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.get('/api/brands/featured', async (req, res) => {
     try {
-      const brands = await storage.getFeaturedBrands();
+      const { categoryId } = req.query;
+      const brands = await storage.getFeaturedBrands({ 
+        categoryId: categoryId as string 
+      });
       res.json(brands);
     } catch (error) {
       console.error("Error fetching featured brands:", error);

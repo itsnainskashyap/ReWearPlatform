@@ -24,6 +24,7 @@ import {
   type PromotionalPopup,
   type AdminLog,
   type InsertCategory,
+  type UpdateCategory,
   type InsertBrand,
   type InsertProduct,
   type InsertCart,
@@ -47,10 +48,16 @@ export interface IStorage {
   getCategories(): Promise<Category[]>;
   getCategoryBySlug(slug: string): Promise<Category | undefined>;
   createCategory(category: InsertCategory): Promise<Category>;
+  updateCategory(id: string, updates: Partial<InsertCategory>): Promise<Category | undefined>;
+  deleteCategory(id: string): Promise<void>;
+  setCategoryVisibility(id: string, isActive: boolean): Promise<Category | undefined>;
+  listCategoriesAdmin(options?: { search?: string; limit?: number; offset?: number; }): Promise<{ categories: Category[]; total: number; }>;
+  getCategoryById(id: string): Promise<Category | undefined>;
+  checkCategoryProductDependency(id: string): Promise<number>;
   
   // Brand operations
-  getBrands(): Promise<Brand[]>;
-  getFeaturedBrands(): Promise<Brand[]>;
+  getBrands(options?: { categoryId?: string; }): Promise<Brand[]>;
+  getFeaturedBrands(options?: { categoryId?: string; }): Promise<Brand[]>;
   getBrandBySlug(slug: string): Promise<Brand | undefined>;
   createBrand(brand: InsertBrand): Promise<Brand>;
   
@@ -166,8 +173,153 @@ export class DatabaseStorage implements IStorage {
     return newCategory;
   }
 
+  async updateCategory(id: string, updates: Partial<InsertCategory>): Promise<Category | undefined> {
+    const [updatedCategory] = await db
+      .update(categories)
+      .set({ ...updates, updatedAt: new Date() })
+      .where(eq(categories.id, id))
+      .returning();
+    return updatedCategory;
+  }
+
+  async deleteCategory(id: string): Promise<void> {
+    await db.delete(categories).where(eq(categories.id, id));
+  }
+
+  async setCategoryVisibility(id: string, isActive: boolean): Promise<Category | undefined> {
+    const [updatedCategory] = await db
+      .update(categories)
+      .set({ isActive, updatedAt: new Date() })
+      .where(eq(categories.id, id))
+      .returning();
+    return updatedCategory;
+  }
+
+  async listCategoriesAdmin(options: { 
+    search?: string; 
+    limit?: number; 
+    offset?: number; 
+  } = {}): Promise<{ categories: Category[]; total: number; }> {
+    const conditions = [];
+
+    if (options.search) {
+      conditions.push(
+        like(categories.name, `%${options.search}%`)
+      );
+    }
+
+    // Get total count
+    let totalQuery = db
+      .select({ count: sql<number>`count(*)` })
+      .from(categories);
+    
+    if (conditions.length > 0) {
+      totalQuery = totalQuery.where(and(...conditions));
+    }
+
+    const [{ count }] = await totalQuery;
+
+    // Get categories with product count using proper Drizzle left join
+    let query = db
+      .select({
+        id: categories.id,
+        name: categories.name,
+        slug: categories.slug,
+        description: categories.description,
+        imageUrl: categories.imageUrl,
+        isActive: categories.isActive,
+        sortOrder: categories.sortOrder,
+        createdAt: categories.createdAt,
+        updatedAt: categories.updatedAt,
+        productCount: sql<number>`count(${products.id})::int`
+      })
+      .from(categories)
+      .leftJoin(
+        products, 
+        and(
+          eq(products.categoryId, categories.id),
+          eq(products.isActive, true)
+        )
+      )
+      .groupBy(
+        categories.id,
+        categories.name,
+        categories.slug,
+        categories.description,
+        categories.imageUrl,
+        categories.isActive,
+        categories.sortOrder,
+        categories.createdAt,
+        categories.updatedAt
+      )
+      .orderBy(categories.sortOrder, categories.name);
+
+    if (conditions.length > 0) {
+      query = query.where(and(...conditions));
+    }
+
+    if (options.limit) {
+      query = query.limit(options.limit);
+    }
+
+    if (options.offset) {
+      query = query.offset(options.offset);
+    }
+
+    const categoryResults = await query;
+
+    return {
+      categories: categoryResults,
+      total: count
+    };
+  }
+
+  async getCategoryById(id: string): Promise<Category | undefined> {
+    const [category] = await db
+      .select()
+      .from(categories)
+      .where(eq(categories.id, id));
+    return category;
+  }
+
+  async checkCategoryProductDependency(id: string): Promise<number> {
+    const [result] = await db
+      .select({ count: sql<number>`count(*)` })
+      .from(products)
+      .where(and(eq(products.categoryId, id), eq(products.isActive, true)));
+    return result?.count || 0;
+  }
+
   // Brand operations
-  async getBrands(): Promise<Brand[]> {
+  async getBrands(options: { categoryId?: string; } = {}): Promise<Brand[]> {
+    if (options.categoryId) {
+      // Get brands that have active products in the specified category
+      return await db
+        .select({
+          id: brands.id,
+          name: brands.name,
+          slug: brands.slug,
+          description: brands.description,
+          logoUrl: brands.logoUrl,
+          isActive: brands.isActive,
+          isFeatured: brands.isFeatured,
+          sortOrder: brands.sortOrder,
+          createdAt: brands.createdAt,
+          updatedAt: brands.updatedAt,
+        })
+        .from(brands)
+        .innerJoin(products, eq(brands.id, products.brandId))
+        .where(
+          and(
+            eq(brands.isActive, true),
+            eq(products.isActive, true),
+            eq(products.categoryId, options.categoryId)
+          )
+        )
+        .groupBy(brands.id, brands.name, brands.slug, brands.description, brands.logoUrl, brands.isActive, brands.isFeatured, brands.sortOrder, brands.createdAt, brands.updatedAt)
+        .orderBy(brands.sortOrder, brands.name);
+    }
+
     return await db
       .select()
       .from(brands)
@@ -175,7 +327,36 @@ export class DatabaseStorage implements IStorage {
       .orderBy(brands.sortOrder, brands.name);
   }
 
-  async getFeaturedBrands(): Promise<Brand[]> {
+  async getFeaturedBrands(options: { categoryId?: string; } = {}): Promise<Brand[]> {
+    if (options.categoryId) {
+      // Get featured brands that have active products in the specified category
+      return await db
+        .select({
+          id: brands.id,
+          name: brands.name,
+          slug: brands.slug,
+          description: brands.description,
+          logoUrl: brands.logoUrl,
+          isActive: brands.isActive,
+          isFeatured: brands.isFeatured,
+          sortOrder: brands.sortOrder,
+          createdAt: brands.createdAt,
+          updatedAt: brands.updatedAt,
+        })
+        .from(brands)
+        .innerJoin(products, eq(brands.id, products.brandId))
+        .where(
+          and(
+            eq(brands.isActive, true),
+            eq(brands.isFeatured, true),
+            eq(products.isActive, true),
+            eq(products.categoryId, options.categoryId)
+          )
+        )
+        .groupBy(brands.id, brands.name, brands.slug, brands.description, brands.logoUrl, brands.isActive, brands.isFeatured, brands.sortOrder, brands.createdAt, brands.updatedAt)
+        .orderBy(brands.sortOrder, brands.name);
+    }
+
     return await db
       .select()
       .from(brands)

@@ -45,7 +45,16 @@ export default function Shop() {
   });
 
   const { data: brands } = useQuery({
-    queryKey: ["/api/brands"],
+    queryKey: ["/api/brands", selectedCategory],
+    queryFn: async () => {
+      const params = new URLSearchParams();
+      if (selectedCategory && selectedCategory !== 'all') {
+        params.append('categoryId', selectedCategory);
+      }
+      const response = await fetch(`/api/brands?${params.toString()}`);
+      if (!response.ok) throw new Error('Failed to fetch brands');
+      return response.json();
+    }
   });
 
   const { data: products, isLoading, isFetching } = useQuery({
@@ -170,12 +179,13 @@ export default function Shop() {
         <div className="p-4 border-b border-white/10">
           <div className="flex items-center justify-between">
             <h1 className="text-2xl font-bold gradient-text">Shop</h1>
-            <div className="flex space-x-2 bg-background/50 rounded-2xl p-1">
+            <div className="flex space-x-2 bg-background/50 rounded-2xl p-1" data-testid="shop-type-toggle">
               <Button
                 variant={shopType === 'all' ? 'default' : 'ghost'}
                 size="sm"
                 onClick={() => setShopType('all')}
                 className={`rounded-xl transition-all ${shopType === 'all' ? 'border-2 border-primary shadow-md' : 'dark:border dark:border-border/50'}`}
+                data-testid="button-shop-type-all"
               >
                 All
               </Button>
@@ -184,6 +194,7 @@ export default function Shop() {
                 size="sm"
                 onClick={() => setShopType('thrift')}
                 className={`rounded-xl transition-all ${shopType === 'thrift' ? 'border-2 border-primary shadow-md' : 'dark:border dark:border-border/50'}`}
+                data-testid="button-shop-type-thrift"
               >
                 <Recycle className="w-4 h-4 mr-1" />
                 Thrift
@@ -193,6 +204,7 @@ export default function Shop() {
                 size="sm"
                 onClick={() => setShopType('originals')}
                 className={`rounded-xl transition-all ${shopType === 'originals' ? 'border-2 border-primary shadow-md' : 'dark:border dark:border-border/50'}`}
+                data-testid="button-shop-type-originals"
               >
                 <Sparkles className="w-4 h-4 mr-1" />
                 ReWeara OGs
@@ -212,11 +224,12 @@ export default function Shop() {
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 className="pl-10 h-12 rounded-2xl glassmorphism border-white/20"
+                data-testid="input-search-products"
               />
             </div>
             <Sheet open={showFilters} onOpenChange={setShowFilters}>
               <SheetTrigger asChild>
-                <Button size="icon" className="h-12 w-12 rounded-2xl hover-lift">
+                <Button size="icon" className="h-12 w-12 rounded-2xl hover-lift" data-testid="button-filters">
                   <Filter className="w-5 h-5" />
                 </Button>
               </SheetTrigger>
@@ -229,14 +242,18 @@ export default function Shop() {
                   {/* Category Filter */}
                   <div className="space-y-3">
                     <label className="font-semibold">Category</label>
-                    <Select value={selectedCategory} onValueChange={setSelectedCategory}>
+                    <Select 
+                      value={selectedCategory} 
+                      onValueChange={setSelectedCategory}
+                      data-testid="select-category-filter"
+                    >
                       <SelectTrigger className="rounded-xl">
                         <SelectValue placeholder="All Categories" />
                       </SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="all">All Categories</SelectItem>
+                        <SelectItem value="all" data-testid="option-category-all">All Categories</SelectItem>
                         {Array.isArray(categories) && categories.map((cat: any) => (
-                          <SelectItem key={cat.id} value={cat.id}>
+                          <SelectItem key={cat.id} value={cat.id} data-testid={`option-category-${cat.id}`}>
                             {cat.name}
                           </SelectItem>
                         ))}
@@ -247,14 +264,18 @@ export default function Shop() {
                   {/* Brand Filter */}
                   <div className="space-y-3">
                     <label className="font-semibold">Brand</label>
-                    <Select value={selectedBrand} onValueChange={setSelectedBrand}>
+                    <Select 
+                      value={selectedBrand} 
+                      onValueChange={setSelectedBrand}
+                      data-testid="select-brand-filter"
+                    >
                       <SelectTrigger className="rounded-xl">
                         <SelectValue placeholder="All Brands" />
                       </SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="all">All Brands</SelectItem>
+                        <SelectItem value="all" data-testid="option-brand-all">All Brands</SelectItem>
                         {Array.isArray(brands) && brands.map((brand: any) => (
-                          <SelectItem key={brand.id} value={brand.id}>
+                          <SelectItem key={brand.id} value={brand.id} data-testid={`option-brand-${brand.id}`}>
                             {brand.name}
                           </SelectItem>
                         ))}
@@ -302,6 +323,7 @@ export default function Shop() {
                       onClick={clearFilters}
                       variant="outline" 
                       className="w-full rounded-xl"
+                      data-testid="button-clear-filters"
                     >
                       Clear All Filters
                     </Button>

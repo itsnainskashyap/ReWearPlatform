@@ -9,6 +9,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { AddProductModal } from "@/components/ui/add-product-modal";
 import { EditProductModal } from "@/components/ui/edit-product-modal";
+import CategoryManagement from "@/components/admin/CategoryManagement";
 import { 
   BarChart3, 
   Users, 
@@ -23,7 +24,8 @@ import {
   XCircle,
   DollarSign,
   Calendar,
-  Printer
+  Printer,
+  FolderOpen
 } from "lucide-react";
 import { useLocation } from "wouter";
 import { useToast } from "@/hooks/use-toast";
@@ -318,11 +320,12 @@ export default function Admin() {
       {/* Content */}
       <div className="p-4">
         <Tabs value={selectedTab} onValueChange={setSelectedTab} className="w-full">
-          <TabsList className="grid w-full grid-cols-4 glassmorphism rounded-2xl p-1 mb-6">
-            <TabsTrigger value="dashboard" className="rounded-xl">Dashboard</TabsTrigger>
-            <TabsTrigger value="orders" className="rounded-xl">Orders</TabsTrigger>
-            <TabsTrigger value="products" className="rounded-xl">Products</TabsTrigger>
-            <TabsTrigger value="settings" className="rounded-xl">Settings</TabsTrigger>
+          <TabsList className="grid w-full grid-cols-5 glassmorphism rounded-2xl p-1 mb-6">
+            <TabsTrigger value="dashboard" className="rounded-xl" data-testid="tab-dashboard">Dashboard</TabsTrigger>
+            <TabsTrigger value="orders" className="rounded-xl" data-testid="tab-orders">Orders</TabsTrigger>
+            <TabsTrigger value="products" className="rounded-xl" data-testid="tab-products">Products</TabsTrigger>
+            <TabsTrigger value="categories" className="rounded-xl" data-testid="tab-categories">Categories</TabsTrigger>
+            <TabsTrigger value="settings" className="rounded-xl" data-testid="tab-settings">Settings</TabsTrigger>
           </TabsList>
 
           {/* Dashboard Tab */}
@@ -541,6 +544,11 @@ export default function Admin() {
                 )}
               </CardContent>
             </Card>
+          </TabsContent>
+
+          {/* Categories Tab */}
+          <TabsContent value="categories" className="space-y-6" data-testid="content-categories">
+            <CategoryManagement />
           </TabsContent>
 
           {/* Settings Tab */}

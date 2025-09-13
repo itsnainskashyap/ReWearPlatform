@@ -316,6 +316,12 @@ export const insertCategorySchema = createInsertSchema(categories).omit({
   updatedAt: true,
 });
 
+export const updateCategorySchema = createInsertSchema(categories).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+}).partial();
+
 export const insertBrandSchema = createInsertSchema(brands).omit({
   id: true,
   createdAt: true,
@@ -613,6 +619,7 @@ export type PromotionalPopup = typeof promotionalPopups.$inferSelect;
 export type AdminLog = typeof adminLogs.$inferSelect;
 
 export type InsertCategory = z.infer<typeof insertCategorySchema>;
+export type UpdateCategory = z.infer<typeof updateCategorySchema>;
 export type InsertBrand = z.infer<typeof insertBrandSchema>;
 export type InsertProduct = z.infer<typeof insertProductSchema>;
 export type InsertCart = z.infer<typeof insertCartSchema>;

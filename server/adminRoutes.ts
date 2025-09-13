@@ -34,6 +34,14 @@ import {
   handleFailedLogin,
   resetLoginAttempts
 } from "./adminAuth";
+import {
+  insertCategorySchema,
+  updateCategorySchema,
+  type InsertCategory,
+  type UpdateCategory
+} from "@shared/schema";
+import { z } from "zod";
+import { fromZodError } from "zod-validation-error";
 
 export function setupAdminRoutes(app: Express) {
   // Initialize default admin user
@@ -613,8 +621,16 @@ export function setupAdminRoutes(app: Express) {
   // Categories management
   app.get("/api/admin/categories", isAdminAuthenticated, async (req: AdminRequest, res) => {
     try {
-      const categories = await storage.getCategories();
-      res.json(categories);
+      const { search, page = 1, limit = 10 } = req.query;
+      const offset = (Number(page) - 1) * Number(limit);
+      
+      const result = await storage.listCategoriesAdmin({
+        search: search as string,
+        limit: Number(limit),
+        offset
+      });
+      
+      res.json(result);
     } catch (error) {
       console.error("Categories fetch error:", error);
       res.status(500).json({ message: "Failed to fetch categories" });
@@ -624,15 +640,36 @@ export function setupAdminRoutes(app: Express) {
   // Create category
   app.post("/api/admin/categories", isAdminAuthenticated, async (req: AdminRequest, res) => {
     try {
-      const categoryData = req.body;
+      // Validate request body with Zod
+      const validationResult = insertCategorySchema.safeParse(req.body);
+      if (!validationResult.success) {
+        const errorMessage = fromZodError(validationResult.error);
+        return res.status(400).json({ 
+          message: "Invalid category data",
+          details: errorMessage.toString() 
+        });
+      }
+
+      const categoryData = validationResult.data;
       
-      const slug = categoryData.name.toLowerCase()
+      // Sanitize name to prevent XSS and generate slug
+      const sanitizedName = categoryData.name.trim().replace(/[<>\"&]/g, '');
+      if (!sanitizedName) {
+        return res.status(400).json({ message: "Category name cannot be empty after sanitization" });
+      }
+
+      const slug = sanitizedName.toLowerCase()
         .replace(/[^a-z0-9 -]/g, '')
         .replace(/\s+/g, '-')
         .replace(/-+/g, '-');
 
+      // Sanitize description if present
+      const sanitizedDescription = categoryData.description?.trim().replace(/[<>]/g, '') || null;
+
       const newCategory = await storage.createCategory({
         ...categoryData,
+        name: sanitizedName,
+        description: sanitizedDescription,
         slug
       });
 
@@ -653,10 +690,163 @@ export function setupAdminRoutes(app: Express) {
     }
   });
 
+  // Update category
+  app.patch("/api/admin/categories/:id", isAdminAuthenticated, async (req: AdminRequest, res) => {
+    try {
+      const { id } = req.params;
+
+      // Validate request body with Zod
+      const validationResult = updateCategorySchema.safeParse(req.body);
+      if (!validationResult.success) {
+        const errorMessage = fromZodError(validationResult.error);
+        return res.status(400).json({ 
+          message: "Invalid category update data",
+          details: errorMessage.toString() 
+        });
+      }
+
+      const updateData = validationResult.data;
+
+      // Check if category exists
+      const existingCategory = await storage.getCategoryById(id);
+      if (!existingCategory) {
+        return res.status(404).json({ message: "Category not found" });
+      }
+
+      // Sanitize and validate name if being updated
+      if (updateData.name !== undefined) {
+        const sanitizedName = updateData.name.trim().replace(/[<>\"&]/g, '');
+        if (!sanitizedName) {
+          return res.status(400).json({ message: "Category name cannot be empty after sanitization" });
+        }
+        updateData.name = sanitizedName;
+
+        // Generate slug if name is being updated
+        if (sanitizedName !== existingCategory.name) {
+          updateData.slug = sanitizedName.toLowerCase()
+            .replace(/[^a-z0-9 -]/g, '')
+            .replace(/\s+/g, '-')
+            .replace(/-+/g, '-');
+        }
+      }
+
+      // Sanitize description if being updated
+      if (updateData.description !== undefined) {
+        updateData.description = updateData.description?.trim().replace(/[<>]/g, '') || null;
+      }
+
+      const updatedCategory = await storage.updateCategory(id, updateData);
+
+      await logAuditAction(
+        req.admin!.id,
+        "UPDATE_CATEGORY",
+        "category",
+        id,
+        { before: existingCategory, after: updateData },
+        req.ip,
+        req.headers["user-agent"]
+      );
+
+      res.json(updatedCategory);
+    } catch (error) {
+      console.error("Category update error:", error);
+      res.status(500).json({ message: "Failed to update category" });
+    }
+  });
+
+  // Toggle category visibility
+  app.patch("/api/admin/categories/:id/visibility", isAdminAuthenticated, async (req: AdminRequest, res) => {
+    try {
+      const { id } = req.params;
+
+      // Create schema for visibility validation
+      const visibilitySchema = z.object({
+        isActive: z.boolean({ required_error: "isActive is required" })
+      }).strict(); // Strict mode to reject extra fields
+
+      // Validate request body with Zod
+      const validationResult = visibilitySchema.safeParse(req.body);
+      if (!validationResult.success) {
+        const errorMessage = fromZodError(validationResult.error);
+        return res.status(400).json({ 
+          message: "Invalid visibility data",
+          details: errorMessage.toString() 
+        });
+      }
+
+      const { isActive } = validationResult.data;
+
+      // Check if category exists
+      const existingCategory = await storage.getCategoryById(id);
+      if (!existingCategory) {
+        return res.status(404).json({ message: "Category not found" });
+      }
+
+      const updatedCategory = await storage.setCategoryVisibility(id, isActive);
+
+      await logAuditAction(
+        req.admin!.id,
+        "TOGGLE_CATEGORY_VISIBILITY",
+        "category",
+        id,
+        { isActive: isActive, previousState: existingCategory.isActive },
+        req.ip,
+        req.headers["user-agent"]
+      );
+
+      res.json(updatedCategory);
+    } catch (error) {
+      console.error("Category visibility toggle error:", error);
+      res.status(500).json({ message: "Failed to toggle category visibility" });
+    }
+  });
+
+  // Delete category
+  app.delete("/api/admin/categories/:id", isAdminAuthenticated, async (req: AdminRequest, res) => {
+    try {
+      const { id } = req.params;
+
+      // Check if category exists
+      const existingCategory = await storage.getCategoryById(id);
+      if (!existingCategory) {
+        return res.status(404).json({ message: "Category not found" });
+      }
+
+      // Check for product dependencies
+      const productCount = await storage.checkCategoryProductDependency(id);
+      if (productCount > 0) {
+        return res.status(409).json({ 
+          message: `Cannot delete category. It has ${productCount} active products. Please reassign or remove these products first.`,
+          productCount
+        });
+      }
+
+      await storage.deleteCategory(id);
+
+      await logAuditAction(
+        req.admin!.id,
+        "DELETE_CATEGORY",
+        "category",
+        id,
+        existingCategory,
+        req.ip,
+        req.headers["user-agent"]
+      );
+
+      res.json({ message: "Category deleted successfully" });
+    } catch (error) {
+      console.error("Category delete error:", error);
+      res.status(500).json({ message: "Failed to delete category" });
+    }
+  });
+
   // Brands management
   app.get("/api/admin/brands", isAdminAuthenticated, async (req: AdminRequest, res) => {
     try {
-      const brands = await storage.getBrands();
+      const { categoryId } = req.query;
+      const brands = await storage.getBrands({ 
+        categoryId: categoryId as string 
+      });
       res.json(brands);
     } catch (error) {
       console.error("Brands fetch error:", error);

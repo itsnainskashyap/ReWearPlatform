@@ -146,13 +146,12 @@ export function PromotionalPopupComponent({ currentPath }: PromotionalPopupCompo
           "bg-background/95 backdrop-blur-md border-2",
           getSizeClass()
         )}
-        data-testid="promotional-popup-content"
+        data-testid="promotional-popup"
         style={{
           backgroundColor: currentPopup.backgroundColor || undefined,
           color: currentPopup.textColor || undefined,
           borderColor: currentPopup.buttonColor || undefined,
         }}
-        data-testid="promotional-popup"
       >
         <DialogHeader>
           <DialogTitle 
