@@ -52,8 +52,8 @@ export default function Header() {
             className="w-10 h-10"
           />
           <div>
-            <h1 className="text-xl font-bold text-primary">ReWeara</h1>
-            <p className="text-xs text-primary/70 hidden sm:block">Sustainable Fashion</p>
+            <h1 className="text-xl font-bold" style={{ color: 'var(--brand-green)' }}>ReWeara</h1>
+            <p className="text-xs hidden sm:block" style={{ color: 'var(--brand-green-light)' }}>Sustainable Fashion</p>
           </div>
         </div>
         

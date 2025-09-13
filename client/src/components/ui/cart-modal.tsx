@@ -30,10 +30,11 @@ export default function CartModal() {
   };
 
   return (
-    <div className={`fixed inset-0 z-[100] transition-opacity duration-300 ${isVisible ? 'opacity-100' : 'opacity-0'}`}>
+    <div className={`fixed inset-0 z-50 transition-opacity duration-300 ${isVisible ? 'opacity-100' : 'opacity-0'}`} data-testid="cart-modal-overlay">
       <div 
-        className="absolute inset-0 drawer-overlay"
+        className="absolute inset-0 bg-black/50 backdrop-blur-sm md:backdrop-blur"
         onClick={handleBackdropClick}
+        data-testid="cart-modal-backdrop"
       />
       <div 
         className={`fixed bottom-[7rem] left-4 right-4 glassmorphism border border-white/20 rounded-3xl transition-all duration-500 max-h-[50vh] flex flex-col shadow-2xl ${

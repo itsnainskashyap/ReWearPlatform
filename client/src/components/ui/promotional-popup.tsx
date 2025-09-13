@@ -143,9 +143,10 @@ export function PromotionalPopupComponent({ currentPath }: PromotionalPopupCompo
     <Dialog open={isVisible} onOpenChange={setIsVisible}>
       <DialogContent
         className={cn(
-          "backdrop-blur-md bg-background/95 border-2",
+          "bg-background/95 backdrop-blur-md border-2",
           getSizeClass()
         )}
+        data-testid="promotional-popup-content"
         style={{
           backgroundColor: currentPopup.backgroundColor || undefined,
           color: currentPopup.textColor || undefined,

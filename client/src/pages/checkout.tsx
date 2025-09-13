@@ -234,6 +234,29 @@ export default function Checkout() {
         </div>
       </div>
 
+      {/* Compact Order Summary Bar */}
+      <div className="sticky top-16 z-30 bg-white/95 dark:bg-card/95 backdrop-blur-sm border-b border-border p-3 mb-4">
+        <div className="max-w-6xl mx-auto flex items-center justify-between text-sm">
+          <div className="flex items-center space-x-6" data-testid="order-summary-bar">
+            <span className="font-medium">
+              {cart && Array.isArray((cart as any)?.items) ? (cart as any).items.length : 0} item(s)
+            </span>
+            <span className="text-muted-foreground">
+              Subtotal: ₹{calculateSubtotal()}
+            </span>
+            <span className="text-muted-foreground">
+              Shipping: {parseFloat(calculateSubtotal()) > 500 ? 'FREE' : '₹50'}
+            </span>
+            <span className="text-muted-foreground">
+              Tax: ₹{(parseFloat(calculateSubtotal()) * 0.18).toFixed(2)}
+            </span>
+          </div>
+          <div className="font-bold text-lg" style={{ color: 'var(--brand-green)' }}>
+            Total: ₹{calculateTotal()}
+          </div>
+        </div>
+      </div>
+
       <div className="p-4 max-w-6xl mx-auto">
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           {/* Main Content */}
@@ -375,9 +398,9 @@ export default function Checkout() {
               </Card>
             )}
 
-            {/* Step 2: Payment Method */}
+            {/* Step 2: Payment Method - Compressed Layout */}
             {step === 2 && (
-              <Card className="card-premium rounded-2xl">
+              <Card className="card-premium rounded-2xl" data-testid="payment-method-card">
                 <CardHeader>
                   <CardTitle className="flex items-center">
                     <CreditCard className="w-5 h-5 mr-2" />
@@ -385,133 +408,134 @@ export default function Checkout() {
                   </CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-4">
-                  <RadioGroup value={paymentMethod} onValueChange={setPaymentMethod}>
-                    <Card className={`p-4 rounded-xl cursor-pointer ${paymentMethod === 'upi' ? 'border-primary' : ''}`}>
-                      <label className="flex items-center space-x-3 cursor-pointer">
+                  {/* Desktop: Single line radio group */}
+                  <div className="hidden md:block">
+                    <RadioGroup value={paymentMethod} onValueChange={setPaymentMethod} className="flex space-x-6">
+                      <label className={`flex items-center space-x-2 p-3 border rounded-xl cursor-pointer flex-1 ${paymentMethod === 'upi' ? 'border-primary bg-primary/5' : 'border-muted'}`} data-testid="radio-upi">
                         <RadioGroupItem value="upi" />
-                        <div className="flex-1">
-                          <div className="font-medium">UPI Payment</div>
-                          <div className="text-sm text-muted-foreground">Pay using UPI ID or QR Code</div>
+                        <div>
+                          <div className="font-medium text-sm">UPI Payment</div>
+                          <div className="text-xs text-muted-foreground">Quick & Secure</div>
                         </div>
                       </label>
-                      {paymentMethod === 'upi' && (
-                        <div className="mt-4 space-y-3">
+                      <label className={`flex items-center space-x-2 p-3 border rounded-xl cursor-pointer flex-1 ${paymentMethod === 'cod' ? 'border-primary bg-primary/5' : 'border-muted'}`} data-testid="radio-cod">
+                        <RadioGroupItem value="cod" />
+                        <div>
+                          <div className="font-medium text-sm">Cash on Delivery</div>
+                          <div className="text-xs text-muted-foreground">₹99 advance + COD</div>
+                        </div>
+                      </label>
+                    </RadioGroup>
+                  </div>
+                  
+                  {/* Mobile: Stacked layout */}
+                  <div className="md:hidden">
+                    <RadioGroup value={paymentMethod} onValueChange={setPaymentMethod} className="space-y-3">
+                      <Card className={`p-4 rounded-xl cursor-pointer ${paymentMethod === 'upi' ? 'border-primary' : ''}`}>
+                        <label className="flex items-center space-x-3 cursor-pointer">
+                          <RadioGroupItem value="upi" />
+                          <div className="flex-1">
+                            <div className="font-medium">UPI Payment</div>
+                            <div className="text-sm text-muted-foreground">Pay using UPI ID or QR Code</div>
+                          </div>
+                        </label>
+                      </Card>
+                      <Card className={`p-4 rounded-xl cursor-pointer ${paymentMethod === 'cod' ? 'border-primary' : ''}`}>
+                        <label className="flex items-center space-x-3 cursor-pointer">
+                          <RadioGroupItem value="cod" />
+                          <div className="flex-1">
+                            <div className="font-medium">Cash on Delivery</div>
+                            <div className="text-sm text-muted-foreground">Pay ₹99 security advance + remaining on delivery</div>
+                          </div>
+                        </label>
+                      </Card>
+                    </RadioGroup>
+                  </div>
+                  
+                  {/* Payment Details Section */}
+                  {paymentMethod === 'upi' && (
+                    <div className="space-y-3 p-4 bg-primary/5 border border-primary/20 rounded-xl">
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div>
+                          <Label htmlFor="upiId" className="text-sm font-medium">UPI ID</Label>
                           <Input
+                            id="upiId"
                             value={upiId}
                             onChange={(e) => setUpiId(e.target.value)}
-                            placeholder="Enter UPI ID (e.g., yourname@upi)"
-                            className="rounded-xl"
+                            placeholder="yourname@upi"
+                            className="rounded-xl mt-1"
+                            data-testid="input-upi-id"
                           />
-                          {paymentSettings?.upiId && (
-                            <div className="p-3 bg-primary/5 border border-primary/20 rounded-xl">
-                              <p className="text-sm font-medium text-primary mb-1">Pay to:</p>
-                              <p className="text-sm font-mono">{paymentSettings.upiId}</p>
-                            </div>
-                          )}
-                          <div className="text-center p-4 bg-muted rounded-xl">
-                            <p className="text-sm text-muted-foreground mb-2">Or scan QR code</p>
-                            <div className="w-32 h-32 bg-white rounded-xl mx-auto flex items-center justify-center">
-                              {paymentSettings?.qrCodeUrl ? (
+                        </div>
+                        <div className="flex items-center justify-center">
+                          {paymentSettings?.qrCodeUrl && (
+                            <div className="text-center">
+                              <p className="text-xs text-muted-foreground mb-2">Or scan QR</p>
+                              <div className="w-16 h-16 bg-white rounded-lg p-1 border">
                                 <img 
                                   src={paymentSettings.qrCodeUrl} 
                                   alt="UPI QR Code" 
-                                  className="w-full h-full object-contain rounded-xl"
+                                  className="w-full h-full object-contain rounded-md"
                                 />
-                              ) : (
-                                <span className="text-xs text-muted-foreground">QR Code not configured</span>
-                              )}
+                              </div>
                             </div>
-                          </div>
+                          )}
+                        </div>
+                      </div>
+                      {paymentSettings?.upiId && (
+                        <div className="text-center text-sm">
+                          <span className="text-muted-foreground">Pay to: </span>
+                          <span className="font-mono text-primary">{paymentSettings.upiId}</span>
                         </div>
                       )}
-                    </Card>
-                    
-                    <Card className={`p-4 rounded-xl cursor-pointer ${paymentMethod === 'cod' ? 'border-primary' : ''}`}>
-                      <label className="flex items-center space-x-3 cursor-pointer">
-                        <RadioGroupItem value="cod" />
-                        <div className="flex-1">
-                          <div className="font-medium">Cash on Delivery</div>
-                          <div className="text-sm text-muted-foreground">Pay ₹99 security advance + remaining on delivery</div>
+                    </div>
+                  )}
+                  
+                  {paymentMethod === 'cod' && (
+                    <div className="space-y-4">
+                      <div className="p-3 bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 rounded-xl">
+                        <div className="flex items-center space-x-2">
+                          <Shield className="w-4 h-4 text-amber-600" />
+                          <p className="text-sm font-medium text-amber-800 dark:text-amber-300">₹99 Security Advance Required</p>
                         </div>
-                      </label>
-                      {paymentMethod === 'cod' && (
-                        <div className="mt-4 space-y-4">
-                          <div className="p-3 bg-amber-50 border border-amber-200 rounded-xl">
-                            <div className="flex items-center space-x-2">
-                              <Shield className="w-5 h-5 text-amber-600" />
-                              <div>
-                                <p className="text-sm font-medium text-amber-800">Security Advance Payment</p>
-                                <p className="text-xs text-amber-600">Pay ₹99 security advance now using UPI</p>
-                              </div>
-                            </div>
-                          </div>
-                          
-                          {/* UPI Payment for COD Advance */}
-                          <div className="p-4 bg-primary/5 border border-primary/20 rounded-xl">
-                            <h4 className="font-medium mb-3 text-primary">Pay ₹99 Security Advance</h4>
-                            
-                            {paymentSettings?.upiId && (
-                              <div className="mb-4">
-                                <p className="text-sm font-medium mb-2">UPI ID:</p>
-                                <div className="p-3 bg-white rounded-lg border text-center">
-                                  <p className="font-mono text-sm text-primary">{paymentSettings.upiId}</p>
-                                  <p className="text-xs text-muted-foreground mt-1">Amount: ₹99</p>
-                                </div>
-                              </div>
-                            )}
-                            
-                            {paymentSettings?.qrCodeUrl && (
-                              <div className="text-center mb-4">
-                                <p className="text-sm font-medium mb-2">Or scan QR code:</p>
-                                <div className="w-32 h-32 bg-white rounded-lg mx-auto p-2 border">
-                                  <img 
-                                    src={paymentSettings.qrCodeUrl} 
-                                    alt="UPI QR Code for ₹99" 
-                                    className="w-full h-full object-contain"
-                                  />
-                                </div>
-                                <p className="text-xs text-muted-foreground mt-2">Scan to pay ₹99</p>
-                              </div>
-                            )}
-                            
-                            <div className="space-y-3">
-                              <div>
-                                <Label htmlFor="transactionId">Transaction ID/Reference Number</Label>
-                                <Input
-                                  id="transactionId"
-                                  value={codAdvanceData.transactionId}
-                                  onChange={(e) => setCodAdvanceData({...codAdvanceData, transactionId: e.target.value})}
-                                  placeholder="Enter transaction ID"
-                                  className="rounded-xl mt-1"
-                                  data-testid="input-transaction-id"
+                      </div>
+                      
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div>
+                          <Label htmlFor="transactionId">Transaction ID</Label>
+                          <Input
+                            id="transactionId"
+                            value={codAdvanceData.transactionId}
+                            onChange={(e) => setCodAdvanceData({...codAdvanceData, transactionId: e.target.value})}
+                            placeholder="Enter transaction ID"
+                            className="rounded-xl mt-1"
+                            data-testid="input-transaction-id"
+                          />
+                        </div>
+                        <div className="flex items-center justify-center">
+                          {paymentSettings?.qrCodeUrl && (
+                            <div className="text-center">
+                              <p className="text-xs text-muted-foreground mb-2">Pay ₹99</p>
+                              <div className="w-16 h-16 bg-white rounded-lg p-1 border">
+                                <img 
+                                  src={paymentSettings.qrCodeUrl} 
+                                  alt="₹99 QR Code" 
+                                  className="w-full h-full object-contain rounded-md"
                                 />
                               </div>
-                              
-                              <div>
-                                <Label htmlFor="paymentProof">Payment Screenshot (Optional)</Label>
-                                <Input
-                                  id="paymentProof"
-                                  type="file"
-                                  accept="image/*"
-                                  onChange={(e) => setCodAdvanceData({...codAdvanceData, screenshotProof: e.target.files?.[0] || null})}
-                                  className="rounded-xl mt-1"
-                                  data-testid="input-payment-proof"
-                                />
-                                <p className="text-xs text-muted-foreground mt-1">Upload screenshot of successful payment</p>
-                              </div>
-                              
-                              {codAdvanceData.transactionId && (
-                                <div className="flex items-center space-x-2 p-3 bg-green-50 border border-green-200 rounded-xl">
-                                  <CheckCircle className="w-4 h-4 text-green-600" />
-                                  <p className="text-sm text-green-800">Payment details captured. You can proceed.</p>
-                                </div>
-                              )}
                             </div>
-                          </div>
+                          )}
+                        </div>
+                      </div>
+                            
+                      {codAdvanceData.transactionId && (
+                        <div className="flex items-center space-x-2 p-3 bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-xl">
+                          <CheckCircle className="w-4 h-4 text-green-600" />
+                          <p className="text-sm text-green-800 dark:text-green-300">Payment details captured. You can proceed.</p>
                         </div>
                       )}
-                    </Card>
-                  </RadioGroup>
+                    </div>
+                  )}
                   
                   <div className="flex space-x-3">
                     <Button

@@ -58,7 +58,7 @@ export default function Profile() {
             </AvatarFallback>
           </Avatar>
           <div className="flex-1">
-            <h1 className="text-2xl font-bold text-white">
+            <h1 className="text-2xl font-bold" style={{ color: 'var(--brand-green)' }}>
               {user?.firstName} {user?.lastName}
             </h1>
             <p className="text-white">{user?.email}</p>
@@ -81,7 +81,7 @@ export default function Profile() {
             {/* Personal Information */}
             <Card className="card-premium rounded-2xl">
               <CardHeader className="flex flex-row items-center justify-between">
-                <CardTitle>Personal Information</CardTitle>
+                <CardTitle style={{ color: 'var(--brand-green)' }}>Personal Information</CardTitle>
                 <Button
                   variant={isEditing ? "default" : "outline"}
                   size="sm"

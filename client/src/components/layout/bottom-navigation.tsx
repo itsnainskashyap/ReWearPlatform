@@ -47,10 +47,13 @@ export default function BottomNavigation() {
               onClick={() => handleNavClick(item)}
               className={`flex flex-col items-center py-3 px-3 min-h-0 h-auto rounded-2xl transition-all duration-300 hover:scale-110 active:scale-95 ${
                 isActive 
-                  ? "text-primary bg-primary/10 shadow-lg" 
-                  : "text-muted-foreground hover:text-primary hover:bg-primary/5"
+                  ? "bg-primary/10 shadow-lg" 
+                  : "text-muted-foreground hover:bg-primary/5"
               }`}
-              style={{ animationDelay: `${index * 50}ms` }}
+              style={{
+                ...(isActive ? { color: 'var(--brand-green)' } : {}),
+                animationDelay: `${index * 50}ms`
+              }}
               data-testid={item.testId}
             >
               <div className="relative">
@@ -66,7 +69,10 @@ export default function BottomNavigation() {
                   </span>
                 )}
               </div>
-              <span className={`text-xs transition-all duration-200 ${isActive ? "font-bold text-primary" : "font-medium"}`}>
+              <span 
+                className={`text-xs transition-all duration-200 ${isActive ? "font-bold" : "font-medium"}`}
+                style={isActive ? { color: 'var(--brand-green)' } : {}}
+              >
                 {item.label}
               </span>
             </Button>

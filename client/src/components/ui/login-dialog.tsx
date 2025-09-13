@@ -29,7 +29,7 @@ export function LoginDialog({ open, onOpenChange, redirectAfterLogin }: LoginDia
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-md !bg-white dark:!bg-card border-2 border-primary/30 rounded-3xl shadow-2xl text-foreground !z-[99999] !fixed !important" style={{ zIndex: 99999 }}>
+      <DialogContent className="sm:max-w-md bg-white/95 dark:bg-card/95 backdrop-blur-md border-2 border-primary/30 rounded-3xl shadow-2xl text-foreground" data-testid="login-dialog-content">
         <DialogHeader className="text-center space-y-6 text-foreground">
           <div className="mx-auto">
             <img 
@@ -54,7 +54,7 @@ export function LoginDialog({ open, onOpenChange, redirectAfterLogin }: LoginDia
             onClick={handleLogin}
             disabled={isLoading}
             className="w-full h-12 bg-gradient-to-r from-primary to-accent hover:from-primary/90 hover:to-accent/90 text-primary-foreground rounded-2xl button-glow"
-            data-testid="button-login"
+            data-testid="button-login-google"
           >
             <User className="w-5 h-5 mr-2" />
             {isLoading ? 'Connecting...' : 'Continue with Google'}

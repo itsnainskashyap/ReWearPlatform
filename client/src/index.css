@@ -86,6 +86,10 @@
   --chart-3: hsl(0, 84%, 60%);
   --chart-4: hsl(158, 15%, 92%);
   --chart-5: hsl(158, 35%, 35%);
+  
+  /* Brand Green for Profile Elements */
+  --brand-green: hsl(158, 82%, 25%); /* Darker green for better contrast */
+  --brand-green-light: hsl(158, 60%, 35%); /* Lighter variant */
 
   --font-sans: 'Inter', sans-serif;
   --font-serif: Georgia, serif;
@@ -189,6 +193,10 @@
   --chart-3: hsl(0, 62.8%, 30.6%);
   --chart-4: hsl(240, 3.7%, 15.9%);
   --chart-5: hsl(240, 5%, 64.9%);
+  
+  /* Brand Green for Profile Elements - Dark Mode */
+  --brand-green: hsl(158, 82%, 35%); /* Lighter green for dark mode */
+  --brand-green-light: hsl(158, 60%, 45%); /* Even lighter variant */
 
   --shadow-2xs: 0px 1px 2px 0px hsl(240, 10%, 3.9%, 0.1);
   --shadow-xs: 0px 1px 2px 0px hsl(240, 10%, 3.9%, 0.1);
