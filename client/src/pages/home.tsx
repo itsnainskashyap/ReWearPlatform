@@ -6,6 +6,7 @@ import ProductGrid from "@/components/sections/product-grid";
 import FeaturedCarousel from "@/components/sections/featured-carousel";
 import RecentlyViewed from "@/components/sections/recently-viewed";
 import AIRecommendations from "@/components/ai/recommendations";
+import { ErrorBoundary } from "@/components/ui/error-boundary";
 
 export default function Home() {
   const [shopType, setShopType] = useState<'all' | 'thrift' | 'originals'>('all');
@@ -21,29 +22,46 @@ export default function Home() {
 
   return (
     <div className="motion-safe-fade-in">
-      <HeroSection />
+      <ErrorBoundary fallback={<div className="text-red-500 p-4">Error in Hero Section</div>}>
+        <HeroSection />
+      </ErrorBoundary>
+      
       {/* Only show Featured Brands when not in ReWeara Originals mode */}
       {shopType !== 'originals' && (
         <section className="section-y" aria-label="Featured Brands">
-          <BrandScroll />
+          <ErrorBoundary fallback={<div className="text-red-500 p-4">Error in Brand Scroll</div>}>
+            <BrandScroll />
+          </ErrorBoundary>
         </section>
       )}
+      
       <section className="section-y" aria-label="AI Recommendations">
         <div className="container-custom">
-          <AIRecommendations 
-            title="AI Recommendations For You" 
-            maxItems={6}
-          />
+          <ErrorBoundary fallback={<div className="text-red-500 p-4">Error in AI Recommendations</div>}>
+            <AIRecommendations 
+              title="AI Recommendations For You" 
+              maxItems={6}
+            />
+          </ErrorBoundary>
         </div>
       </section>
+      
       <section className="section-y" aria-label="All Products">
-        <ProductGrid />
+        <ErrorBoundary fallback={<div className="text-red-500 p-4">Error in Product Grid</div>}>
+          <ProductGrid />
+        </ErrorBoundary>
       </section>
+      
       <section className="section-y" aria-label="Featured Products">
-        <FeaturedCarousel />
+        <ErrorBoundary fallback={<div className="text-red-500 p-4">Error in Featured Carousel</div>}>
+          <FeaturedCarousel />
+        </ErrorBoundary>
       </section>
+      
       <section className="section-y" aria-label="Recently Viewed">
-        <RecentlyViewed />
+        <ErrorBoundary fallback={<div className="text-red-500 p-4">Error in Recently Viewed</div>}>
+          <RecentlyViewed />
+        </ErrorBoundary>
       </section>
     </div>
   );
