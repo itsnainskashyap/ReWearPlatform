@@ -7,7 +7,7 @@ import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { AddProductModal } from "@/components/ui/add-product-modal";
+import { EnhancedAddProductModal } from "@/components/ui/enhanced-add-product-modal";
 import { EditProductModal } from "@/components/ui/edit-product-modal";
 import CategoryManagement from "@/components/admin/CategoryManagement";
 import { 
@@ -634,7 +634,7 @@ export default function Admin() {
       </div>
 
       {/* Add Product Modal */}
-      <AddProductModal 
+      <EnhancedAddProductModal 
         open={showAddProduct} 
         onOpenChange={setShowAddProduct} 
       />
