@@ -69,11 +69,11 @@ export default function FeaturedCarousel() {
     if (!carouselRef.current || !featuredProducts || featuredProducts.length === 0) return;
     
     const container = carouselRef.current;
-    const itemHeight = 320; // Height of each product card
-    const scrollPosition = currentIndex * itemHeight;
+    const itemWidth = 280; // Width of each product card
+    const scrollPosition = currentIndex * itemWidth;
     
     container.scrollTo({
-      top: scrollPosition,
+      left: scrollPosition,
       behavior: 'smooth'
     });
   }, [currentIndex, featuredProducts]);
@@ -126,7 +126,7 @@ export default function FeaturedCarousel() {
       
       <div className="px-4">
         <div 
-          className="relative h-96 overflow-hidden"
+          className="relative overflow-hidden"
           onMouseEnter={handleMouseEnter}
           onMouseLeave={handleMouseLeave}
           data-testid="featured-carousel-container"
@@ -140,21 +140,21 @@ export default function FeaturedCarousel() {
             </div>
           )}
 
-          {/* Vertical scrolling container */}
+          {/* Horizontal scrolling container */}
           <div
             ref={carouselRef}
-            className="h-full overflow-y-auto scrollbar-hide scroll-smooth"
+            className="overflow-x-auto scrollbar-hide scroll-smooth"
             style={{
               scrollbarWidth: 'none',
               msOverflowStyle: 'none',
             }}
             data-testid="featured-carousel-scroll-container"
           >
-            <div className="space-y-4 pb-4">
+            <div className="flex space-x-4 pb-4">
               {displayProducts.map((product, index) => (
                 <Card 
                   key={`${product.id}-${index}`}
-                  className="group cursor-pointer hover:shadow-lg transition-all duration-300 border-0 bg-white dark:bg-gray-800 hover:scale-[1.02]"
+                  className="group cursor-pointer hover:shadow-lg transition-all duration-300 border-0 bg-white dark:bg-gray-800 hover:scale-[1.02] flex-shrink-0 w-72"
                   data-testid={`featured-product-card-${product.id}`}
                 >
                   <CardContent className="p-0">

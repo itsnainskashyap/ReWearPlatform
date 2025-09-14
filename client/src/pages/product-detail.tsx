@@ -231,9 +231,9 @@ export default function ProductDetail() {
         <div className="space-y-2 animate-slideInLeft">
           <div className="flex items-center space-x-2">
             <Badge className="bg-primary/10 text-primary border-primary/20">
-              {product.condition || 'Good'}
+              {product?.condition || 'new'}
             </Badge>
-            {product.isOriginal && (
+            {product?.isOriginal && (
               <Badge className="bg-accent/10 text-accent-foreground border-accent/20">
                 <Sparkles className="w-3 h-3 mr-1" />
                 ReWeara Original
@@ -285,13 +285,11 @@ export default function ProductDetail() {
           {/* Stock Information */}
           <div className="flex items-center space-x-2">
             <Badge variant="secondary" className="text-xs">
-              {product.stock > 0 ? `${product.stock} pieces left` : 'Out of stock'}
+              {(product?.stock ?? 0) > 0 ? `${product?.stock} pieces left` : 'Out of stock'}
             </Badge>
-            {product.condition && (
-              <Badge variant="outline" className="text-xs bg-amber-50 text-amber-700 border-amber-200">
-                Condition: {product.condition}
-              </Badge>
-            )}
+            <Badge variant="outline" className="text-xs bg-amber-50 text-amber-700 border-amber-200">
+              Condition: {product?.condition || 'new'}
+            </Badge>
           </div>
         </div>
 

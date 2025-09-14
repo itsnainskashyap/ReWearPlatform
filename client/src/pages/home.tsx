@@ -35,6 +35,12 @@ export default function Home() {
         </section>
       )}
       
+      <section className="section-y" aria-label="Featured Products">
+        <ErrorBoundary fallback={<div className="text-red-500 p-4">Error in Featured Carousel</div>}>
+          <FeaturedCarousel />
+        </ErrorBoundary>
+      </section>
+      
       <section className="section-y" aria-label="AI Recommendations">
         <div className="container-custom">
           <ErrorBoundary fallback={<div className="text-red-500 p-4">Error in AI Recommendations</div>}>
@@ -49,12 +55,6 @@ export default function Home() {
       <section className="section-y" aria-label="All Products">
         <ErrorBoundary fallback={<div className="text-red-500 p-4">Error in Product Grid</div>}>
           <ProductGrid />
-        </ErrorBoundary>
-      </section>
-      
-      <section className="section-y" aria-label="Featured Products">
-        <ErrorBoundary fallback={<div className="text-red-500 p-4">Error in Featured Carousel</div>}>
-          <FeaturedCarousel />
         </ErrorBoundary>
       </section>
       
