@@ -223,12 +223,11 @@ export function EnhancedAddProductModal({ open, onOpenChange }: EnhancedAddProdu
       const formData = new FormData();
       formData.append('video', file);
 
-      const response = await apiRequest("POST", "/api/upload/video", formData, {
-        headers: { 'Content-Type': 'multipart/form-data' },
-      });
+      const response = await apiRequest("POST", "/api/upload/video", formData);
+      const responseData = await response.json();
 
       const newVideos = [...videos];
-      newVideos[index] = response.videoUrl;
+      newVideos[index] = responseData.videoUrl;
       setVideos(newVideos);
       setValue("videos", newVideos.filter(url => url.trim() !== ""));
 
