@@ -16,6 +16,7 @@ import TaxManagement from "@/components/admin/TaxManagement";
 import BrandManagement from "@/components/admin/BrandManagement";
 import OrderWorkflow from "@/components/admin/OrderWorkflow";
 import { PromotionalPopupManagement } from "@/components/admin/promotional-popup-management";
+import { BannerManagement } from "@/components/admin/BannerManagement";
 import { PaymentSettingsForm } from "@/components/admin/PaymentSettings";
 import FeaturedProductsManagement from "@/components/admin/FeaturedProductsManagement";
 import { useLocation } from "wouter";
@@ -637,6 +638,10 @@ export default function AdminPanel() {
               <TabsTrigger value="marketing" className="gap-2">
                 <Tag className="w-4 h-4" />
                 Marketing
+              </TabsTrigger>
+              <TabsTrigger value="banners" className="gap-2">
+                <Image className="w-4 h-4" />
+                Banners
               </TabsTrigger>
               <TabsTrigger value="promotional-popups" className="gap-2">
                 <Target className="w-4 h-4" />
@@ -1544,6 +1549,11 @@ export default function AdminPanel() {
                 </CardContent>
               </Card>
             </div>
+          </TabsContent>
+
+          {/* Banners Tab */}
+          <TabsContent value="banners" className="space-y-4">
+            <BannerManagement />
           </TabsContent>
 
           {/* Promotional Popups Tab */}

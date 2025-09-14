@@ -7,6 +7,7 @@ import { ThemeProvider } from "@/components/ui/theme-provider";
 import { useAuth } from "@/hooks/useAuth";
 import NotFound from "@/pages/not-found";
 import { PromotionalPopupComponent } from "@/components/ui/promotional-popup";
+import BannerBar from "@/components/ui/BannerBar";
 import { useLocation } from "wouter";
 import Landing from "@/pages/landing";
 import Home from "@/pages/home";
@@ -122,6 +123,7 @@ function AppContent() {
           <div className="animate-fadeInUp relative">
             <Drawer />
             <Header />
+            <BannerBar />
             <main className="pt-16 md:pt-20 pb-24">
               <Router />
             </main>

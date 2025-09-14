@@ -9,7 +9,7 @@ import { Switch } from "@/components/ui/switch";
 import { useToast } from "@/hooks/use-toast";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Plus, Edit, Trash2, Calculator } from "lucide-react";
+import { Settings, Plus, Edit, Trash2, Calculator } from "lucide-react";
 import { apiRequest } from "@/lib/queryClient";
 
 interface TaxRate {
@@ -43,7 +43,7 @@ export default function TaxManagement() {
   });
 
   // Fetch tax rates
-  const { data: taxRates = [], isLoading } = useQuery({
+  const { data: taxRates = [], isLoading } = useQuery<TaxRate[]>({
     queryKey: ["/api/admin/tax-rates"]
   });
 

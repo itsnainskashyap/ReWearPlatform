@@ -8,6 +8,7 @@ import {
   wishlists,
   orders,
   orderItems,
+  banners,
   promotionalPopups,
   adminLogs,
   orderTracking,
@@ -33,6 +34,7 @@ import {
   type InsertWishlist,
   type InsertOrder,
   type InsertOrderItem,
+  type InsertBanner,
   type InsertPromotionalPopup,
   type InsertAdminLog,
   type InsertOrderTracking,
@@ -109,6 +111,13 @@ export interface IStorage {
   updateOrderStatus(id: string, status: string): Promise<Order | undefined>;
   updatePaymentStatusWithTracking(orderId: string, paymentStatus: string, trackingData?: InsertOrderTracking): Promise<Order | undefined>;
   updateOrderWithAudit(orderId: string, updates: Partial<InsertOrder>, adminId: string, notes?: string): Promise<Order | undefined>;
+  
+  // Banner operations
+  getBanners(options?: { active?: boolean }): Promise<Banner[]>;
+  getBannerById(id: string): Promise<Banner | undefined>;
+  createBanner(banner: InsertBanner): Promise<Banner>;
+  updateBanner(id: string, updates: Partial<InsertBanner>): Promise<Banner | undefined>;
+  deleteBanner(id: string): Promise<void>;
   
   // Promotional popup operations
   getPromotionalPopups(options?: { active?: boolean }): Promise<PromotionalPopup[]>;
@@ -469,14 +478,27 @@ export class DatabaseStorage implements IStorage {
   }
 
   async createProduct(product: InsertProduct): Promise<Product> {
-    const [newProduct] = await db.insert(products).values(product).returning();
+    // Handle timestamp coercion for discountExpiry
+    const productData = {
+      ...product,
+      discountExpiry: product.discountExpiry ? new Date(product.discountExpiry as any) : null,
+    };
+    
+    const [newProduct] = await db.insert(products).values(productData).returning();
     return newProduct;
   }
 
   async updateProduct(id: string, updates: Partial<InsertProduct>): Promise<Product | undefined> {
+    // Handle timestamp coercion for discountExpiry
+    const updateData = {
+      ...updates,
+      discountExpiry: updates.discountExpiry ? new Date(updates.discountExpiry as any) : updates.discountExpiry,
+      updatedAt: new Date()
+    };
+    
     const [updatedProduct] = await db
       .update(products)
-      .set({ ...updates, updatedAt: new Date() })
+      .set(updateData)
       .where(eq(products.id, id))
       .returning();
     return updatedProduct;
@@ -969,6 +991,66 @@ export class DatabaseStorage implements IStorage {
     await db
       .delete(promotionalPopups)
       .where(eq(promotionalPopups.id, id));
+  }
+
+  // Banner operations
+  async getBanners(options?: { active?: boolean }): Promise<Banner[]> {
+    if (options?.active) {
+      const now = new Date();
+      return await db
+        .select()
+        .from(banners)
+        .where(
+          and(
+            eq(banners.isActive, true),
+            or(
+              sql`${banners.startDate} IS NULL`,
+              sql`${banners.startDate} <= ${now}`
+            ),
+            or(
+              sql`${banners.endDate} IS NULL`,
+              sql`${banners.endDate} >= ${now}`
+            )
+          )
+        )
+        .orderBy(desc(banners.sortOrder), desc(banners.createdAt));
+    }
+    
+    return await db
+      .select()
+      .from(banners)
+      .orderBy(desc(banners.sortOrder), desc(banners.createdAt));
+  }
+
+  async getBannerById(id: string): Promise<Banner | undefined> {
+    const [banner] = await db
+      .select()
+      .from(banners)
+      .where(eq(banners.id, id));
+    return banner;
+  }
+
+  async createBanner(banner: InsertBanner): Promise<Banner> {
+    const [newBanner] = await db
+      .insert(banners)
+      .values(banner)
+      .returning();
+    return newBanner;
+  }
+
+  async updateBanner(id: string, updates: Partial<InsertBanner>): Promise<Banner | undefined> {
+    const [updatedBanner] = await db
+      .update(banners)
+      .set({ ...updates, updatedAt: new Date() })
+      .where(eq(banners.id, id))
+      .returning();
+    return updatedBanner;
+  }
+
+  async deleteBanner(id: string): Promise<void> {
+    await db
+      .delete(banners)
+      .where(eq(banners.id, id));
   }
 
   // Featured products panel operations

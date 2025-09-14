@@ -197,6 +197,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Banner routes (public)
+  app.get('/api/banners', async (req, res) => {
+    try {
+      const banners = await storage.getBanners({ active: true });
+      res.json(banners);
+    } catch (error) {
+      console.error("Error fetching active banners:", error);
+      res.status(500).json({ message: "Failed to fetch banners" });
+    }
+  });
+
   // Cart routes
   app.get('/api/cart', async (req: any, res) => {
     try {

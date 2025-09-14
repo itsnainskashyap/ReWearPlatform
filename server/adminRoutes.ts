@@ -37,8 +37,12 @@ import {
 import {
   insertCategorySchema,
   updateCategorySchema,
+  insertBannerSchema,
+  insertPromotionalPopupSchema,
   type InsertCategory,
   type UpdateCategory,
+  type InsertBanner,
+  type InsertPromotionalPopup,
   featuredProductsPanelSettingsSchema
 } from "@shared/schema";
 import { z } from "zod";
@@ -616,6 +620,262 @@ export function setupAdminRoutes(app: Express) {
     } catch (error) {
       console.error("Product delete error:", error);
       res.status(500).json({ message: "Failed to delete product" });
+    }
+  });
+
+  // Banner Management Routes
+  
+  // Get all banners for admin
+  app.get("/api/admin/banners", isAdminAuthenticated, async (req: AdminRequest, res) => {
+    try {
+      const banners = await storage.getBanners(); // Get all banners for admin view
+      res.json(banners);
+    } catch (error) {
+      console.error("Banners fetch error:", error);
+      res.status(500).json({ message: "Failed to fetch banners" });
+    }
+  });
+
+  // Get single banner by ID
+  app.get("/api/admin/banners/:bannerId", isAdminAuthenticated, async (req: AdminRequest, res) => {
+    try {
+      const { bannerId } = req.params;
+      const banner = await storage.getBannerById(bannerId);
+      
+      if (!banner) {
+        return res.status(404).json({ message: "Banner not found" });
+      }
+      
+      res.json(banner);
+    } catch (error) {
+      console.error("Banner fetch error:", error);
+      res.status(500).json({ message: "Failed to fetch banner" });
+    }
+  });
+
+  // Create banner
+  app.post("/api/admin/banners", isAdminAuthenticated, async (req: AdminRequest, res) => {
+    try {
+      const validationResult = insertBannerSchema.safeParse(req.body);
+      
+      if (!validationResult.success) {
+        return res.status(400).json({ 
+          message: "Invalid banner data", 
+          errors: validationResult.error.issues 
+        });
+      }
+
+      const newBanner = await storage.createBanner(validationResult.data);
+
+      await logAuditAction(
+        req.admin!.id,
+        "CREATE_BANNER",
+        "banner",
+        newBanner.id,
+        validationResult.data,
+        req.ip,
+        req.headers["user-agent"]
+      );
+
+      res.json(newBanner);
+    } catch (error) {
+      console.error("Banner create error:", error);
+      res.status(500).json({ message: "Failed to create banner" });
+    }
+  });
+
+  // Update banner
+  app.put("/api/admin/banners/:bannerId", isAdminAuthenticated, async (req: AdminRequest, res) => {
+    try {
+      const { bannerId } = req.params;
+      
+      const validationResult = insertBannerSchema.partial().safeParse(req.body);
+      
+      if (!validationResult.success) {
+        return res.status(400).json({ 
+          message: "Invalid banner data", 
+          errors: validationResult.error.issues 
+        });
+      }
+
+      const updatedBanner = await storage.updateBanner(bannerId, validationResult.data);
+      
+      if (!updatedBanner) {
+        return res.status(404).json({ message: "Banner not found" });
+      }
+
+      await logAuditAction(
+        req.admin!.id,
+        "UPDATE_BANNER",
+        "banner",
+        bannerId,
+        validationResult.data,
+        req.ip,
+        req.headers["user-agent"]
+      );
+
+      res.json(updatedBanner);
+    } catch (error) {
+      console.error("Banner update error:", error);
+      res.status(500).json({ message: "Failed to update banner" });
+    }
+  });
+
+  // Delete banner
+  app.delete("/api/admin/banners/:bannerId", isAdminAuthenticated, async (req: AdminRequest, res) => {
+    try {
+      const { bannerId } = req.params;
+
+      // Check if banner exists first
+      const existingBanner = await storage.getBannerById(bannerId);
+      if (!existingBanner) {
+        return res.status(404).json({ message: "Banner not found" });
+      }
+
+      await storage.deleteBanner(bannerId);
+
+      await logAuditAction(
+        req.admin!.id,
+        "DELETE_BANNER",
+        "banner",
+        bannerId,
+        null,
+        req.ip,
+        req.headers["user-agent"]
+      );
+
+      res.json({ message: "Banner deleted successfully" });
+    } catch (error) {
+      console.error("Banner delete error:", error);
+      res.status(500).json({ message: "Failed to delete banner" });
+    }
+  });
+
+  // Promotional Popup Management Routes
+  
+  // Get all promotional popups for admin
+  app.get("/api/admin/promotional-popups", isAdminAuthenticated, async (req: AdminRequest, res) => {
+    try {
+      const popups = await storage.getPromotionalPopups(); // Get all popups for admin view
+      res.json(popups);
+    } catch (error) {
+      console.error("Promotional popups fetch error:", error);
+      res.status(500).json({ message: "Failed to fetch promotional popups" });
+    }
+  });
+
+  // Get single promotional popup by ID
+  app.get("/api/admin/promotional-popups/:popupId", isAdminAuthenticated, async (req: AdminRequest, res) => {
+    try {
+      const { popupId } = req.params;
+      const popup = await storage.getPromotionalPopupById(popupId);
+      
+      if (!popup) {
+        return res.status(404).json({ message: "Promotional popup not found" });
+      }
+      
+      res.json(popup);
+    } catch (error) {
+      console.error("Promotional popup fetch error:", error);
+      res.status(500).json({ message: "Failed to fetch promotional popup" });
+    }
+  });
+
+  // Create promotional popup
+  app.post("/api/admin/promotional-popups", isAdminAuthenticated, async (req: AdminRequest, res) => {
+    try {
+      const validationResult = insertPromotionalPopupSchema.safeParse(req.body);
+      
+      if (!validationResult.success) {
+        return res.status(400).json({ 
+          message: "Invalid promotional popup data", 
+          errors: validationResult.error.issues 
+        });
+      }
+
+      const newPopup = await storage.createPromotionalPopup(validationResult.data);
+
+      await logAuditAction(
+        req.admin!.id,
+        "CREATE_PROMOTIONAL_POPUP",
+        "promotional_popup",
+        newPopup.id,
+        validationResult.data,
+        req.ip,
+        req.headers["user-agent"]
+      );
+
+      res.json(newPopup);
+    } catch (error) {
+      console.error("Promotional popup create error:", error);
+      res.status(500).json({ message: "Failed to create promotional popup" });
+    }
+  });
+
+  // Update promotional popup
+  app.put("/api/admin/promotional-popups/:popupId", isAdminAuthenticated, async (req: AdminRequest, res) => {
+    try {
+      const { popupId } = req.params;
+      
+      const validationResult = insertPromotionalPopupSchema.partial().safeParse(req.body);
+      
+      if (!validationResult.success) {
+        return res.status(400).json({ 
+          message: "Invalid promotional popup data", 
+          errors: validationResult.error.issues 
+        });
+      }
+
+      const updatedPopup = await storage.updatePromotionalPopup(popupId, validationResult.data);
+      
+      if (!updatedPopup) {
+        return res.status(404).json({ message: "Promotional popup not found" });
+      }
+
+      await logAuditAction(
+        req.admin!.id,
+        "UPDATE_PROMOTIONAL_POPUP",
+        "promotional_popup",
+        popupId,
+        validationResult.data,
+        req.ip,
+        req.headers["user-agent"]
+      );
+
+      res.json(updatedPopup);
+    } catch (error) {
+      console.error("Promotional popup update error:", error);
+      res.status(500).json({ message: "Failed to update promotional popup" });
+    }
+  });
+
+  // Delete promotional popup
+  app.delete("/api/admin/promotional-popups/:popupId", isAdminAuthenticated, async (req: AdminRequest, res) => {
+    try {
+      const { popupId } = req.params;
+
+      // Check if popup exists first
+      const existingPopup = await storage.getPromotionalPopupById(popupId);
+      if (!existingPopup) {
+        return res.status(404).json({ message: "Promotional popup not found" });
+      }
+
+      await storage.deletePromotionalPopup(popupId);
+
+      await logAuditAction(
+        req.admin!.id,
+        "DELETE_PROMOTIONAL_POPUP",
+        "promotional_popup",
+        popupId,
+        null,
+        req.ip,
+        req.headers["user-agent"]
+      );
+
+      res.json({ message: "Promotional popup deleted successfully" });
+    } catch (error) {
+      console.error("Promotional popup delete error:", error);
+      res.status(500).json({ message: "Failed to delete promotional popup" });
     }
   });
 

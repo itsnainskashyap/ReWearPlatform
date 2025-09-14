@@ -303,6 +303,17 @@ export const orderItemRelations = relations(orderItems, ({ one }) => ({
   }),
 }));
 
+// Utility for preprocessing timestamp fields
+const preprocessTimestamp = z.preprocess((val) => {
+  if (val === "" || val === null || val === undefined) return null;
+  if (typeof val === "string") {
+    const date = new Date(val);
+    return isNaN(date.getTime()) ? null : date;
+  }
+  if (val instanceof Date) return val;
+  return null;
+}, z.date().nullable());
+
 // Insert schemas
 export const insertUserSchema = createInsertSchema(users).omit({
   id: true,
@@ -332,6 +343,8 @@ export const insertProductSchema = createInsertSchema(products).omit({
   id: true,
   createdAt: true,
   updatedAt: true,
+}).extend({
+  discountExpiry: preprocessTimestamp,
 });
 
 export const insertCartSchema = createInsertSchema(carts).omit({
@@ -355,6 +368,8 @@ export const insertOrderSchema = createInsertSchema(orders).omit({
   id: true,
   createdAt: true,
   updatedAt: true,
+}).extend({
+  estimatedDelivery: preprocessTimestamp,
 });
 
 export const insertOrderItemSchema = createInsertSchema(orderItems).omit({
@@ -540,6 +555,9 @@ export const insertCouponSchema = createInsertSchema(coupons).omit({
   id: true,
   createdAt: true,
   updatedAt: true,
+}).extend({
+  startDate: preprocessTimestamp,
+  endDate: preprocessTimestamp,
 });
 
 export const insertAdminUserSchema = createInsertSchema(adminUsers).omit({
@@ -562,6 +580,9 @@ export const insertBannerSchema = createInsertSchema(banners).omit({
   id: true,
   createdAt: true,
   updatedAt: true,
+}).extend({
+  startDate: preprocessTimestamp,
+  endDate: preprocessTimestamp,
 });
 
 export const insertContentPageSchema = createInsertSchema(contentPages).omit({
@@ -586,6 +607,9 @@ export const insertPromotionalPopupSchema = createInsertSchema(promotionalPopups
   id: true,
   createdAt: true,
   updatedAt: true,
+}).extend({
+  startDate: preprocessTimestamp,
+  endDate: preprocessTimestamp,
 });
 
 export const insertAdminLogSchema = createInsertSchema(adminLogs).omit({
@@ -632,6 +656,7 @@ export type InsertProductMedia = z.infer<typeof insertProductMediaSchema>;
 export type InsertOrderTracking = z.infer<typeof insertOrderTrackingSchema>;
 export type InsertPromotionalPopup = z.infer<typeof insertPromotionalPopupSchema>;
 export type InsertAdminLog = z.infer<typeof insertAdminLogSchema>;
+export type InsertBanner = z.infer<typeof insertBannerSchema>;
 
 // Featured Products Panel Settings Schema
 export const featuredProductsPanelSettingsSchema = z.object({
