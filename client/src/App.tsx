@@ -12,6 +12,7 @@ import { useLocation } from "wouter";
 import Landing from "@/pages/landing";
 import Home from "@/pages/home";
 import Shop from "@/pages/shop";
+import Originals from "@/pages/originals";
 import ProductDetail from "@/pages/product-detail";
 import Wishlist from "@/pages/wishlist";
 import Profile from "@/pages/profile";
@@ -59,6 +60,7 @@ function Router() {
         {/* Public routes accessible without login */}
         <Route path="/" component={Home} />
         <Route path="/shop" component={Shop} />
+        <Route path="/originals" component={Originals} />
         <Route path="/product/:id" component={ProductDetail} />
         <Route path="/cart" component={Cart} />
         <Route path="/about" component={About} />

@@ -7,14 +7,14 @@ import { Badge } from "@/components/ui/badge";
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Slider } from "@/components/ui/slider";
-import { Search, Filter, Grid2x2, Grid3x3, ChevronDown, X, Sparkles, Recycle } from "lucide-react";
+import { Search, Filter, Grid2x2, Grid3x3, ChevronDown, X, Sparkles, ArrowLeft } from "lucide-react";
 import ProductCard from "@/components/products/product-card";
 import { apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 import { useLocation } from "wouter";
 import type { Product } from "@shared/schema";
 
-export default function Shop() {
+export default function Originals() {
   const [, navigate] = useLocation();
   const { toast } = useToast();
   const queryClient = useQueryClient();
@@ -27,7 +27,6 @@ export default function Shop() {
   const [selectedCondition, setSelectedCondition] = useState<string>("all");
   const [sortBy, setSortBy] = useState("newest");
   const [showFilters, setShowFilters] = useState(false);
-  const [shopType, setShopType] = useState<'all' | 'thrift'>('all');
   const [page, setPage] = useState(0);
   const [hasMore, setHasMore] = useState(true);
   const [allProducts, setAllProducts] = useState<Product[]>([]);
@@ -41,12 +40,12 @@ export default function Shop() {
     }
   }, []);
 
-  const { data: categories } = useQuery({
+  const { data: categories } = useQuery<{id: string, name: string, slug: string}[]>({
     queryKey: ["/api/categories"],
   });
 
-  const { data: brands } = useQuery({
-    queryKey: ["/api/brands", selectedCategory],
+  const { data: brands } = useQuery<{id: string, name: string, slug: string, logoUrl?: string}[]>({
+    queryKey: ["/api/brands/originals", selectedCategory],
     queryFn: async () => {
       const params = new URLSearchParams();
       if (selectedCategory && selectedCategory !== 'all') {
@@ -59,7 +58,7 @@ export default function Shop() {
   });
 
   const { data: products, isLoading, isFetching } = useQuery({
-    queryKey: ["/api/products", selectedCategory, selectedBrand, searchQuery, priceRange, selectedCondition, shopType],
+    queryKey: ["/api/products/originals", selectedCategory, selectedBrand, searchQuery, priceRange, selectedCondition],
     queryFn: async () => {
       const params = new URLSearchParams();
       if (selectedCategory && selectedCategory !== 'all') params.append('category', selectedCategory);
@@ -75,7 +74,7 @@ export default function Shop() {
       
       params.append('limit', '1000'); // Show all products for limitless scroll
       params.append('offset', '0'); // Always start from beginning for simplicity
-      if (shopType === 'thrift') params.append('isThrift', 'true');
+      params.append('isOriginal', 'true'); // Hardcoded for originals page
       
       const response = await fetch(`/api/products?${params.toString()}`);
       if (!response.ok) throw new Error('Failed to fetch products');
@@ -145,7 +144,7 @@ export default function Shop() {
     setPage(0);
     setAllProducts([]);
     setHasMore(false);
-  }, [selectedCategory, selectedBrand, searchQuery, priceRange, selectedCondition, shopType]);
+  }, [selectedCategory, selectedBrand, searchQuery, priceRange, selectedCondition]);
 
   // Server-side filtering is now handled in the API query
   // Only client-side sorting remains for better UX
@@ -165,45 +164,33 @@ export default function Shop() {
   });
 
   return (
-    <div className="min-h-screen pb-20">
+    <div className="min-h-screen pb-20 animate-fadeInUp" data-testid="page-originals">
       {/* Header */}
       <div className="bg-white dark:bg-card border-b border-border shadow-sm">
-        {/* Shop Type Toggle */}
+        {/* Page Title with Back Link */}
         <div className="p-4 border-b border-white/10">
           <div className="flex items-center justify-between">
-            <h1 className="text-2xl font-bold gradient-text">Shop</h1>
-            <div className="flex space-x-2 bg-background/50 rounded-2xl p-1" data-testid="shop-type-toggle">
-              <Button
-                variant={shopType === 'all' ? 'default' : 'ghost'}
-                size="sm"
-                onClick={() => setShopType('all')}
-                className={`rounded-xl transition-all ${shopType === 'all' ? 'border-2 border-primary shadow-md' : 'dark:border dark:border-border/50'}`}
-                data-testid="button-shop-type-all"
-              >
-                All
-              </Button>
-              <Button
-                variant={shopType === 'thrift' ? 'default' : 'ghost'}
-                size="sm"
-                onClick={() => setShopType('thrift')}
-                className={`rounded-xl transition-all ${shopType === 'thrift' ? 'border-2 border-primary shadow-md' : 'dark:border dark:border-border/50'}`}
-                data-testid="button-shop-type-thrift"
-              >
-                <Recycle className="w-4 h-4 mr-1" />
-                Thrift
-              </Button>
+            <div className="flex items-center space-x-3">
               <Button
                 variant="ghost"
                 size="sm"
-                onClick={() => navigate('/originals')}
-                className="rounded-xl transition-all dark:border dark:border-border/50 hover:border-primary hover:shadow-md"
-                data-testid="button-shop-type-originals"
+                onClick={() => navigate("/shop")}
+                className="rounded-xl"
+                data-testid="button-back-to-shop"
               >
-                <Sparkles className="w-4 h-4 mr-1" />
-                ReWeara OGs
+                <ArrowLeft className="w-4 h-4 mr-1" />
+                Shop
               </Button>
+              <div className="h-6 w-px bg-border" />
+              <div className="flex items-center space-x-2">
+                <Sparkles className="w-5 h-5 text-primary" />
+                <h1 className="text-2xl font-bold gradient-text" data-testid="text-page-title">ReWeara Originals</h1>
+              </div>
             </div>
           </div>
+          <p className="text-sm text-muted-foreground mt-2" data-testid="text-page-description">
+            Discover our exclusive collection of sustainable, eco-friendly original designs
+          </p>
         </div>
 
         {/* Search and Filters Bar */}
@@ -213,11 +200,11 @@ export default function Shop() {
               <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground w-5 h-5" />
               <Input
                 type="search"
-                placeholder="Search products..."
+                placeholder="Search ReWeara Originals..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 className="pl-10 h-12 rounded-2xl glassmorphism border-white/20"
-                data-testid="input-search-products"
+                data-testid="input-search-originals"
               />
             </div>
             <Sheet open={showFilters} onOpenChange={setShowFilters}>
@@ -403,7 +390,7 @@ export default function Shop() {
           <div className="flex items-center justify-between">
             <div className="flex items-center space-x-2">
               <span className="text-sm text-muted-foreground" data-testid="text-product-count">
-                {isLoading ? "Loading..." : `${sortedProducts.length} products`}
+                {isLoading ? "Loading..." : `${sortedProducts.length} originals`}
               </span>
             </div>
             
@@ -455,7 +442,8 @@ export default function Shop() {
           </div>
         ) : sortedProducts.length === 0 ? (
           <div className="text-center py-12" data-testid="no-products-message">
-            <p className="text-muted-foreground">No products found matching your criteria.</p>
+            <Sparkles className="w-16 h-16 text-muted-foreground/50 mx-auto mb-4" />
+            <p className="text-muted-foreground">No ReWeara Originals found matching your criteria.</p>
             <Button onClick={clearFilters} variant="outline" className="mt-4" data-testid="button-clear-no-products">
               Clear Filters
             </Button>
@@ -466,10 +454,8 @@ export default function Shop() {
               <ProductCard
                 key={product.id}
                 product={product}
-                onClick={() => handleProductClick(product.id)}
                 onAddToCart={() => addToCartMutation.mutate(product.id)}
                 onAddToWishlist={() => addToWishlistMutation.mutate(product.id)}
-                viewMode={view}
               />
             ))}
           </div>
