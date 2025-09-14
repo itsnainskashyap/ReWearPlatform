@@ -138,9 +138,30 @@ export async function registerRoutes(app: Express): Promise<Server> {
         isThrift,
         isOriginal,
         search,
+        priceMin,
+        priceMax,
+        condition,
         limit = "20",
         offset = "0"
       } = req.query;
+
+      // Validate price parameters
+      const parsedPriceMin = priceMin ? parseFloat(priceMin as string) : undefined;
+      const parsedPriceMax = priceMax ? parseFloat(priceMax as string) : undefined;
+      
+      if (priceMin && isNaN(parsedPriceMin!)) {
+        return res.status(400).json({ message: "Invalid priceMin value" });
+      }
+      
+      if (priceMax && isNaN(parsedPriceMax!)) {
+        return res.status(400).json({ message: "Invalid priceMax value" });
+      }
+
+      // Validate condition parameter
+      const validConditions = ['all', 'New', 'Very Good', 'Good', 'Fair'];
+      if (condition && !validConditions.includes(condition as string)) {
+        return res.status(400).json({ message: "Invalid condition value" });
+      }
 
       const products = await storage.getProducts({
         categoryId: category as string,
@@ -150,6 +171,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
         isThrift: isThrift === 'true',
         isOriginal: isOriginal === 'true',
         search: search as string,
+        priceMin: parsedPriceMin,
+        priceMax: parsedPriceMax,
+        condition: condition as string,
         limit: parseInt(limit as string),
         offset: parseInt(offset as string),
       });

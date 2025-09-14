@@ -7,7 +7,7 @@ import { Badge } from "@/components/ui/badge";
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Slider } from "@/components/ui/slider";
-import { Search, Filter, Grid2X2, Grid3X3, ChevronDown, X, Sparkles, Recycle } from "lucide-react";
+import { Search, Filter, Grid2x2, Grid3x3, ChevronDown, X, Sparkles, Recycle } from "lucide-react";
 import ProductCard from "@/components/products/product-card";
 import { apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
@@ -24,6 +24,7 @@ export default function Shop() {
   const [selectedCategory, setSelectedCategory] = useState<string>("all");
   const [selectedBrand, setSelectedBrand] = useState<string>("all");
   const [priceRange, setPriceRange] = useState([0, 10000]);
+  const [selectedCondition, setSelectedCondition] = useState<string>("all");
   const [sortBy, setSortBy] = useState("newest");
   const [showFilters, setShowFilters] = useState(false);
   const [shopType, setShopType] = useState<'all' | 'thrift' | 'originals'>('all');
@@ -58,14 +59,22 @@ export default function Shop() {
   });
 
   const { data: products, isLoading, isFetching } = useQuery({
-    queryKey: ["/api/products", selectedCategory, selectedBrand, searchQuery, page, shopType],
+    queryKey: ["/api/products", selectedCategory, selectedBrand, searchQuery, priceRange, selectedCondition, shopType],
     queryFn: async () => {
       const params = new URLSearchParams();
       if (selectedCategory && selectedCategory !== 'all') params.append('category', selectedCategory);
       if (selectedBrand && selectedBrand !== 'all') params.append('brand', selectedBrand);
       if (searchQuery) params.append('search', searchQuery);
+      
+      // Add price range parameters
+      if (priceRange[0] > 0) params.append('priceMin', priceRange[0].toString());
+      if (priceRange[1] < 10000) params.append('priceMax', priceRange[1].toString());
+      
+      // Add condition parameter
+      if (selectedCondition && selectedCondition !== 'all') params.append('condition', selectedCondition);
+      
       params.append('limit', '1000'); // Show all products for limitless scroll
-      params.append('offset', (page * 1000).toString());
+      params.append('offset', '0'); // Always start from beginning for simplicity
       if (shopType === 'thrift') params.append('isThrift', 'true');
       if (shopType === 'originals') params.append('isOriginal', 'true');
       
@@ -124,6 +133,7 @@ export default function Shop() {
     setSelectedCategory("all");
     setSelectedBrand("all");
     setPriceRange([0, 10000]);
+    setSelectedCondition("all");
     setSearchQuery("");
     setSortBy("newest");
     setPage(0);
@@ -136,29 +146,13 @@ export default function Shop() {
     setPage(0);
     setAllProducts([]);
     setHasMore(false);
-  }, [selectedCategory, selectedBrand, searchQuery, shopType]);
+  }, [selectedCategory, selectedBrand, searchQuery, priceRange, selectedCondition, shopType]);
 
-  const filteredProducts = Array.isArray(allProducts) ? allProducts.filter((p: Product) => {
-    const price = parseFloat(p.price);
-    const priceInRange = price >= priceRange[0] && price <= priceRange[1];
-    
-    // Filter for ReWeara originals when shopType is 'originals'
-    if (shopType === 'originals') {
-      // Check if product has isOriginal flag or is from category "Sustainable Dresses"
-      const isReWearaOriginal = p.isOriginal === true || (p as any).categoryName === 'Sustainable Dresses';
-      return priceInRange && isReWearaOriginal;
-    }
-    
-    // Filter for thrift products when shopType is 'thrift'
-    if (shopType === 'thrift') {
-      const isThriftProduct = p.isThrift === true || (p as any).categoryName === 'Originals';
-      return priceInRange && isThriftProduct;
-    }
-    
-    return priceInRange;
-  }) : [];
+  // Server-side filtering is now handled in the API query
+  // Only client-side sorting remains for better UX
+  const displayProducts = Array.isArray(allProducts) ? allProducts : [];
 
-  const sortedProducts = [...filteredProducts].sort((a: Product, b: Product) => {
+  const sortedProducts = [...displayProducts].sort((a: Product, b: Product) => {
     switch (sortBy) {
       case 'price-low':
         return parseFloat(a.price) - parseFloat(b.price);
@@ -239,6 +233,50 @@ export default function Shop() {
                 </SheetHeader>
                 
                 <div className="space-y-6 mt-6">
+                  {/* Active Filters */}
+                  {(selectedCategory !== "all" || selectedBrand !== "all" || selectedCondition !== "all" || priceRange[0] !== 0 || priceRange[1] !== 10000) && (
+                    <div className="space-y-3">
+                      <div className="flex items-center justify-between">
+                        <label className="font-semibold">Active Filters</label>
+                        <Button 
+                          onClick={clearFilters}
+                          variant="ghost" 
+                          size="sm"
+                          className="text-xs h-6 px-2"
+                          data-testid="button-clear-all-filters"
+                        >
+                          Clear All
+                        </Button>
+                      </div>
+                      <div className="flex flex-wrap gap-2">
+                        {selectedCategory !== "all" && (
+                          <Badge variant="secondary" className="flex items-center gap-1" data-testid="badge-filter-category">
+                            Category: {categories?.find((c: any) => c.id === selectedCategory)?.name || selectedCategory}
+                            <X className="w-3 h-3 cursor-pointer" onClick={() => setSelectedCategory("all")} />
+                          </Badge>
+                        )}
+                        {selectedBrand !== "all" && (
+                          <Badge variant="secondary" className="flex items-center gap-1" data-testid="badge-filter-brand">
+                            Brand: {brands?.find((b: any) => b.id === selectedBrand)?.name || selectedBrand}
+                            <X className="w-3 h-3 cursor-pointer" onClick={() => setSelectedBrand("all")} />
+                          </Badge>
+                        )}
+                        {selectedCondition !== "all" && (
+                          <Badge variant="secondary" className="flex items-center gap-1" data-testid="badge-filter-condition">
+                            Condition: {selectedCondition}
+                            <X className="w-3 h-3 cursor-pointer" onClick={() => setSelectedCondition("all")} />
+                          </Badge>
+                        )}
+                        {(priceRange[0] !== 0 || priceRange[1] !== 10000) && (
+                          <Badge variant="secondary" className="flex items-center gap-1" data-testid="badge-filter-price">
+                            Price: ₹{priceRange[0]} - ₹{priceRange[1]}
+                            <X className="w-3 h-3 cursor-pointer" onClick={() => setPriceRange([0, 10000])} />
+                          </Badge>
+                        )}
+                      </div>
+                    </div>
+                  )}
+
                   {/* Category Filter */}
                   <div className="space-y-3">
                     <label className="font-semibold">Category</label>
@@ -293,26 +331,48 @@ export default function Shop() {
                         max={10000}
                         step={100}
                         className="w-full"
+                        data-testid="slider-price-range"
                       />
                       <div className="flex justify-between mt-2 text-sm text-muted-foreground">
-                        <span>₹{priceRange[0]}</span>
-                        <span>₹{priceRange[1]}</span>
+                        <span data-testid="text-price-min">₹{priceRange[0]}</span>
+                        <span data-testid="text-price-max">₹{priceRange[1]}</span>
                       </div>
                     </div>
+                  </div>
+
+                  {/* Condition Filter */}
+                  <div className="space-y-3">
+                    <label className="font-semibold">Condition</label>
+                    <Select 
+                      value={selectedCondition} 
+                      onValueChange={setSelectedCondition}
+                      data-testid="select-condition-filter"
+                    >
+                      <SelectTrigger className="rounded-xl">
+                        <SelectValue placeholder="All Conditions" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="all" data-testid="option-condition-all">All Conditions</SelectItem>
+                        <SelectItem value="New" data-testid="option-condition-new">New</SelectItem>
+                        <SelectItem value="Very Good" data-testid="option-condition-very-good">Very Good</SelectItem>
+                        <SelectItem value="Good" data-testid="option-condition-good">Good</SelectItem>
+                        <SelectItem value="Fair" data-testid="option-condition-fair">Fair</SelectItem>
+                      </SelectContent>
+                    </Select>
                   </div>
 
                   {/* Sort By */}
                   <div className="space-y-3">
                     <label className="font-semibold">Sort By</label>
-                    <Select value={sortBy} onValueChange={setSortBy}>
+                    <Select value={sortBy} onValueChange={setSortBy} data-testid="select-sort-by">
                       <SelectTrigger className="rounded-xl">
                         <SelectValue />
                       </SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="newest">Newest First</SelectItem>
-                        <SelectItem value="price-low">Price: Low to High</SelectItem>
-                        <SelectItem value="price-high">Price: High to Low</SelectItem>
-                        <SelectItem value="trending">Trending</SelectItem>
+                        <SelectItem value="newest" data-testid="option-sort-newest">Newest First</SelectItem>
+                        <SelectItem value="price-low" data-testid="option-sort-price-low">Price: Low to High</SelectItem>
+                        <SelectItem value="price-high" data-testid="option-sort-price-high">Price: High to Low</SelectItem>
+                        <SelectItem value="trending" data-testid="option-sort-trending">Trending</SelectItem>
                       </SelectContent>
                     </Select>
                   </div>
@@ -329,7 +389,8 @@ export default function Shop() {
                     </Button>
                     <Button 
                       onClick={() => setShowFilters(false)}
-                      className="w-full bg-gradient-to-r from-accent to-accent/90 text-accent-foreground rounded-xl"
+                      className="w-full rounded-xl"
+                      data-testid="button-apply-filters"
                     >
                       Apply Filters
                     </Button>
@@ -338,85 +399,81 @@ export default function Shop() {
               </SheetContent>
             </Sheet>
           </div>
-
-          {/* Active Filters */}
-          {(selectedCategory || selectedBrand || searchQuery) && (
-            <div className="flex flex-wrap gap-2">
-              {selectedCategory && (
-                <Badge className="rounded-full px-3 py-1">
-                  {Array.isArray(categories) && categories.find((c: any) => c.id === selectedCategory)?.name}
-                  <X 
-                    className="w-3 h-3 ml-2 cursor-pointer" 
-                    onClick={() => setSelectedCategory("")}
-                  />
-                </Badge>
-              )}
-              {selectedBrand && (
-                <Badge className="rounded-full px-3 py-1">
-                  {Array.isArray(brands) && brands.find((b: any) => b.id === selectedBrand)?.name}
-                  <X 
-                    className="w-3 h-3 ml-2 cursor-pointer" 
-                    onClick={() => setSelectedBrand("")}
-                  />
-                </Badge>
-              )}
-              {searchQuery && (
-                <Badge className="rounded-full px-3 py-1">
-                  "{searchQuery}"
-                  <X 
-                    className="w-3 h-3 ml-2 cursor-pointer" 
-                    onClick={() => setSearchQuery("")}
-                  />
-                </Badge>
-              )}
+          
+          {/* Sort and View options */}
+          <div className="flex items-center justify-between">
+            <div className="flex items-center space-x-2">
+              <span className="text-sm text-muted-foreground" data-testid="text-product-count">
+                {isLoading ? "Loading..." : `${sortedProducts.length} products`}
+              </span>
             </div>
-          )}
+            
+            <div className="flex items-center space-x-2">
+              <Select value={sortBy} onValueChange={setSortBy}>
+                <SelectTrigger className="w-[180px] h-8 rounded-xl" data-testid="select-sort-main">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="newest">Newest First</SelectItem>
+                  <SelectItem value="price-low">Price: Low to High</SelectItem>
+                  <SelectItem value="price-high">Price: High to Low</SelectItem>
+                  <SelectItem value="trending">Trending</SelectItem>
+                </SelectContent>
+              </Select>
+
+              <div className="flex rounded-xl border overflow-hidden" data-testid="view-toggle">
+                <Button
+                  variant={view === 'grid' ? 'default' : 'ghost'}
+                  size="sm"
+                  onClick={() => setView('grid')}
+                  className="rounded-none h-8"
+                  data-testid="button-view-grid"
+                >
+                  <Grid2x2 className="w-4 h-4" />
+                </Button>
+                <Button
+                  variant={view === 'list' ? 'default' : 'ghost'}
+                  size="sm"
+                  onClick={() => setView('list')}
+                  className="rounded-none h-8"
+                  data-testid="button-view-list"
+                >
+                  <Grid3x3 className="w-4 h-4" />
+                </Button>
+              </div>
+            </div>
+          </div>
         </div>
       </div>
 
       {/* Products Grid */}
       <div className="p-4">
-        {isLoading ? (
+        {isLoading || isFetching ? (
           <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
-            {[...Array(8)].map((_, index) => (
-              <div key={index} className="card-premium rounded-3xl overflow-hidden">
-                <div className="w-full h-48 skeleton rounded-t-3xl"></div>
-                <div className="p-5 space-y-3">
-                  <div className="h-4 skeleton rounded-full w-3/4"></div>
-                  <div className="h-3 skeleton rounded-full w-1/2"></div>
-                  <div className="flex items-center justify-between pt-2">
-                    <div className="h-6 skeleton rounded-full w-1/3"></div>
-                    <div className="h-11 skeleton rounded-2xl w-24"></div>
-                  </div>
-                </div>
-              </div>
+            {[...Array(8)].map((_, i) => (
+              <div key={i} className="aspect-square bg-muted animate-pulse rounded-xl" />
             ))}
           </div>
         ) : sortedProducts.length === 0 ? (
-          <div className="text-center py-16">
-            <div className="w-24 h-24 bg-gradient-to-br from-muted to-muted/50 rounded-3xl flex items-center justify-center mx-auto mb-6">
-              <Search className="w-12 h-12 text-muted-foreground" />
-            </div>
-            <h3 className="text-xl font-bold mb-3">No products found</h3>
-            <p className="text-muted-foreground mb-6">Try adjusting your filters or search query</p>
-            <Button onClick={clearFilters} className="rounded-2xl">
+          <div className="text-center py-12" data-testid="no-products-message">
+            <p className="text-muted-foreground">No products found matching your criteria.</p>
+            <Button onClick={clearFilters} variant="outline" className="mt-4" data-testid="button-clear-no-products">
               Clear Filters
             </Button>
           </div>
         ) : (
-          <>
-            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
-              {sortedProducts.map((product: Product, index: number) => (
-                <ProductCard
-                  key={product.id}
-                  product={product}
-                  variant="minimal"
-                  index={index}
-                />
-              ))}
-            </div>
-
-          </>
+          <div className={`grid gap-4 ${view === 'grid' ? 'grid-cols-2 md:grid-cols-3 lg:grid-cols-4' : 'grid-cols-1'}`} data-testid="products-grid">
+            {sortedProducts.map((product: Product) => (
+              <ProductCard
+                key={product.id}
+                product={product}
+                onClick={() => handleProductClick(product.id)}
+                onAddToCart={() => addToCartMutation.mutate(product.id)}
+                onAddToWishlist={() => addToWishlistMutation.mutate(product.id)}
+                viewMode={view}
+              />
+            ))}
+          </div>
         )}
       </div>
     </div>

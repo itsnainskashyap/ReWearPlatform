@@ -86,6 +86,9 @@ export interface IStorage {
     isThrift?: boolean;
     isOriginal?: boolean;
     search?: string;
+    priceMin?: number;
+    priceMax?: number;
+    condition?: string;
   }): Promise<any[]>;
   getProductById(id: string): Promise<Product | undefined>;
   getProductBySlug(slug: string): Promise<Product | undefined>;
@@ -422,6 +425,9 @@ export class DatabaseStorage implements IStorage {
     isThrift?: boolean;
     isOriginal?: boolean;
     search?: string;
+    priceMin?: number;
+    priceMax?: number;
+    condition?: string;
   } = {}): Promise<any[]> {
     const conditions = [eq(products.isActive, true)];
 
@@ -453,6 +459,20 @@ export class DatabaseStorage implements IStorage {
       conditions.push(
         sql`${products.name} ILIKE ${`%${options.search}%`} OR ${products.description} ILIKE ${`%${options.search}%`}`
       );
+    }
+
+    // Price range filtering
+    if (options.priceMin !== undefined && options.priceMin >= 0) {
+      conditions.push(sql`${products.price}::numeric >= ${options.priceMin}`);
+    }
+
+    if (options.priceMax !== undefined && options.priceMax >= 0) {
+      conditions.push(sql`${products.price}::numeric <= ${options.priceMax}`);
+    }
+
+    // Condition filtering
+    if (options.condition && options.condition !== 'all') {
+      conditions.push(eq(products.condition, options.condition));
     }
 
     let query = db
