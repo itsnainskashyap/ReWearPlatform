@@ -28,7 +28,7 @@ import {
   generateQRCode,
   verify2FAToken,
   isAdminAuthenticated,
-  initializeAdminUser,
+  secureAdminBootstrap,
   logAuditAction,
   isAccountLocked,
   handleFailedLogin,
@@ -45,15 +45,29 @@ import {
   type InsertPromotionalPopup,
   featuredProductsPanelSettingsSchema
 } from "@shared/schema";
+import { rateLimits, authorizeAdmin, validate } from "./security";
+import { setupSuperAdminRoutes } from "./admin-super";
 import { z } from "zod";
 import { fromZodError } from "zod-validation-error";
 
 export function setupAdminRoutes(app: Express) {
-  // Initialize default admin user
-  initializeAdminUser();
+  // Secure bootstrap for first admin user only
+  secureAdminBootstrap();
 
-  // Admin login
-  app.post("/api/admin/login", async (req, res) => {
+  // Setup super admin routes
+  setupSuperAdminRoutes(app);
+
+  // Admin login with rate limiting and validation
+  const loginSchema = z.object({
+    email: z.string().email("Invalid email format"),
+    password: z.string().min(1, "Password is required"),
+    otpToken: z.string().optional()
+  });
+
+  app.post("/api/admin/login", 
+    rateLimits.adminLogin,
+    validate(loginSchema),
+    async (req, res) => {
     try {
       const { email, password, otpToken } = req.body;
 
@@ -133,8 +147,11 @@ export function setupAdminRoutes(app: Express) {
     }
   });
 
-  // Setup 2FA
-  app.post("/api/admin/2fa/setup", isAdminAuthenticated, async (req: AdminRequest, res) => {
+  // Setup 2FA - requires authentication but any admin can setup their own 2FA
+  app.post("/api/admin/2fa/setup", 
+    rateLimits.twoFactor,
+    isAdminAuthenticated, 
+    async (req: AdminRequest, res) => {
     try {
       const adminId = req.admin!.id;
       
@@ -163,8 +180,16 @@ export function setupAdminRoutes(app: Express) {
     }
   });
 
-  // Enable 2FA
-  app.post("/api/admin/2fa/enable", isAdminAuthenticated, async (req: AdminRequest, res) => {
+  // Enable 2FA with validation
+  const enable2FASchema = z.object({
+    token: z.string().min(6, "2FA token must be at least 6 characters").max(8, "2FA token must be at most 8 characters")
+  });
+
+  app.post("/api/admin/2fa/enable", 
+    rateLimits.twoFactor,
+    isAdminAuthenticated,
+    validate(enable2FASchema),
+    async (req: AdminRequest, res) => {
     try {
       const { token } = req.body;
       const adminId = req.admin!.id;
@@ -211,8 +236,11 @@ export function setupAdminRoutes(app: Express) {
     }
   });
 
-  // Dashboard statistics
-  app.get("/api/admin/dashboard/stats", isAdminAuthenticated, async (req: AdminRequest, res) => {
+  // Dashboard statistics - any authenticated admin can view
+  app.get("/api/admin/dashboard/stats", 
+    rateLimits.general,
+    isAdminAuthenticated,
+    async (req: AdminRequest, res) => {
     try {
       // Get real statistics from database
       const [totalProducts] = await db
@@ -269,8 +297,11 @@ export function setupAdminRoutes(app: Express) {
     }
   });
 
-  // Orders management using storage interface
-  app.get("/api/admin/orders", isAdminAuthenticated, async (req: AdminRequest, res) => {
+  // Orders management - any authenticated admin can view
+  app.get("/api/admin/orders", 
+    rateLimits.general,
+    isAdminAuthenticated, 
+    async (req: AdminRequest, res) => {
     try {
       const { status, search, page = 1, limit = 10 } = req.query;
       const offset = (Number(page) - 1) * Number(limit);
@@ -312,8 +343,16 @@ export function setupAdminRoutes(app: Express) {
     }
   });
 
-  // Update order status
-  app.put("/api/admin/orders/:orderId/status", isAdminAuthenticated, async (req: AdminRequest, res) => {
+  // Update order status - any authenticated admin can update
+  const updateOrderStatusSchema = z.object({
+    status: z.enum(['pending', 'processing', 'shipped', 'delivered', 'cancelled'])
+  });
+
+  app.put("/api/admin/orders/:orderId/status", 
+    rateLimits.general,
+    isAdminAuthenticated,
+    validate(updateOrderStatusSchema),
+    async (req: AdminRequest, res) => {
     try {
       const { orderId } = req.params;
       const { status } = req.body;
@@ -333,12 +372,19 @@ export function setupAdminRoutes(app: Express) {
         return res.status(404).json({ message: "Order not found" });
       }
 
+      // Enhanced audit logging with comprehensive details
       await logAuditAction(
         req.admin!.id,
         "UPDATE_ORDER_STATUS",
-        "order",
+        "order", 
         orderId,
-        { oldStatus: order.status, newStatus: status },
+        { 
+          oldStatus: order.status, 
+          newStatus: status,
+          orderValue: order.totalAmount,
+          adminRole: req.admin!.role,
+          timestamp: new Date().toISOString()
+        },
         req.ip,
         req.headers["user-agent"]
       );
@@ -350,8 +396,11 @@ export function setupAdminRoutes(app: Express) {
     }
   });
 
-  // Users management
-  app.get("/api/admin/users", isAdminAuthenticated, async (req: AdminRequest, res) => {
+  // Users management - any authenticated admin can view
+  app.get("/api/admin/users", 
+    rateLimits.general,
+    isAdminAuthenticated, 
+    async (req: AdminRequest, res) => {
     try {
       const { search, page = 1, limit = 10 } = req.query;
       
@@ -394,8 +443,11 @@ export function setupAdminRoutes(app: Express) {
     }
   });
 
-  // Coupons management
-  app.get("/api/admin/coupons", isAdminAuthenticated, async (req: AdminRequest, res) => {
+  // Coupons management - any authenticated admin can view
+  app.get("/api/admin/coupons", 
+    rateLimits.general,
+    isAdminAuthenticated, 
+    async (req: AdminRequest, res) => {
     try {
       const couponsList = await db
         .select()
@@ -409,8 +461,22 @@ export function setupAdminRoutes(app: Express) {
     }
   });
 
-  // Create coupon
-  app.post("/api/admin/coupons", isAdminAuthenticated, async (req: AdminRequest, res) => {
+  // Create coupon - any authenticated admin can create
+  const createCouponSchema = z.object({
+    code: z.string().min(3, "Coupon code must be at least 3 characters").max(50, "Coupon code must be at most 50 characters"),
+    discount: z.number().positive("Discount must be positive").max(100, "Discount cannot exceed 100%"),
+    discountType: z.enum(['percentage', 'fixed']),
+    minOrderAmount: z.number().min(0, "Minimum order amount must be non-negative").optional(),
+    maxUses: z.number().positive("Max uses must be positive").optional(),
+    expiresAt: z.string().optional(),
+    isActive: z.boolean().optional()
+  });
+
+  app.post("/api/admin/coupons", 
+    rateLimits.general,
+    isAdminAuthenticated,
+    validate(createCouponSchema),
+    async (req: AdminRequest, res) => {
     try {
       const couponData = req.body;
 
@@ -419,12 +485,17 @@ export function setupAdminRoutes(app: Express) {
         .values(couponData)
         .returning();
 
+      // Enhanced audit logging
       await logAuditAction(
         req.admin!.id,
         "CREATE_COUPON",
         "coupon",
         newCoupon.id,
-        couponData,
+        {
+          ...couponData,
+          adminRole: req.admin!.role,
+          timestamp: new Date().toISOString()
+        },
         req.ip,
         req.headers["user-agent"]
       );
@@ -436,8 +507,22 @@ export function setupAdminRoutes(app: Express) {
     }
   });
 
-  // Update coupon
-  app.put("/api/admin/coupons/:couponId", isAdminAuthenticated, async (req: AdminRequest, res) => {
+  // Update coupon - any authenticated admin can update
+  const updateCouponSchema = z.object({
+    code: z.string().min(3).max(50).optional(),
+    discount: z.number().positive().max(100).optional(),
+    discountType: z.enum(['percentage', 'fixed']).optional(),
+    minOrderAmount: z.number().min(0).optional(),
+    maxUses: z.number().positive().optional(),
+    expiresAt: z.string().optional(),
+    isActive: z.boolean().optional()
+  });
+
+  app.put("/api/admin/coupons/:couponId", 
+    rateLimits.general,
+    isAdminAuthenticated,
+    validate(updateCouponSchema),
+    async (req: AdminRequest, res) => {
     try {
       const { couponId } = req.params;
       const updates = req.body;
@@ -451,12 +536,17 @@ export function setupAdminRoutes(app: Express) {
         .where(eq(coupons.id, couponId))
         .returning();
 
+      // Enhanced audit logging  
       await logAuditAction(
         req.admin!.id,
         "UPDATE_COUPON",
         "coupon",
         couponId,
-        updates,
+        {
+          changes: updates,
+          adminRole: req.admin!.role,
+          timestamp: new Date().toISOString()
+        },
         req.ip,
         req.headers["user-agent"]
       );
@@ -468,8 +558,11 @@ export function setupAdminRoutes(app: Express) {
     }
   });
 
-  // Delete coupon
-  app.delete("/api/admin/coupons/:couponId", isAdminAuthenticated, async (req: AdminRequest, res) => {
+  // Delete coupon - any authenticated admin can delete
+  app.delete("/api/admin/coupons/:couponId", 
+    rateLimits.general,
+    isAdminAuthenticated,
+    async (req: AdminRequest, res) => {
     try {
       const { couponId } = req.params;
 
@@ -477,12 +570,16 @@ export function setupAdminRoutes(app: Express) {
         .delete(coupons)
         .where(eq(coupons.id, couponId));
 
+      // Enhanced audit logging
       await logAuditAction(
         req.admin!.id,
         "DELETE_COUPON",
         "coupon",
         couponId,
-        null,
+        {
+          adminRole: req.admin!.role,
+          timestamp: new Date().toISOString()
+        },
         req.ip,
         req.headers["user-agent"]
       );
@@ -494,8 +591,11 @@ export function setupAdminRoutes(app: Express) {
     }
   });
 
-  // Product management using storage interface
-  app.get("/api/admin/products", isAdminAuthenticated, async (req: AdminRequest, res) => {
+  // Product management - any authenticated admin can view
+  app.get("/api/admin/products", 
+    rateLimits.general,
+    isAdminAuthenticated, 
+    async (req: AdminRequest, res) => {
     try {
       const { search, categoryId, brandId, page = 1, limit = 20 } = req.query;
       
@@ -520,8 +620,34 @@ export function setupAdminRoutes(app: Express) {
     }
   });
 
-  // Create product
-  app.post("/api/admin/products", isAdminAuthenticated, async (req: AdminRequest, res) => {
+  // Create product - any authenticated admin can create
+  const createProductSchema = z.object({
+    name: z.string().min(1, "Product name is required").max(200, "Product name too long"),
+    description: z.string().optional(),
+    shortDescription: z.string().optional(),
+    categoryId: z.string().min(1, "Category is required"),
+    brandId: z.string().optional(),
+    price: z.number().positive("Price must be positive"),
+    originalPrice: z.number().positive().optional(),
+    condition: z.string().optional(),
+    size: z.string().optional(),
+    color: z.string().optional(),
+    material: z.string().optional(),
+    images: z.array(z.string()).optional(),
+    sizes: z.array(z.string()).optional(),
+    stock: z.number().min(0, "Stock cannot be negative").optional(),
+    isActive: z.boolean().optional(),
+    isFeatured: z.boolean().optional(),
+    isHotSelling: z.boolean().optional(),
+    isOriginal: z.boolean().optional(),
+    isThrift: z.boolean().optional()
+  });
+
+  app.post("/api/admin/products", 
+    rateLimits.general,
+    isAdminAuthenticated,
+    validate(createProductSchema),
+    async (req: AdminRequest, res) => {
     try {
       const productData = req.body;
       
@@ -544,12 +670,17 @@ export function setupAdminRoutes(app: Express) {
 
       const newProduct = await storage.createProduct(productToCreate);
 
+      // Enhanced audit logging
       await logAuditAction(
         req.admin!.id,
         "CREATE_PRODUCT",
         "product",
         newProduct.id,
-        productData,
+        {
+          ...productData,
+          adminRole: req.admin!.role,
+          timestamp: new Date().toISOString()
+        },
         req.ip,
         req.headers["user-agent"]
       );
@@ -561,8 +692,34 @@ export function setupAdminRoutes(app: Express) {
     }
   });
 
-  // Update product
-  app.put("/api/admin/products/:productId", isAdminAuthenticated, async (req: AdminRequest, res) => {
+  // Update product - any authenticated admin can update
+  const updateProductSchema = z.object({
+    name: z.string().min(1).max(200).optional(),
+    description: z.string().optional(),
+    shortDescription: z.string().optional(),
+    categoryId: z.string().optional(),
+    brandId: z.string().optional(),
+    price: z.number().positive().optional(),
+    originalPrice: z.number().positive().optional(),
+    condition: z.string().optional(),
+    size: z.string().optional(),
+    color: z.string().optional(),
+    material: z.string().optional(),
+    images: z.array(z.string()).optional(),
+    sizes: z.array(z.string()).optional(),
+    stock: z.number().min(0).optional(),
+    isActive: z.boolean().optional(),
+    isFeatured: z.boolean().optional(),
+    isHotSelling: z.boolean().optional(),
+    isOriginal: z.boolean().optional(),
+    isThrift: z.boolean().optional()
+  });
+
+  app.put("/api/admin/products/:productId", 
+    rateLimits.general,
+    isAdminAuthenticated,
+    validate(updateProductSchema),
+    async (req: AdminRequest, res) => {
     try {
       const { productId } = req.params;
       const updates = req.body;
@@ -581,12 +738,17 @@ export function setupAdminRoutes(app: Express) {
         return res.status(404).json({ message: "Product not found" });
       }
 
+      // Enhanced audit logging
       await logAuditAction(
         req.admin!.id,
         "UPDATE_PRODUCT",
         "product",
         productId,
-        updates,
+        {
+          changes: updates,
+          adminRole: req.admin!.role,
+          timestamp: new Date().toISOString()
+        },
         req.ip,
         req.headers["user-agent"]
       );
@@ -598,8 +760,11 @@ export function setupAdminRoutes(app: Express) {
     }
   });
 
-  // Delete product
-  app.delete("/api/admin/products/:productId", isAdminAuthenticated, async (req: AdminRequest, res) => {
+  // Delete product - any authenticated admin can delete
+  app.delete("/api/admin/products/:productId", 
+    rateLimits.general,
+    isAdminAuthenticated,
+    async (req: AdminRequest, res) => {
     try {
       const { productId } = req.params;
 
@@ -667,12 +832,17 @@ export function setupAdminRoutes(app: Express) {
 
       const newBanner = await storage.createBanner(validationResult.data);
 
+      // Enhanced audit logging
       await logAuditAction(
         req.admin!.id,
         "CREATE_BANNER",
         "banner",
         newBanner.id,
-        validationResult.data,
+        {
+          ...validationResult.data,
+          adminRole: req.admin!.role,
+          timestamp: new Date().toISOString()
+        },
         req.ip,
         req.headers["user-agent"]
       );
@@ -704,12 +874,17 @@ export function setupAdminRoutes(app: Express) {
         return res.status(404).json({ message: "Banner not found" });
       }
 
+      // Enhanced audit logging
       await logAuditAction(
         req.admin!.id,
         "UPDATE_BANNER",
         "banner",
         bannerId,
-        validationResult.data,
+        {
+          changes: validationResult.data,
+          adminRole: req.admin!.role,
+          timestamp: new Date().toISOString()
+        },
         req.ip,
         req.headers["user-agent"]
       );

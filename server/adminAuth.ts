@@ -6,8 +6,7 @@ import { Request, Response, NextFunction } from "express";
 import { db } from "./db";
 import { adminUsers, auditLogs } from "@shared/schema";
 import { eq, and, gt } from "drizzle-orm";
-
-const JWT_SECRET = process.env.JWT_SECRET || "your-secret-key-change-in-production";
+import { getJWTSecret } from "./security";
 const MAX_LOGIN_ATTEMPTS = 5;
 const LOCK_TIME = 30 * 60 * 1000; // 30 minutes
 
@@ -33,7 +32,7 @@ export async function verifyPassword(password: string, hash: string): Promise<bo
 export function generateToken(adminId: string, email: string, role: string): string {
   return jwt.sign(
     { id: adminId, email, role },
-    JWT_SECRET,
+    getJWTSecret(),
     { expiresIn: "1h" }
   );
 }
@@ -41,7 +40,7 @@ export function generateToken(adminId: string, email: string, role: string): str
 // Verify JWT token
 export function verifyToken(token: string): any {
   try {
-    return jwt.verify(token, JWT_SECRET);
+    return jwt.verify(token, getJWTSecret());
   } catch (error) {
     return null;
   }
@@ -111,26 +110,45 @@ export async function isAdminAuthenticated(
   }
 }
 
-// Initialize default admin user
-export async function initializeAdminUser() {
+// Secure admin bootstrap - only creates admin if none exist and proper env vars are set
+export async function secureAdminBootstrap() {
   try {
-    const adminEmail = "rewearaofficials@gmail.com";
+    // Check if any admin users exist
     const [existingAdmin] = await db
       .select()
       .from(adminUsers)
-      .where(eq(adminUsers.email, adminEmail));
+      .limit(1);
 
-    if (!existingAdmin) {
-      const passwordHash = await hashPassword("reweara@2025");
-      await db.insert(adminUsers).values({
-        email: adminEmail,
-        passwordHash,
-        role: "super_admin"
-      });
-      console.log("Default admin user created");
+    if (existingAdmin) {
+      console.log("[SECURITY] Admin users already exist, skipping bootstrap");
+      return;
     }
+
+    // Only allow bootstrap if specific env vars are set
+    const bootstrapEmail = process.env.BOOTSTRAP_ADMIN_EMAIL;
+    const bootstrapPassword = process.env.BOOTSTRAP_ADMIN_PASSWORD;
+    
+    if (!bootstrapEmail || !bootstrapPassword) {
+      console.warn("[SECURITY] No admin users exist. Set BOOTSTRAP_ADMIN_EMAIL and BOOTSTRAP_ADMIN_PASSWORD environment variables to create first admin user.");
+      return;
+    }
+
+    if (bootstrapPassword.length < 12) {
+      console.error("[SECURITY] Bootstrap admin password must be at least 12 characters long");
+      return;
+    }
+
+    const passwordHash = await hashPassword(bootstrapPassword);
+    await db.insert(adminUsers).values({
+      email: bootstrapEmail,
+      passwordHash,
+      role: "super_admin"
+    });
+    
+    console.log(`[SECURITY] Bootstrap admin user created: ${bootstrapEmail}`);
+    console.log("[SECURITY] IMPORTANT: Remove BOOTSTRAP_ADMIN_EMAIL and BOOTSTRAP_ADMIN_PASSWORD environment variables after first login");
   } catch (error) {
-    console.error("Error initializing admin user:", error);
+    console.error("[SECURITY] Error in secure admin bootstrap:", error);
   }
 }
 

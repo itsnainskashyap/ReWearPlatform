@@ -7,6 +7,7 @@ import type { Express, RequestHandler } from "express";
 import memoize from "memoizee";
 import connectPg from "connect-pg-simple";
 import { storage } from "./storage";
+import { getSessionSecret } from "./security";
 
 if (!process.env.REPLIT_DOMAINS) {
   throw new Error("Environment variable REPLIT_DOMAINS not provided");
@@ -32,8 +33,7 @@ export function getSession() {
     tableName: "sessions",
   });
   
-  // Generate a secure session secret if not provided
-  const sessionSecret = process.env.SESSION_SECRET || "79e04f92d36370c3092872fd7d0f696b783473b0a669120e2b05d7d89a741dbe";
+  const sessionSecret = getSessionSecret();
   
   return session({
     secret: sessionSecret,
@@ -43,6 +43,7 @@ export function getSession() {
     cookie: {
       httpOnly: true,
       secure: process.env.NODE_ENV === "production",
+      sameSite: 'lax',
       maxAge: sessionTtl,
     },
   });

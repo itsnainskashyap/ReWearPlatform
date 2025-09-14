@@ -3,6 +3,8 @@ import { registerRoutes } from "./routes";
 import { setupVite, serveStatic, log } from "./vite";
 import { validateDatabaseConnection, closeDatabaseConnection } from "./db";
 import { seedDatabase } from "./seed";
+import { validateSecrets, getSecurityHeaders, securityAudit } from "./security";
+import compression from "compression";
 import fs from "fs";
 import path from "path";
 
@@ -33,13 +35,23 @@ if (IS_PRODUCTION) {
     console.error(`[STARTUP ERROR] ${startupError}`);
   }
   
+  // CRITICAL: Validate security secrets
+  console.log('[STARTUP] Validating security configuration...');
+  const secretValidation = validateSecrets();
+  if (!secretValidation.isValid) {
+    startupHealthy = false;
+    startupError = `SECURITY ERROR: ${secretValidation.error}`;
+    console.error(`[STARTUP SECURITY ERROR] ${startupError}`);
+    console.error('[STARTUP] Application cannot start with insecure secrets in production');
+  }
+  
   // Warn about PORT but don't fail (server defaults to 5000)
   if (!process.env.PORT) {
     console.warn('[STARTUP WARNING] PORT environment variable not set, defaulting to 5000');
   }
   
   if (startupHealthy) {
-    console.log('[STARTUP] Environment variables validation passed');
+    console.log('[STARTUP] Environment variables and security validation passed');
   }
 }
 
@@ -100,8 +112,19 @@ app.use((req, res, next) => {
   next();
 });
 
-app.use(express.json());
-app.use(express.urlencoded({ extended: false }));
+// Security middleware - must be early in the stack
+if (IS_PRODUCTION) {
+  app.use(getSecurityHeaders());
+}
+
+// Enable compression for better performance
+app.use(compression());
+
+// Security audit middleware
+app.use(securityAudit);
+
+app.use(express.json({ limit: '10mb' }));
+app.use(express.urlencoded({ extended: false, limit: '10mb' }));
 
 app.use((req, res, next) => {
   const start = Date.now();

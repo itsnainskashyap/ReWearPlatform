@@ -34,6 +34,7 @@ import multer from "multer";
 import express from "express";
 import fs from "fs";
 import path from "path";
+import { rateLimits, fileValidation, validate } from "./security";
 
 export async function registerRoutes(app: Express): Promise<Server> {
   // Serve uploaded files statically with range support for videos
@@ -437,8 +438,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Validate coupon code
-  app.post('/api/coupons/validate', async (req, res) => {
+  // Validate coupon code with rate limiting and validation
+  const validateCouponSchema = z.object({
+    code: z.string().min(1, "Coupon code is required").max(50, "Coupon code too long"),
+    total: z.number().positive("Total must be positive")
+  });
+
+  app.post('/api/coupons/validate', 
+    rateLimits.general,
+    validate(validateCouponSchema),
+    async (req, res) => {
     try {
       const { code, total } = req.body;
       const now = new Date();
@@ -533,31 +542,57 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   // Initialize Gemini AI
 
-  // Configure multer for image uploads (AI try-on)
+  // Enhanced multer configuration for image uploads with strict validation
   const upload = multer({ 
     dest: 'uploads/',
-    limits: { fileSize: 5 * 1024 * 1024 }, // 5MB limit
-    fileFilter: (req, file, cb) => {
-      if (file.mimetype === 'image/jpeg' || file.mimetype === 'image/png') {
-        cb(null, true);
-      } else {
-        cb(new Error('Only JPEG and PNG files are allowed'));
+    limits: { 
+      fileSize: 5 * 1024 * 1024, // 5MB limit
+      files: 10, // Max 10 files per request
+      fieldSize: 1024 * 1024, // 1MB field size
+      fieldNameSize: 100, // Max field name length
+      headerPairs: 2000 // Max header pairs
+    },
+    fileFilter: fileValidation.imageFilter,
+    storage: multer.diskStorage({
+      destination: (req, file, cb) => {
+        const uploadPath = 'uploads/';
+        if (!fs.existsSync(uploadPath)) {
+          fs.mkdirSync(uploadPath, { recursive: true });
+        }
+        cb(null, uploadPath);
+      },
+      filename: (req, file, cb) => {
+        const sanitizedName = fileValidation.sanitizeFilename(file.originalname);
+        const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
+        cb(null, uniqueSuffix + '-' + sanitizedName);
       }
-    }
+    })
   });
 
-  // Configure multer for video uploads (product videos)
+  // Enhanced multer configuration for video uploads with strict validation
   const videoUpload = multer({
-    dest: 'uploads/videos/',
-    limits: { fileSize: 50 * 1024 * 1024 }, // 50MB limit for videos
-    fileFilter: (req, file, cb) => {
-      const allowedMimeTypes = ['video/mp4', 'video/webm'];
-      if (allowedMimeTypes.includes(file.mimetype)) {
-        cb(null, true);
-      } else {
-        cb(new Error('Only MP4 and WebM video files are allowed'));
+    limits: { 
+      fileSize: 50 * 1024 * 1024, // 50MB limit for videos
+      files: 5, // Max 5 video files per request
+      fieldSize: 1024 * 1024, // 1MB field size
+      fieldNameSize: 100, // Max field name length
+      headerPairs: 2000 // Max header pairs
+    },
+    fileFilter: fileValidation.videoFilter,
+    storage: multer.diskStorage({
+      destination: (req, file, cb) => {
+        const uploadPath = 'uploads/videos/';
+        if (!fs.existsSync(uploadPath)) {
+          fs.mkdirSync(uploadPath, { recursive: true });
+        }
+        cb(null, uploadPath);
+      },
+      filename: (req, file, cb) => {
+        const sanitizedName = fileValidation.sanitizeFilename(file.originalname);
+        const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
+        cb(null, uniqueSuffix + '-' + sanitizedName);
       }
-    }
+    })
   });
 
   // AI Recommendations API - using Gemini embeddings for semantic search
