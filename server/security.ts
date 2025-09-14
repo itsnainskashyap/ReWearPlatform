@@ -57,6 +57,9 @@ export function validateSecrets(): { isValid: boolean; error?: string } {
   return { isValid: true };
 }
 
+// Consistent development JWT secret
+const DEV_JWT_SECRET = "b5d06a3c9d66aa79b12afe43451bdbd9ef7266b3c7a910f0efc6255b50b119b7";
+
 /**
  * Gets JWT secret or throws error if insecure
  */
@@ -67,8 +70,8 @@ export function getJWTSecret(): string {
     if (IS_PRODUCTION) {
       throw new Error("JWT_SECRET environment variable is required in production");
     }
-    // Generate a secure random secret for development
-    return crypto.randomBytes(32).toString('hex');
+    // Use consistent development secret to prevent logout issues
+    return DEV_JWT_SECRET;
   }
   
   if (IS_PRODUCTION && INSECURE_SECRETS.has(secret)) {

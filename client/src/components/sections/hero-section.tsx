@@ -37,7 +37,7 @@ export default function HeroSection() {
       <div className="flex bg-card rounded-xl p-1 mb-6 shadow-sm">
         <Button
           variant="ghost"
-          className="flex-1 py-3 px-4 rounded-lg font-semibold transition-all text-muted-foreground hover:bg-primary hover:text-primary-foreground"
+          className="flex-1 py-3 px-4 rounded-lg font-semibold transition-all text-muted-foreground hover:bg-primary hover:text-primary-foreground border-2 border-primary/60 hover:border-primary"
           onClick={() => navigate("/shop")}
           data-testid="button-tab-thrift"
         >
@@ -45,7 +45,7 @@ export default function HeroSection() {
         </Button>
         <Button
           variant="ghost"
-          className="flex-1 py-3 px-4 rounded-lg font-semibold transition-all text-muted-foreground hover:bg-primary hover:text-primary-foreground"
+          className="flex-1 py-3 px-4 rounded-lg font-semibold transition-all text-muted-foreground hover:bg-primary hover:text-primary-foreground border-2 border-primary/60 hover:border-primary ml-2"
           onClick={() => navigate("/originals")}
           data-testid="button-tab-originals"
         >
