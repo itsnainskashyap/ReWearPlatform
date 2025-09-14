@@ -11,7 +11,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
-import { Package, Truck, CheckCircle, Clock, AlertCircle, Eye, CreditCard, XCircle, Check, X, Edit, FileText } from "lucide-react";
+import { Package, Truck, CheckCircle, Clock, AlertCircle, Eye, CreditCard, XCircle, Check, X, Edit, FileText, Download, Printer, Receipt, Send } from "lucide-react";
 import { apiRequest } from "@/lib/queryClient";
 import { format } from "date-fns";
 
@@ -67,6 +67,7 @@ export default function OrderWorkflow() {
   const [showTrackingDialog, setShowTrackingDialog] = useState(false);
   const [showEditDialog, setShowEditDialog] = useState(false);
   const [showAuditDialog, setShowAuditDialog] = useState(false);
+  const [showInvoiceDialog, setShowInvoiceDialog] = useState(false);
   const [trackingHistory, setTrackingHistory] = useState<OrderTracking[]>([]);
   const [auditLogs, setAuditLogs] = useState<any[]>([]);
   const [statusFilter, setStatusFilter] = useState("all");
@@ -166,6 +167,73 @@ export default function OrderWorkflow() {
       });
     }
   });
+
+  // Invoice functions
+  const handleDownloadInvoice = async (order: Order) => {
+    try {
+      const response = await fetch(`/api/orders/${order.id}/pdf`, {
+        method: 'GET',
+        credentials: 'include'
+      });
+      
+      if (response.ok) {
+        const blob = await response.blob();
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.style.display = 'none';
+        a.href = url;
+        a.download = `invoice-${order.id.slice(0, 8)}.pdf`;
+        document.body.appendChild(a);
+        a.click();
+        window.URL.revokeObjectURL(url);
+        document.body.removeChild(a);
+        
+        toast({ title: "Invoice downloaded successfully" });
+      } else {
+        throw new Error('Failed to download invoice');
+      }
+    } catch (error) {
+      toast({
+        title: "Error downloading invoice",
+        description: "Please try again",
+        variant: "destructive"
+      });
+    }
+  };
+
+  const handlePrintInvoice = async (order: Order) => {
+    try {
+      const response = await fetch(`/api/orders/${order.id}/slip`, {
+        credentials: 'include'
+      });
+      
+      if (response.ok) {
+        const html = await response.text();
+        const printWindow = window.open('', '_blank');
+        if (printWindow) {
+          printWindow.document.write(html);
+          printWindow.document.close();
+          printWindow.focus();
+          setTimeout(() => {
+            printWindow.print();
+          }, 250);
+        }
+      } else {
+        throw new Error('Failed to generate invoice for printing');
+      }
+    } catch (error) {
+      toast({
+        title: "Error printing invoice",
+        description: "Please try again",
+        variant: "destructive"
+      });
+    }
+  };
+
+  const handleViewInvoice = (order: Order) => {
+    setSelectedOrder(order);
+    setShowInvoiceDialog(true);
+  };
 
   // Fetch order tracking history
   const fetchTrackingHistory = async (orderId: string) => {
@@ -447,6 +515,38 @@ export default function OrderWorkflow() {
                           <FileText className="w-4 h-4 mr-1" />
                           Audit Logs
                         </Button>
+                        
+                        {/* Invoice Actions */}
+                        <div className="flex gap-1 mt-2">
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            onClick={() => handleViewInvoice(order)}
+                            data-testid={`button-view-invoice-${order.id}`}
+                            className="text-blue-600 hover:text-blue-800"
+                          >
+                            <Receipt className="w-4 h-4 mr-1" />
+                            Invoice
+                          </Button>
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            onClick={() => handleDownloadInvoice(order)}
+                            data-testid={`button-download-admin-invoice-${order.id}`}
+                            className="text-green-600 hover:text-green-800"
+                          >
+                            <Download className="w-4 h-4" />
+                          </Button>
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            onClick={() => handlePrintInvoice(order)}
+                            data-testid={`button-print-admin-invoice-${order.id}`}
+                            className="text-purple-600 hover:text-purple-800"
+                          >
+                            <Printer className="w-4 h-4" />
+                          </Button>
+                        </div>
                       </div>
                     </TableCell>
                   </TableRow>
@@ -818,6 +918,143 @@ export default function OrderWorkflow() {
               </div>
             )}
           </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Invoice Dialog */}
+      <Dialog open={showInvoiceDialog} onOpenChange={setShowInvoiceDialog}>
+        <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Receipt className="w-5 h-5" />
+              Invoice - Order #{selectedOrder?.id?.slice(0, 8)}
+            </DialogTitle>
+          </DialogHeader>
+          
+          {selectedOrder && (
+            <div className="space-y-6">
+              {/* Invoice Preview */}
+              <Card>
+                <CardHeader>
+                  <CardTitle className="text-lg">Invoice Preview</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="space-y-4">
+                    {/* Company Header */}
+                    <div className="text-center border-b pb-4">
+                      <h1 className="text-2xl font-bold text-green-600">ReWeara</h1>
+                      <p className="text-sm text-muted-foreground">Sustainable Fashion for a Better Tomorrow</p>
+                    </div>
+                    
+                    {/* Invoice Details */}
+                    <div className="grid grid-cols-2 gap-4">
+                      <div>
+                        <h3 className="font-semibold mb-2">Invoice To:</h3>
+                        <p>{selectedOrder.userId ? `User ID: ${selectedOrder.userId.slice(0, 8)}` : selectedOrder.guestEmail}</p>
+                        {selectedOrder.items && selectedOrder.items.length > 0 && (
+                          <p className="text-sm text-muted-foreground">
+                            {selectedOrder.items.length} item(s)
+                          </p>
+                        )}
+                      </div>
+                      <div className="text-right">
+                        <h3 className="font-semibold mb-2">Invoice Details:</h3>
+                        <p>Invoice #: REW-{selectedOrder.id.slice(0, 8).toUpperCase()}</p>
+                        <p>Date: {format(new Date(selectedOrder.createdAt), 'dd MMM yyyy')}</p>
+                        <p>Status: {selectedOrder.status.charAt(0).toUpperCase() + selectedOrder.status.slice(1)}</p>
+                      </div>
+                    </div>
+                    
+                    {/* Order Items */}
+                    {selectedOrder.items && selectedOrder.items.length > 0 && (
+                      <div>
+                        <h3 className="font-semibold mb-2">Order Items:</h3>
+                        <div className="border rounded-lg overflow-hidden">
+                          <Table>
+                            <TableHeader>
+                              <TableRow>
+                                <TableHead>Product</TableHead>
+                                <TableHead>Quantity</TableHead>
+                                <TableHead>Price</TableHead>
+                                <TableHead>Total</TableHead>
+                              </TableRow>
+                            </TableHeader>
+                            <TableBody>
+                              {selectedOrder.items.map((item: any, index: number) => (
+                                <TableRow key={index}>
+                                  <TableCell>{item.productName || 'Product'}</TableCell>
+                                  <TableCell>{item.quantity || 1}</TableCell>
+                                  <TableCell>₹{parseFloat(item.price || '0').toFixed(2)}</TableCell>
+                                  <TableCell>₹{(parseFloat(item.price || '0') * (item.quantity || 1)).toFixed(2)}</TableCell>
+                                </TableRow>
+                              ))}
+                            </TableBody>
+                          </Table>
+                        </div>
+                      </div>
+                    )}
+                    
+                    {/* Total Section */}
+                    <div className="border-t pt-4">
+                      <div className="space-y-2 max-w-xs ml-auto">
+                        <div className="flex justify-between">
+                          <span>Subtotal:</span>
+                          <span>₹{parseFloat(selectedOrder.subtotal || '0').toFixed(2)}</span>
+                        </div>
+                        {parseFloat(selectedOrder.taxAmount || '0') > 0 && (
+                          <div className="flex justify-between">
+                            <span>Tax:</span>
+                            <span>₹{parseFloat(selectedOrder.taxAmount).toFixed(2)}</span>
+                          </div>
+                        )}
+                        {parseFloat(selectedOrder.shippingAmount || '0') > 0 && (
+                          <div className="flex justify-between">
+                            <span>Shipping:</span>
+                            <span>₹{parseFloat(selectedOrder.shippingAmount).toFixed(2)}</span>
+                          </div>
+                        )}
+                        {parseFloat(selectedOrder.discountAmount || '0') > 0 && (
+                          <div className="flex justify-between text-green-600">
+                            <span>Discount:</span>
+                            <span>-₹{parseFloat(selectedOrder.discountAmount).toFixed(2)}</span>
+                          </div>
+                        )}
+                        <div className="flex justify-between font-bold text-lg border-t pt-2">
+                          <span>Total:</span>
+                          <span>₹{parseFloat(selectedOrder.totalAmount || '0').toFixed(2)}</span>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+              
+              {/* Action Buttons */}
+              <div className="flex justify-end gap-3">
+                <Button
+                  variant="outline"
+                  onClick={() => setShowInvoiceDialog(false)}
+                >
+                  Close
+                </Button>
+                <Button
+                  variant="outline"
+                  onClick={() => handleDownloadInvoice(selectedOrder)}
+                  className="text-green-600 hover:text-green-800"
+                >
+                  <Download className="w-4 h-4 mr-2" />
+                  Download PDF
+                </Button>
+                <Button
+                  onClick={() => handlePrintInvoice(selectedOrder)}
+                  className="text-white bg-purple-600 hover:bg-purple-700"
+                >
+                  <Printer className="w-4 h-4 mr-2" />
+                  Print Invoice
+                </Button>
+              </div>
+            </div>
+          )}
         </DialogContent>
       </Dialog>
     </div>
