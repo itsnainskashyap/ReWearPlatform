@@ -20,17 +20,31 @@ export default function Home() {
   }, []);
 
   return (
-    <div className="animate-fade-in">
+    <div className="motion-safe-fade-in">
       <HeroSection />
       {/* Only show Featured Brands when not in ReWeara Originals mode */}
-      {shopType !== 'originals' && <BrandScroll />}
-      <AIRecommendations 
-        title="AI Recommendations For You" 
-        maxItems={6}
-      />
-      <ProductGrid />
-      <FeaturedCarousel />
-      <RecentlyViewed />
+      {shopType !== 'originals' && (
+        <section className="section-y" aria-label="Featured Brands">
+          <BrandScroll />
+        </section>
+      )}
+      <section className="section-y" aria-label="AI Recommendations">
+        <div className="container-custom">
+          <AIRecommendations 
+            title="AI Recommendations For You" 
+            maxItems={6}
+          />
+        </div>
+      </section>
+      <section className="section-y" aria-label="All Products">
+        <ProductGrid />
+      </section>
+      <section className="section-y" aria-label="Featured Products">
+        <FeaturedCarousel />
+      </section>
+      <section className="section-y" aria-label="Recently Viewed">
+        <RecentlyViewed />
+      </section>
     </div>
   );
 }

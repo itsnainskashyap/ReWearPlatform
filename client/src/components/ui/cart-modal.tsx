@@ -32,7 +32,7 @@ export default function CartModal() {
   return (
     <div className={`fixed inset-0 z-50 transition-opacity duration-300 ${isVisible ? 'opacity-100' : 'opacity-0'}`} data-testid="cart-modal-overlay">
       <div 
-        className="absolute inset-0 bg-black/50 backdrop-blur-sm md:backdrop-blur"
+        className="overlay-blur"
         onClick={handleBackdropClick}
         data-testid="cart-modal-backdrop"
       />

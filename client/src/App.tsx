@@ -36,6 +36,7 @@ import FloatingCartButton from "@/components/ui/floating-cart-button";
 import AIChatAssistant from "@/components/ai/chat-assistant";
 import { useState, useEffect } from "react";
 import { AuthModalProvider } from "@/contexts/auth-modal-context";
+import { useRouteChangeEffect } from "@/hooks/useRouteChangeEffect";
 
 function Router() {
   const { isAuthenticated, isLoading } = useAuth();
@@ -92,6 +93,9 @@ function AppContent() {
   const { isAuthenticated, isLoading } = useAuth();
   const [appReady, setAppReady] = useState(false);
 
+  // Auto-scroll to top on route changes with motion preference support
+  useRouteChangeEffect();
+
   useEffect(() => {
     if (!isLoading) {
       const timer = setTimeout(() => setAppReady(true), 100);
@@ -101,6 +105,15 @@ function AppContent() {
 
   return (
     <div className="min-h-screen bg-background text-foreground font-sans">
+      {/* Skip to content link for keyboard accessibility */}
+      <a 
+        href="#main-content" 
+        className="skip-to-content"
+        data-testid="link-skip-to-content"
+      >
+        Skip to main content
+      </a>
+      
       {/* Loading Screen */}
       {isLoading && (
         <div className="fixed inset-0 bg-gradient-to-br from-primary/10 via-background to-accent/10 flex items-center justify-center z-50">
@@ -128,7 +141,7 @@ function AppContent() {
             <Drawer />
             <Header />
             <BannerBar />
-            <main className="pt-16 md:pt-20 pb-24">
+            <main id="main-content" className="pt-16 md:pt-20 pb-24" role="main">
               <Router />
             </main>
             <Footer />

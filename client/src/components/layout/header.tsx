@@ -33,14 +33,15 @@ export default function Header() {
   };
 
   return (
-    <header className={`fixed top-0 left-0 right-0 z-50 bg-white dark:bg-card shadow-lg border-b border-border transition-all duration-500 ${isVisible ? 'animate-slideInLeft' : 'opacity-0'}`}>
+    <header className={`fixed top-0 left-0 right-0 z-50 bg-white dark:bg-card shadow-lg border-b border-border transition-all duration-500 ${isVisible ? 'motion-safe-slide-up' : 'opacity-0'}`} role="banner">
       <div className="flex items-center justify-between p-4">
         <Button 
           variant="ghost" 
           size="icon"
           onClick={toggleDrawer}
-          className="hover-lift rounded-2xl"
+          className="motion-safe-hover-lift rounded-2xl focus-outline"
           data-testid="button-menu"
+          aria-label="Open navigation menu"
         >
           <Menu className="w-6 h-6 transition-transform duration-200 hover:scale-110" />
         </Button>
@@ -64,13 +65,15 @@ export default function Header() {
               <Button 
                 variant="ghost" 
                 size="icon"
-                className="hover-lift relative rounded-2xl"
+                className="motion-safe-hover-lift relative rounded-2xl focus-outline"
                 data-testid="button-notifications"
+                aria-label="View notifications (1 new notification)"
               >
                 <Bell className="w-6 h-6 transition-transform duration-200 hover:scale-110" />
-                <span className="absolute -top-1 -right-1 w-4 h-4 bg-gradient-to-r from-destructive to-destructive/80 rounded-full animate-pulse">
-                  <span className="absolute inset-0 w-4 h-4 bg-destructive rounded-full animate-ping opacity-75"></span>
+                <span className="absolute -top-1 -right-1 w-4 h-4 bg-gradient-to-r from-destructive to-destructive/80 rounded-full motion-safe-pulse">
+                  <span className="absolute inset-0 w-4 h-4 bg-destructive rounded-full motion-safe-bounce opacity-75"></span>
                 </span>
+                <span className="sr-only">1 new notification</span>
               </Button>
               <Button 
                 onClick={() => window.location.href = '/api/logout'}

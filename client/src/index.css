@@ -904,3 +904,328 @@
   font-weight: 700 !important;
   text-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
 }
+
+/* ================================ */
+/* ENHANCED ACCESSIBILITY & POLISH */
+/* ================================ */
+
+/* Overlay utilities with backdrop-filter and accessibility fallbacks */
+@layer utilities {
+  /* Standard overlay blur for dialogs, sheets, and modals */
+  .overlay-blur {
+    @apply fixed inset-0 z-50;
+    background-color: rgba(0, 0, 0, 0.75); /* Fallback for unsupported browsers - WCAG AA compliant */
+    backdrop-filter: blur(24px) saturate(180%);
+    -webkit-backdrop-filter: blur(24px) saturate(180%); /* Safari support */
+  }
+  
+  /* Lighter overlay for less intrusive modals */
+  .overlay-blur-light {
+    @apply fixed inset-0 z-50;
+    background-color: rgba(0, 0, 0, 0.6); /* Fallback for unsupported browsers */
+    backdrop-filter: blur(32px) saturate(180%);
+    -webkit-backdrop-filter: blur(32px) saturate(180%);
+  }
+  
+  /* Heavy overlay for critical dialogs */
+  .overlay-blur-heavy {
+    @apply fixed inset-0 z-50;
+    background-color: rgba(0, 0, 0, 0.85); /* Fallback for unsupported browsers */
+    backdrop-filter: blur(60px) saturate(180%);
+    -webkit-backdrop-filter: blur(60px) saturate(180%);
+  }
+  
+  /* Glassmorphism content background for overlays */
+  .glass-content {
+    background: rgba(255, 255, 255, 0.95);
+    backdrop-filter: blur(20px) saturate(180%);
+    -webkit-backdrop-filter: blur(20px) saturate(180%);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+  }
+  
+  .glass-content.dark {
+    background: rgba(0, 0, 0, 0.85);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+  }
+  
+  /* Fallback support for browsers without backdrop-filter */
+  @supports not (backdrop-filter: blur(1px)) {
+    .overlay-blur {
+      background-color: rgba(0, 0, 0, 0.85); /* Solid fallback */
+    }
+    .overlay-blur-light {
+      background-color: rgba(0, 0, 0, 0.75); /* Solid fallback */
+    }
+    .overlay-blur-heavy {
+      background-color: rgba(0, 0, 0, 0.9); /* Solid fallback */
+    }
+    .glass-content {
+      background: rgba(255, 255, 255, 0.98); /* More opaque fallback */
+    }
+    .glass-content.dark {
+      background: rgba(0, 0, 0, 0.9); /* More opaque fallback */
+    }
+  }
+}
+
+/* Spacing and typography token utilities */
+@layer utilities {
+  /* Section spacing utilities for consistent layout */
+  .section-x {
+    @apply px-4 md:px-6 lg:px-8;
+  }
+  
+  .section-y {
+    @apply py-6 md:py-10 lg:py-16;
+  }
+  
+  .section-spacing {
+    @apply px-4 md:px-6 lg:px-8 py-6 md:py-10 lg:py-16;
+  }
+  
+  /* Container utility for consistent max-width and centering */
+  .container-custom {
+    @apply max-w-7xl mx-auto px-4 md:px-6 lg:px-8;
+  }
+  
+  .container-narrow {
+    @apply max-w-4xl mx-auto px-4 md:px-6;
+  }
+  
+  .container-wide {
+    @apply max-w-screen-2xl mx-auto px-4 md:px-6 lg:px-8;
+  }
+}
+
+/* Typography component layer for consistent headings */
+@layer components {
+  /* Heading styles for consistent typography hierarchy */
+  .heading-1 {
+    @apply text-3xl md:text-4xl lg:text-5xl xl:text-6xl font-bold tracking-tight leading-tight;
+  }
+  
+  .heading-2 {
+    @apply text-2xl md:text-3xl lg:text-4xl font-bold tracking-tight leading-tight;
+  }
+  
+  .heading-3 {
+    @apply text-lg md:text-xl lg:text-2xl font-semibold tracking-tight leading-tight;
+  }
+  
+  .heading-4 {
+    @apply text-base md:text-lg font-semibold tracking-tight leading-tight;
+  }
+  
+  /* Section heading styles */
+  .section-heading {
+    @apply heading-2 text-center mb-6 md:mb-8 lg:mb-12;
+  }
+  
+  .subsection-heading {
+    @apply heading-3 mb-4 md:mb-6 lg:mb-8;
+  }
+  
+  /* Page title styles */
+  .page-title {
+    @apply heading-1 text-center mb-8 md:mb-12;
+  }
+  
+  /* Body text styles */
+  .body-large {
+    @apply text-base md:text-lg leading-relaxed;
+  }
+  
+  .body-regular {
+    @apply text-sm md:text-base leading-relaxed;
+  }
+  
+  .body-small {
+    @apply text-xs md:text-sm leading-relaxed;
+  }
+}
+
+/* Motion system with reduced motion support */
+@layer utilities {
+  /* Base scroll behavior */
+  html {
+    scroll-behavior: smooth;
+  }
+  
+  /* Animation utilities that respect motion preferences */
+  .motion-safe-fade-in {
+    opacity: 0;
+    animation: fadeIn 0.6s ease-out forwards;
+  }
+  
+  .motion-safe-slide-up {
+    opacity: 0;
+    transform: translateY(20px);
+    animation: slideUp 0.6s ease-out forwards;
+  }
+  
+  .motion-safe-scale-in {
+    opacity: 0;
+    transform: scale(0.95);
+    animation: scaleIn 0.4s ease-out forwards;
+  }
+  
+  .motion-safe-bounce {
+    animation: bounce 2s infinite;
+  }
+  
+  .motion-safe-float {
+    animation: floatUp 6s ease-in-out infinite;
+  }
+  
+  .motion-safe-pulse-glow {
+    animation: pulseGlow 3s ease-in-out infinite;
+  }
+  
+  /* Hover effects that respect motion preferences */
+  .motion-safe-hover-lift {
+    transition: transform 0.2s ease-out, box-shadow 0.2s ease-out;
+  }
+  
+  .motion-safe-hover-lift:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
+  }
+  
+  .motion-safe-hover-scale {
+    transition: transform 0.2s ease-out;
+  }
+  
+  .motion-safe-hover-scale:hover {
+    transform: scale(1.05);
+  }
+  
+  /* Focus utilities for keyboard navigation */
+  .focus-outline {
+    @apply focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 focus:ring-offset-background;
+  }
+  
+  .focus-outline-accent {
+    @apply focus:outline-none focus:ring-2 focus:ring-accent focus:ring-offset-2 focus:ring-offset-background;
+  }
+  
+  /* High contrast focus for accessibility */
+  .focus-visible-enhanced {
+    @apply focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary focus-visible:ring-offset-4 focus-visible:ring-offset-background;
+  }
+  
+  /* Disable animations for users who prefer reduced motion */
+  @media (prefers-reduced-motion: reduce) {
+    html {
+      scroll-behavior: auto !important;
+    }
+    
+    .motion-safe-fade-in,
+    .motion-safe-slide-up,
+    .motion-safe-scale-in,
+    .motion-safe-bounce,
+    .motion-safe-float,
+    .motion-safe-pulse-glow,
+    .motion-safe-hover-lift,
+    .motion-safe-hover-scale {
+      animation: none !important;
+      transition: none !important;
+      transform: none !important;
+      opacity: 1 !important;
+    }
+    
+    /* Remove all transform transitions for accessibility */
+    *,
+    *::before,
+    *::after {
+      animation-duration: 0.01ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.01ms !important;
+      scroll-behavior: auto !important;
+    }
+    
+    /* Keep essential interactions functional */
+    .motion-safe-hover-lift:hover,
+    .motion-safe-hover-scale:hover {
+      transform: none !important;
+    }
+  }
+}
+
+/* Skip-to-content link for keyboard accessibility */
+@layer components {
+  .skip-to-content {
+    @apply absolute -top-40 left-6 bg-primary text-primary-foreground px-6 py-3 rounded-lg z-[100] font-semibold text-sm;
+    @apply focus:top-6 transition-all duration-200 shadow-lg;
+    @apply focus-outline;
+  }
+  
+  .skip-to-content:focus {
+    @apply top-6;
+  }
+}
+
+/* Enhanced accessibility utilities */
+@layer utilities {
+  /* Screen reader only content */
+  .sr-only-enhanced {
+    position: absolute !important;
+    width: 1px !important;
+    height: 1px !important;
+    padding: 0 !important;
+    margin: -1px !important;
+    overflow: hidden !important;
+    clip: rect(0, 0, 0, 0) !important;
+    white-space: nowrap !important;
+    border: 0 !important;
+  }
+  
+  /* Show content when focused (for skip links) */
+  .sr-only-enhanced:focus {
+    position: static !important;
+    width: auto !important;
+    height: auto !important;
+    padding: 0.5rem 1rem !important;
+    margin: 0 !important;
+    overflow: visible !important;
+    clip: auto !important;
+    white-space: normal !important;
+  }
+  
+  /* High contrast mode support */
+  @media (prefers-contrast: high) {
+    .overlay-blur,
+    .overlay-blur-light,
+    .overlay-blur-heavy {
+      background-color: rgba(0, 0, 0, 0.95) !important;
+      backdrop-filter: none !important;
+    }
+    
+    .glass-content {
+      background: rgba(255, 255, 255, 1) !important;
+      backdrop-filter: none !important;
+      border: 2px solid rgba(0, 0, 0, 0.8) !important;
+    }
+    
+    .glass-content.dark {
+      background: rgba(0, 0, 0, 1) !important;
+      border: 2px solid rgba(255, 255, 255, 0.8) !important;
+    }
+  }
+  
+  /* Force colors mode support for Windows High Contrast */
+  @media (forced-colors: active) {
+    .overlay-blur,
+    .overlay-blur-light,
+    .overlay-blur-heavy {
+      background-color: Canvas !important;
+      backdrop-filter: none !important;
+    }
+    
+    .glass-content {
+      background: Canvas !important;
+      color: CanvasText !important;
+      border: 1px solid CanvasText !important;
+      backdrop-filter: none !important;
+    }
+  }
+}

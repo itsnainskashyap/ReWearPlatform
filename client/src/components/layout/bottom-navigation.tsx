@@ -36,7 +36,7 @@ export default function BottomNavigation() {
   };
 
   return (
-    <nav className={`bottom-nav-fixed glassmorphism border-t border-white/10 bottom-nav-shadow transition-all duration-500 ${isVisible ? 'animate-slide-up' : 'translate-y-full'}`}>
+    <nav className={`bottom-nav-fixed glassmorphism border-t border-white/10 bottom-nav-shadow transition-all duration-500 ${isVisible ? 'motion-safe-slide-up' : 'translate-y-full'}`} role="navigation" aria-label="Main navigation">
       <div className="flex items-center justify-around py-3 px-2">
         {navItems.map((item, index) => {
           const isActive = item.path ? location === item.path : (item.path === "/cart" && location === "/cart");
@@ -45,7 +45,7 @@ export default function BottomNavigation() {
               key={item.label}
               variant="ghost"
               onClick={() => handleNavClick(item)}
-              className={`flex flex-col items-center py-3 px-3 min-h-0 h-auto rounded-2xl transition-all duration-300 hover:scale-110 active:scale-95 ${
+              className={`flex flex-col items-center py-3 px-3 min-h-0 h-auto rounded-2xl transition-all duration-300 motion-safe-hover-scale active:scale-95 focus-outline ${
                 isActive 
                   ? "bg-primary/10 shadow-lg" 
                   : "text-muted-foreground hover:bg-primary/5"
@@ -55,6 +55,8 @@ export default function BottomNavigation() {
                 animationDelay: `${index * 50}ms`
               }}
               data-testid={item.testId}
+              aria-label={`${item.label}${item.count ? ` (${item.count} items)` : ''}${isActive ? ' - current page' : ''}`}
+              aria-current={isActive ? 'page' : undefined}
             >
               <div className="relative">
                 <item.icon className={`w-6 h-6 mb-1 transition-all duration-200 ${isActive ? 'animate-pulse-glow' : ''}`} />
