@@ -1787,4 +1787,552 @@ export function setupAdminRoutes(app: Express) {
       res.status(500).json({ message: "Failed to edit order" });
     }
   });
+
+  // API Settings Management Routes
+
+  // Payment Settings Routes
+  app.get("/api/admin/payment-settings", isAdminAuthenticated, async (req: AdminRequest, res) => {
+    try {
+      const settings = await storage.getPaymentSettings();
+      
+      if (!settings) {
+        return res.json({
+          upiId: null,
+          qrCodeUrl: null,
+          bankDetails: null,
+          stripeSecretKeySet: false,
+          stripePublishableKey: null,
+          stripeWebhookSecretSet: false,
+          stripeEnabled: false,
+          upiEnabled: true,
+          codEnabled: true,
+          lastTestStatus: null,
+          lastTestAt: null,
+        });
+      }
+
+      // Mask sensitive data
+      res.json({
+        ...settings,
+        stripeSecretKey: undefined,
+        stripeWebhookSecret: undefined,
+        stripeSecretKeySet: !!settings.stripeSecretKey,
+        stripeWebhookSecretSet: !!settings.stripeWebhookSecret,
+      });
+    } catch (error) {
+      console.error("Payment settings fetch error:", error);
+      res.status(500).json({ message: "Failed to fetch payment settings" });
+    }
+  });
+
+  app.put("/api/admin/payment-settings", isAdminAuthenticated, async (req: AdminRequest, res) => {
+    try {
+      const adminId = req.admin!.id;
+      const settingsData = req.body;
+      
+      // Remove masked fields that shouldn't be updated
+      delete settingsData.stripeSecretKeySet;
+      delete settingsData.stripeWebhookSecretSet;
+      
+      const updatedSettings = await storage.upsertPaymentSettings(settingsData);
+      
+      // Log audit action
+      await logAuditAction(
+        adminId,
+        "UPDATE_PAYMENT_SETTINGS",
+        "payment_settings",
+        updatedSettings.id,
+        { updated: Object.keys(settingsData) },
+        req.ip,
+        req.headers["user-agent"]
+      );
+
+      // Return masked response
+      res.json({
+        ...updatedSettings,
+        stripeSecretKey: undefined,
+        stripeWebhookSecret: undefined,
+        stripeSecretKeySet: !!updatedSettings.stripeSecretKey,
+        stripeWebhookSecretSet: !!updatedSettings.stripeWebhookSecret,
+      });
+    } catch (error) {
+      console.error("Payment settings update error:", error);
+      res.status(500).json({ message: "Failed to update payment settings" });
+    }
+  });
+
+  // Payment Settings Test Endpoints
+  app.post("/api/admin/payment-settings/test-stripe", isAdminAuthenticated, async (req: AdminRequest, res) => {
+    try {
+      const settings = await storage.getPaymentSettings();
+      if (!settings?.stripeSecretKey) {
+        return res.status(400).json({ message: "Stripe secret key not configured" });
+      }
+
+      // Test Stripe connection by retrieving balance
+      const stripe = require('stripe')(settings.stripeSecretKey);
+      const balance = await stripe.balance.retrieve();
+      
+      // Update test status
+      await storage.upsertPaymentSettings({
+        lastTestStatus: 'success',
+        lastTestAt: new Date()
+      });
+
+      await logAuditAction(
+        req.admin!.id,
+        "TEST_STRIPE_CONNECTION",
+        "payment_settings",
+        settings.id,
+        { status: 'success', balance: balance.available?.[0]?.amount || 'N/A' },
+        req.ip,
+        req.headers["user-agent"]
+      );
+
+      res.json({ 
+        success: true, 
+        message: "Stripe connection successful",
+        balance: balance.available?.[0]?.amount || 'N/A'
+      });
+    } catch (error: any) {
+      console.error("Stripe test error:", error);
+      
+      // Update test status
+      const settings = await storage.getPaymentSettings();
+      if (settings) {
+        await storage.upsertPaymentSettings({
+          lastTestStatus: 'failed',
+          lastTestAt: new Date()
+        });
+      }
+
+      await logAuditAction(
+        req.admin!.id,
+        "TEST_STRIPE_CONNECTION",
+        "payment_settings",
+        settings?.id || 'unknown',
+        { status: 'failed', error: error.message },
+        req.ip,
+        req.headers["user-agent"]
+      );
+
+      res.status(400).json({ 
+        success: false, 
+        message: "Stripe connection failed: " + error.message 
+      });
+    }
+  });
+
+  app.post("/api/admin/payment-settings/test-upi", isAdminAuthenticated, async (req: AdminRequest, res) => {
+    try {
+      const settings = await storage.getPaymentSettings();
+      if (!settings?.upiId) {
+        return res.status(400).json({ message: "UPI ID not configured" });
+      }
+
+      // Validate UPI ID format
+      const upiRegex = /^[a-zA-Z0-9.\-_]{2,256}@[a-zA-Z]{2,64}$/;
+      const isValid = upiRegex.test(settings.upiId);
+      
+      // Update test status
+      await storage.upsertPaymentSettings({
+        lastTestStatus: isValid ? 'success' : 'failed',
+        lastTestAt: new Date()
+      });
+
+      await logAuditAction(
+        req.admin!.id,
+        "TEST_UPI_VALIDATION",
+        "payment_settings",
+        settings.id,
+        { status: isValid ? 'success' : 'failed', upiId: settings.upiId },
+        req.ip,
+        req.headers["user-agent"]
+      );
+
+      if (isValid) {
+        res.json({ 
+          success: true, 
+          message: "UPI ID format is valid" 
+        });
+      } else {
+        res.status(400).json({ 
+          success: false, 
+          message: "Invalid UPI ID format" 
+        });
+      }
+    } catch (error: any) {
+      console.error("UPI test error:", error);
+      res.status(500).json({ 
+        success: false, 
+        message: "UPI validation failed: " + error.message 
+      });
+    }
+  });
+
+  // Analytics Settings Routes
+  app.get("/api/admin/analytics-settings", isAdminAuthenticated, async (req: AdminRequest, res) => {
+    try {
+      const settings = await storage.getAnalyticsSettings();
+      
+      if (!settings) {
+        return res.json({
+          googleAnalyticsId: null,
+          facebookPixelId: null,
+          googleTagManagerId: null,
+          hotjarId: null,
+          mixpanelTokenSet: false,
+          amplitudeApiKeySet: false,
+          googleAnalyticsEnabled: false,
+          facebookPixelEnabled: false,
+          googleTagManagerEnabled: false,
+          hotjarEnabled: false,
+          mixpanelEnabled: false,
+          amplitudeEnabled: false,
+          lastTestStatus: null,
+          lastTestAt: null,
+        });
+      }
+
+      // Mask sensitive data
+      res.json({
+        ...settings,
+        mixpanelToken: undefined,
+        amplitudeApiKey: undefined,
+        mixpanelTokenSet: !!settings.mixpanelToken,
+        amplitudeApiKeySet: !!settings.amplitudeApiKey,
+      });
+    } catch (error) {
+      console.error("Analytics settings fetch error:", error);
+      res.status(500).json({ message: "Failed to fetch analytics settings" });
+    }
+  });
+
+  app.put("/api/admin/analytics-settings", isAdminAuthenticated, async (req: AdminRequest, res) => {
+    try {
+      const adminId = req.admin!.id;
+      const settingsData = req.body;
+      
+      // Remove masked fields
+      delete settingsData.mixpanelTokenSet;
+      delete settingsData.amplitudeApiKeySet;
+      
+      const updatedSettings = await storage.upsertAnalyticsSettings(settingsData);
+      
+      await logAuditAction(
+        adminId,
+        "UPDATE_ANALYTICS_SETTINGS",
+        "analytics_settings",
+        updatedSettings.id,
+        { updated: Object.keys(settingsData) },
+        req.ip,
+        req.headers["user-agent"]
+      );
+
+      res.json({
+        ...updatedSettings,
+        mixpanelToken: undefined,
+        amplitudeApiKey: undefined,
+        mixpanelTokenSet: !!updatedSettings.mixpanelToken,
+        amplitudeApiKeySet: !!updatedSettings.amplitudeApiKey,
+      });
+    } catch (error) {
+      console.error("Analytics settings update error:", error);
+      res.status(500).json({ message: "Failed to update analytics settings" });
+    }
+  });
+
+  // Integration Settings Routes
+  app.get("/api/admin/integration-settings", isAdminAuthenticated, async (req: AdminRequest, res) => {
+    try {
+      const settings = await storage.getIntegrationSettings();
+      
+      if (!settings) {
+        return res.json({
+          sendgridApiKeySet: false,
+          sendgridFromEmail: null,
+          openaiApiKeySet: false,
+          geminiApiKeySet: false,
+          twilioAccountSid: null,
+          twilioAuthTokenSet: false,
+          twilioFromNumber: null,
+          razorpayKeyId: null,
+          razorpayKeySecretSet: false,
+          sendgridEnabled: false,
+          openaiEnabled: false,
+          geminiEnabled: false,
+          twilioEnabled: false,
+          razorpayEnabled: false,
+          lastTestStatus: null,
+          lastTestAt: null,
+        });
+      }
+
+      // Mask sensitive data
+      res.json({
+        ...settings,
+        sendgridApiKey: undefined,
+        openaiApiKey: undefined,
+        geminiApiKey: undefined,
+        twilioAuthToken: undefined,
+        razorpayKeySecret: undefined,
+        sendgridApiKeySet: !!settings.sendgridApiKey,
+        openaiApiKeySet: !!settings.openaiApiKey,
+        geminiApiKeySet: !!settings.geminiApiKey,
+        twilioAuthTokenSet: !!settings.twilioAuthToken,
+        razorpayKeySecretSet: !!settings.razorpayKeySecret,
+      });
+    } catch (error) {
+      console.error("Integration settings fetch error:", error);
+      res.status(500).json({ message: "Failed to fetch integration settings" });
+    }
+  });
+
+  app.put("/api/admin/integration-settings", isAdminAuthenticated, async (req: AdminRequest, res) => {
+    try {
+      const adminId = req.admin!.id;
+      const settingsData = req.body;
+      
+      // Remove masked fields
+      delete settingsData.sendgridApiKeySet;
+      delete settingsData.openaiApiKeySet;
+      delete settingsData.geminiApiKeySet;
+      delete settingsData.twilioAuthTokenSet;
+      delete settingsData.razorpayKeySecretSet;
+      
+      const updatedSettings = await storage.upsertIntegrationSettings(settingsData);
+      
+      await logAuditAction(
+        adminId,
+        "UPDATE_INTEGRATION_SETTINGS",
+        "integration_settings",
+        updatedSettings.id,
+        { updated: Object.keys(settingsData) },
+        req.ip,
+        req.headers["user-agent"]
+      );
+
+      res.json({
+        ...updatedSettings,
+        sendgridApiKey: undefined,
+        openaiApiKey: undefined,
+        geminiApiKey: undefined,
+        twilioAuthToken: undefined,
+        razorpayKeySecret: undefined,
+        sendgridApiKeySet: !!updatedSettings.sendgridApiKey,
+        openaiApiKeySet: !!updatedSettings.openaiApiKey,
+        geminiApiKeySet: !!updatedSettings.geminiApiKey,
+        twilioAuthTokenSet: !!updatedSettings.twilioAuthToken,
+        razorpayKeySecretSet: !!updatedSettings.razorpayKeySecret,
+      });
+    } catch (error) {
+      console.error("Integration settings update error:", error);
+      res.status(500).json({ message: "Failed to update integration settings" });
+    }
+  });
+
+  // Integration Settings Test Endpoints
+  app.post("/api/admin/integration-settings/test-sendgrid", isAdminAuthenticated, async (req: AdminRequest, res) => {
+    try {
+      const settings = await storage.getIntegrationSettings();
+      if (!settings?.sendgridApiKey) {
+        return res.status(400).json({ message: "SendGrid API key not configured" });
+      }
+
+      // Test SendGrid by getting user profile
+      const sgMail = require('@sendgrid/mail');
+      sgMail.setApiKey(settings.sendgridApiKey);
+      
+      // Use SendGrid API to verify the key
+      const response = await fetch('https://api.sendgrid.com/v3/user/profile', {
+        headers: {
+          'Authorization': `Bearer ${settings.sendgridApiKey}`,
+          'Content-Type': 'application/json'
+        }
+      });
+
+      if (!response.ok) {
+        throw new Error(`SendGrid API returned ${response.status}`);
+      }
+
+      const profile = await response.json();
+      
+      await storage.upsertIntegrationSettings({
+        lastTestStatus: 'success',
+        lastTestAt: new Date()
+      });
+
+      await logAuditAction(
+        req.admin!.id,
+        "TEST_SENDGRID_CONNECTION",
+        "integration_settings",
+        settings.id,
+        { status: 'success', email: profile.email },
+        req.ip,
+        req.headers["user-agent"]
+      );
+
+      res.json({ 
+        success: true, 
+        message: "SendGrid connection successful",
+        email: profile.email
+      });
+    } catch (error: any) {
+      console.error("SendGrid test error:", error);
+      
+      const settings = await storage.getIntegrationSettings();
+      if (settings) {
+        await storage.upsertIntegrationSettings({
+          lastTestStatus: 'failed',
+          lastTestAt: new Date()
+        });
+      }
+
+      await logAuditAction(
+        req.admin!.id,
+        "TEST_SENDGRID_CONNECTION",
+        "integration_settings",
+        settings?.id || 'unknown',
+        { status: 'failed', error: error.message },
+        req.ip,
+        req.headers["user-agent"]
+      );
+
+      res.status(400).json({ 
+        success: false, 
+        message: "SendGrid connection failed: " + error.message 
+      });
+    }
+  });
+
+  app.post("/api/admin/integration-settings/test-openai", isAdminAuthenticated, async (req: AdminRequest, res) => {
+    try {
+      const settings = await storage.getIntegrationSettings();
+      if (!settings?.openaiApiKey) {
+        return res.status(400).json({ message: "OpenAI API key not configured" });
+      }
+
+      // Test OpenAI by listing models
+      const response = await fetch('https://api.openai.com/v1/models', {
+        headers: {
+          'Authorization': `Bearer ${settings.openaiApiKey}`,
+          'Content-Type': 'application/json'
+        }
+      });
+
+      if (!response.ok) {
+        throw new Error(`OpenAI API returned ${response.status}`);
+      }
+
+      const data = await response.json();
+      
+      await storage.upsertIntegrationSettings({
+        lastTestStatus: 'success',
+        lastTestAt: new Date()
+      });
+
+      await logAuditAction(
+        req.admin!.id,
+        "TEST_OPENAI_CONNECTION",
+        "integration_settings",
+        settings.id,
+        { status: 'success', modelCount: data.data?.length || 0 },
+        req.ip,
+        req.headers["user-agent"]
+      );
+
+      res.json({ 
+        success: true, 
+        message: "OpenAI connection successful",
+        modelCount: data.data?.length || 0
+      });
+    } catch (error: any) {
+      console.error("OpenAI test error:", error);
+      
+      const settings = await storage.getIntegrationSettings();
+      if (settings) {
+        await storage.upsertIntegrationSettings({
+          lastTestStatus: 'failed',
+          lastTestAt: new Date()
+        });
+      }
+
+      await logAuditAction(
+        req.admin!.id,
+        "TEST_OPENAI_CONNECTION",
+        "integration_settings",
+        settings?.id || 'unknown',
+        { status: 'failed', error: error.message },
+        req.ip,
+        req.headers["user-agent"]
+      );
+
+      res.status(400).json({ 
+        success: false, 
+        message: "OpenAI connection failed: " + error.message 
+      });
+    }
+  });
+
+  app.post("/api/admin/integration-settings/test-gemini", isAdminAuthenticated, async (req: AdminRequest, res) => {
+    try {
+      const settings = await storage.getIntegrationSettings();
+      if (!settings?.geminiApiKey) {
+        return res.status(400).json({ message: "Gemini API key not configured" });
+      }
+
+      // Test Gemini by making a simple API call
+      const { GoogleGenerativeAI } = require('@google/generative-ai');
+      const genAI = new GoogleGenerativeAI(settings.geminiApiKey);
+      const model = genAI.getGenerativeModel({ model: "gemini-pro" });
+      
+      // Simple test prompt
+      const result = await model.generateContent("Test connection");
+      
+      await storage.upsertIntegrationSettings({
+        lastTestStatus: 'success',
+        lastTestAt: new Date()
+      });
+
+      await logAuditAction(
+        req.admin!.id,
+        "TEST_GEMINI_CONNECTION",
+        "integration_settings",
+        settings.id,
+        { status: 'success' },
+        req.ip,
+        req.headers["user-agent"]
+      );
+
+      res.json({ 
+        success: true, 
+        message: "Gemini connection successful"
+      });
+    } catch (error: any) {
+      console.error("Gemini test error:", error);
+      
+      const settings = await storage.getIntegrationSettings();
+      if (settings) {
+        await storage.upsertIntegrationSettings({
+          lastTestStatus: 'failed',
+          lastTestAt: new Date()
+        });
+      }
+
+      await logAuditAction(
+        req.admin!.id,
+        "TEST_GEMINI_CONNECTION",
+        "integration_settings",
+        settings?.id || 'unknown',
+        { status: 'failed', error: error.message },
+        req.ip,
+        req.headers["user-agent"]
+      );
+
+      res.status(400).json({ 
+        success: false, 
+        message: "Gemini connection failed: " + error.message 
+      });
+    }
+  });
 }

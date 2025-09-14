@@ -602,12 +602,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
         const imageBuffer = fs.readFileSync(req.file.path);
         const userImageBase64 = imageBuffer.toString('base64');
         
+        // Get configured Gemini service instance
+        const configuredGeminiService = await import('./geminiService').then(m => m.getConfiguredGeminiService());
+        const geminiInstance = await configuredGeminiService;
+        
         // Use the stored AI prompt or generate one
-        const tryOnPrompt = product.aiTryOnPrompt || geminiService.generateTryOnPrompt(product.name);
+        const tryOnPrompt = product.aiTryOnPrompt || geminiInstance.generateTryOnPrompt(product.name);
         const finalPrompt = prompt || tryOnPrompt;
         
         // Generate try-on image using Gemini image generation
-        const generatedImageResult = await geminiService.generateTryOnImage(product.name, userImageBase64, finalPrompt);
+        const generatedImageResult = await geminiInstance.generateTryOnImage(product.name, userImageBase64, finalPrompt);
         
         // Auto-delete uploaded file for privacy using async method
         await fs.promises.unlink(req.file.path);
@@ -666,7 +670,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
       try {
         const backgroundPrompt = `Generate a description for a cartoon-style hero background for ReWeara sustainable fashion e-commerce: ${prompt}. Make it vibrant, eco-friendly, and appealing for a thrift store and original sustainable fashion brand. Include details about colors, style, and eco-fashion elements. Size should be optimized for web hero sections (1920x1080).`;
         
-        const backgroundDescription = await geminiService.generateContent(backgroundPrompt);
+        // Get configured Gemini service instance
+        const configuredGeminiService = await import('./geminiService').then(m => m.getConfiguredGeminiService());
+        const geminiInstance = await configuredGeminiService;
+        
+        const backgroundDescription = await geminiInstance.generateContent(backgroundPrompt);
 
         res.json({ 
           success: true,
@@ -1248,7 +1256,11 @@ Please help customers with:
 Keep responses helpful, friendly, and focused on sustainable fashion. If asked about specific products, recommend checking our shop section.`;
 
       try {
-        const assistantReply = await geminiService.generateChatResponse(message, context);
+        // Get configured Gemini service instance
+        const configuredGeminiService = await import('./geminiService').then(m => m.getConfiguredGeminiService());
+        const geminiInstance = await configuredGeminiService;
+        
+        const assistantReply = await geminiInstance.generateChatResponse(message, context);
 
         res.json({ 
           success: true,

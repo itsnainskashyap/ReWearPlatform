@@ -493,7 +493,61 @@ export const paymentSettings = pgTable("payment_settings", {
   upiId: varchar("upi_id"),
   qrCodeUrl: varchar("qr_code_url"),
   bankDetails: jsonb("bank_details"),
+  stripeSecretKey: varchar("stripe_secret_key"),
+  stripePublishableKey: varchar("stripe_publishable_key"),
+  stripeWebhookSecret: varchar("stripe_webhook_secret"),
   isActive: boolean("is_active").default(true),
+  stripeEnabled: boolean("stripe_enabled").default(false),
+  upiEnabled: boolean("upi_enabled").default(true),
+  codEnabled: boolean("cod_enabled").default(true),
+  lastTestStatus: varchar("last_test_status"), // success, failed, never_tested
+  lastTestAt: timestamp("last_test_at"),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
+// Analytics settings table
+export const analyticsSettings = pgTable("analytics_settings", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  googleAnalyticsId: varchar("google_analytics_id"),
+  facebookPixelId: varchar("facebook_pixel_id"),
+  googleTagManagerId: varchar("google_tag_manager_id"),
+  hotjarId: varchar("hotjar_id"),
+  mixpanelToken: varchar("mixpanel_token"),
+  amplitudeApiKey: varchar("amplitude_api_key"),
+  isActive: boolean("is_active").default(true),
+  googleAnalyticsEnabled: boolean("google_analytics_enabled").default(false),
+  facebookPixelEnabled: boolean("facebook_pixel_enabled").default(false),
+  googleTagManagerEnabled: boolean("google_tag_manager_enabled").default(false),
+  hotjarEnabled: boolean("hotjar_enabled").default(false),
+  mixpanelEnabled: boolean("mixpanel_enabled").default(false),
+  amplitudeEnabled: boolean("amplitude_enabled").default(false),
+  lastTestStatus: varchar("last_test_status"), // success, failed, never_tested
+  lastTestAt: timestamp("last_test_at"),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
+// Integration settings table
+export const integrationSettings = pgTable("integration_settings", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  sendgridApiKey: varchar("sendgrid_api_key"),
+  sendgridFromEmail: varchar("sendgrid_from_email"),
+  openaiApiKey: varchar("openai_api_key"),
+  geminiApiKey: varchar("gemini_api_key"),
+  twilioAccountSid: varchar("twilio_account_sid"),
+  twilioAuthToken: varchar("twilio_auth_token"),
+  twilioFromNumber: varchar("twilio_from_number"),
+  razorpayKeyId: varchar("razorpay_key_id"),
+  razorpayKeySecret: varchar("razorpay_key_secret"),
+  isActive: boolean("is_active").default(true),
+  sendgridEnabled: boolean("sendgrid_enabled").default(false),
+  openaiEnabled: boolean("openai_enabled").default(false),
+  geminiEnabled: boolean("gemini_enabled").default(false),
+  twilioEnabled: boolean("twilio_enabled").default(false),
+  razorpayEnabled: boolean("razorpay_enabled").default(false),
+  lastTestStatus: varchar("last_test_status"), // success, failed, never_tested
+  lastTestAt: timestamp("last_test_at"),
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
 });
@@ -673,5 +727,21 @@ export const insertPaymentSettingsSchema = createInsertSchema(paymentSettings).o
   updatedAt: true,
 });
 
+export const insertAnalyticsSettingsSchema = createInsertSchema(analyticsSettings).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
+export const insertIntegrationSettingsSchema = createInsertSchema(integrationSettings).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
 export type InsertPaymentSettings = z.infer<typeof insertPaymentSettingsSchema>;
 export type PaymentSettings = typeof paymentSettings.$inferSelect;
+export type InsertAnalyticsSettings = z.infer<typeof insertAnalyticsSettingsSchema>;
+export type AnalyticsSettings = typeof analyticsSettings.$inferSelect;
+export type InsertIntegrationSettings = z.infer<typeof insertIntegrationSettingsSchema>;
+export type IntegrationSettings = typeof integrationSettings.$inferSelect;

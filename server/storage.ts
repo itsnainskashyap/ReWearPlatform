@@ -13,6 +13,9 @@ import {
   adminLogs,
   orderTracking,
   storeSettings,
+  paymentSettings,
+  analyticsSettings,
+  integrationSettings,
   type User,
   type UpsertUser,
   type Category,
@@ -40,6 +43,12 @@ import {
   type InsertOrderTracking,
   type FeaturedProductsPanelSettings,
   featuredProductsPanelSettingsSchema,
+  type PaymentSettings,
+  type InsertPaymentSettings,
+  type AnalyticsSettings,
+  type InsertAnalyticsSettings,
+  type IntegrationSettings,
+  type InsertIntegrationSettings,
 } from "@shared/schema";
 import { db } from "./db";
 import { eq, desc, and, sql, like, inArray, or } from "drizzle-orm";
@@ -130,6 +139,14 @@ export interface IStorage {
   getFeaturedProductsPanelSettings(): Promise<FeaturedProductsPanelSettings>;
   saveFeaturedProductsPanelSettings(settings: FeaturedProductsPanelSettings): Promise<FeaturedProductsPanelSettings>;
   getFeaturedProductsOrdered(): Promise<Product[]>;
+  
+  // API Settings operations
+  getPaymentSettings(): Promise<PaymentSettings | undefined>;
+  upsertPaymentSettings(settings: Partial<InsertPaymentSettings>): Promise<PaymentSettings>;
+  getAnalyticsSettings(): Promise<AnalyticsSettings | undefined>;
+  upsertAnalyticsSettings(settings: Partial<InsertAnalyticsSettings>): Promise<AnalyticsSettings>;
+  getIntegrationSettings(): Promise<IntegrationSettings | undefined>;
+  upsertIntegrationSettings(settings: Partial<InsertIntegrationSettings>): Promise<IntegrationSettings>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -1151,6 +1168,121 @@ export class DatabaseStorage implements IStorage {
     orderedProducts.push(...remainingProducts);
 
     return orderedProducts.slice(0, settings.maxItems);
+  }
+
+  // API Settings operations
+  async getPaymentSettings(): Promise<PaymentSettings | undefined> {
+    const [settings] = await db
+      .select()
+      .from(paymentSettings)
+      .where(eq(paymentSettings.isActive, true))
+      .limit(1);
+    return settings;
+  }
+
+  async upsertPaymentSettings(settings: Partial<InsertPaymentSettings>): Promise<PaymentSettings> {
+    const [existing] = await db
+      .select()
+      .from(paymentSettings)
+      .where(eq(paymentSettings.isActive, true))
+      .limit(1);
+
+    if (existing) {
+      const [updated] = await db
+        .update(paymentSettings)
+        .set({
+          ...settings,
+          updatedAt: new Date()
+        })
+        .where(eq(paymentSettings.id, existing.id))
+        .returning();
+      return updated;
+    } else {
+      const [created] = await db
+        .insert(paymentSettings)
+        .values({
+          ...settings,
+          isActive: true
+        })
+        .returning();
+      return created;
+    }
+  }
+
+  async getAnalyticsSettings(): Promise<AnalyticsSettings | undefined> {
+    const [settings] = await db
+      .select()
+      .from(analyticsSettings)
+      .where(eq(analyticsSettings.isActive, true))
+      .limit(1);
+    return settings;
+  }
+
+  async upsertAnalyticsSettings(settings: Partial<InsertAnalyticsSettings>): Promise<AnalyticsSettings> {
+    const [existing] = await db
+      .select()
+      .from(analyticsSettings)
+      .where(eq(analyticsSettings.isActive, true))
+      .limit(1);
+
+    if (existing) {
+      const [updated] = await db
+        .update(analyticsSettings)
+        .set({
+          ...settings,
+          updatedAt: new Date()
+        })
+        .where(eq(analyticsSettings.id, existing.id))
+        .returning();
+      return updated;
+    } else {
+      const [created] = await db
+        .insert(analyticsSettings)
+        .values({
+          ...settings,
+          isActive: true
+        })
+        .returning();
+      return created;
+    }
+  }
+
+  async getIntegrationSettings(): Promise<IntegrationSettings | undefined> {
+    const [settings] = await db
+      .select()
+      .from(integrationSettings)
+      .where(eq(integrationSettings.isActive, true))
+      .limit(1);
+    return settings;
+  }
+
+  async upsertIntegrationSettings(settings: Partial<InsertIntegrationSettings>): Promise<IntegrationSettings> {
+    const [existing] = await db
+      .select()
+      .from(integrationSettings)
+      .where(eq(integrationSettings.isActive, true))
+      .limit(1);
+
+    if (existing) {
+      const [updated] = await db
+        .update(integrationSettings)
+        .set({
+          ...settings,
+          updatedAt: new Date()
+        })
+        .where(eq(integrationSettings.id, existing.id))
+        .returning();
+      return updated;
+    } else {
+      const [created] = await db
+        .insert(integrationSettings)
+        .values({
+          ...settings,
+          isActive: true
+        })
+        .returning();
+      return created;
+    }
   }
 }
 

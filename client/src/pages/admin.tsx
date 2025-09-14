@@ -311,9 +311,21 @@ export default function Admin() {
             <h1 className="text-2xl font-bold gradient-text">Admin Panel</h1>
             <p className="text-sm text-muted-foreground">Manage your ReWeara store</p>
           </div>
-          <Badge className="bg-primary/10 text-primary border-primary/20">
-            {user && typeof user === 'object' && 'email' in user ? String(user.email) : 'Admin'}
-          </Badge>
+          <div className="flex items-center gap-4">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => navigate("/admin/api-controls")}
+              className="bg-white/50 hover:bg-white/80 border-primary/20"
+              data-testid="button-api-controls"
+            >
+              <FolderOpen className="w-4 h-4 mr-2" />
+              API Controls
+            </Button>
+            <Badge className="bg-primary/10 text-primary border-primary/20">
+              {user && typeof user === 'object' && 'email' in user ? String(user.email) : 'Admin'}
+            </Badge>
+          </div>
         </div>
       </div>
 

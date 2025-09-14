@@ -25,6 +25,7 @@ import Policies from "@/pages/policies";
 import Careers from "@/pages/careers";
 import Admin from "@/pages/admin";
 import AdminPanel from "@/pages/admin-panel";
+import AdminApiControls from "@/pages/admin-api-controls";
 import Blog from "@/pages/blog";
 import Header from "@/components/layout/header";
 import Footer from "@/components/layout/footer";
@@ -76,6 +77,7 @@ function Router() {
             <Route path="/orders/:id" component={Orders} />
             <Route path="/orders" component={Orders} />
             <Route path="/admin" component={Admin} />
+            <Route path="/admin/api-controls" component={AdminApiControls} />
           </>
         )}
         <Route component={NotFound} />

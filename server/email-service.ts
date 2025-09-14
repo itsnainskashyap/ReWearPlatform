@@ -7,11 +7,20 @@ interface EmailParams {
   html?: string;
 }
 
+// Enhanced email service that can use SendGrid when configured
 export async function sendEmail(params: EmailParams): Promise<boolean> {
   try {
-    // Log email details for development - can be replaced with actual email service later
+    // Check if SendGrid is configured in database settings
+    const { storage } = await import('./storage');
+    const integrationSettings = await storage.getIntegrationSettings();
+    
+    if (integrationSettings?.sendgridEnabled && integrationSettings.sendgridApiKey) {
+      return await sendEmailWithSendGrid(params, integrationSettings);
+    }
+    
+    // Fallback to console logging for development
     console.log('='.repeat(50));
-    console.log('EMAIL NOTIFICATION');
+    console.log('EMAIL NOTIFICATION (Console Mode)');
     console.log('='.repeat(50));
     console.log(`To: ${params.to}`);
     console.log(`From: ${params.from}`);
@@ -24,6 +33,62 @@ export async function sendEmail(params: EmailParams): Promise<boolean> {
     return true;
   } catch (error) {
     console.error('Email service error:', error);
+    return false;
+  }
+}
+
+// SendGrid implementation
+async function sendEmailWithSendGrid(params: EmailParams, settings: any): Promise<boolean> {
+  try {
+    console.log('Sending email via SendGrid...');
+    
+    const sendGridData = {
+      personalizations: [
+        {
+          to: [{ email: params.to }],
+          subject: params.subject,
+        },
+      ],
+      from: { 
+        email: settings.sendgridFromEmail || params.from,
+        name: 'ReWeara'
+      },
+      content: [
+        {
+          type: params.html ? 'text/html' : 'text/plain',
+          value: params.html || params.text,
+        },
+      ],
+    };
+
+    const response = await fetch('https://api.sendgrid.com/v3/mail/send', {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${settings.sendgridApiKey}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(sendGridData),
+    });
+
+    if (!response.ok) {
+      const errorText = await response.text();
+      throw new Error(`SendGrid API error: ${response.status} ${response.statusText} - ${errorText}`);
+    }
+
+    console.log('Email sent successfully via SendGrid');
+    return true;
+  } catch (error) {
+    console.error('SendGrid email sending failed:', error);
+    
+    // Fallback to console logging
+    console.log('='.repeat(50));
+    console.log('EMAIL NOTIFICATION (SendGrid Failed - Console Fallback)');
+    console.log('='.repeat(50));
+    console.log(`To: ${params.to}`);
+    console.log(`From: ${params.from}`);
+    console.log(`Subject: ${params.subject}`);
+    console.log('='.repeat(50));
+    
     return false;
   }
 }
@@ -111,14 +176,14 @@ ReWeara Team
 
 // Order status update email template
 export function getStatusUpdateEmail(order: any, userEmail: string, newStatus: string) {
-  const statusMessages = {
+  const statusMessages: { [key: string]: string } = {
     'confirmed': 'Your order has been confirmed and is being prepared! 📦',
     'shipped': 'Great news! Your order is on its way! 🚚',
     'delivered': 'Your order has been delivered! We hope you love it! 🎉',
     'cancelled': 'Your order has been cancelled. If this was unexpected, please contact us.'
   };
 
-  const statusColors = {
+  const statusColors: { [key: string]: string } = {
     'confirmed': '#3b82f6',
     'shipped': '#8b5cf6',
     'delivered': '#10b981',

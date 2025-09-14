@@ -42,11 +42,30 @@ export class GeminiService {
   private textApiUrl: string = "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent";
   private imageApiUrl: string = "https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent";
 
-  constructor() {
-    this.apiKey = process.env.GEMINI_API_KEY || '';
+  constructor(providedApiKey?: string) {
+    // Use provided API key (from DB settings) if available, otherwise fallback to env
+    this.apiKey = providedApiKey || process.env.GEMINI_API_KEY || '';
     if (!this.apiKey) {
-      console.warn('GEMINI_API_KEY environment variable not set');
+      console.warn('Gemini API key not configured (neither DB settings nor environment variable)');
     }
+  }
+
+  // Static method to create instance with DB settings
+  static async createWithDbSettings(): Promise<GeminiService> {
+    try {
+      const { storage } = await import('./storage');
+      const integrationSettings = await storage.getIntegrationSettings();
+      
+      if (integrationSettings?.geminiEnabled && integrationSettings.geminiApiKey) {
+        console.log('Using Gemini API key from database settings');
+        return new GeminiService(integrationSettings.geminiApiKey);
+      }
+    } catch (error) {
+      console.warn('Failed to load Gemini settings from database, falling back to environment:', error);
+    }
+    
+    // Fallback to environment variable
+    return new GeminiService();
   }
 
   async generateContent(prompt: string): Promise<string> {
@@ -210,4 +229,10 @@ Keep responses helpful, friendly, and focused on sustainable fashion.`;
   }
 }
 
+// Create global instance with dynamic settings loading
 export const geminiService = new GeminiService();
+
+// Function to get configured Gemini service (checks DB settings first)
+export async function getConfiguredGeminiService(): Promise<GeminiService> {
+  return await GeminiService.createWithDbSettings();
+}
