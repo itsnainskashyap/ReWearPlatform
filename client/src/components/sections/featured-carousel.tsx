@@ -285,7 +285,7 @@ export default function FeaturedCarousel() {
       </div>
 
       {/* Custom CSS for hiding scrollbar */}
-      <style jsx>{`
+      <style>{`
         .scrollbar-hide {
           -ms-overflow-style: none;
           scrollbar-width: none;

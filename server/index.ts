@@ -1,8 +1,10 @@
 import express, { type Request, Response, NextFunction } from "express";
 import { registerRoutes } from "./routes";
 import { setupVite, serveStatic, log } from "./vite";
-import { validateDatabaseConnection, closeDatabaseConnection } from "./db";
-import { seedDatabase } from "./seed";
+import { validateDatabaseConnection, closeDatabaseConnection, db } from "./db";
+import { seedDatabaseAtomic } from "./seed";
+import { products } from "@shared/schema";
+import { sql } from "drizzle-orm";
 import { validateSecrets, getSecurityHeaders, securityAudit } from "./security";
 import compression from "compression";
 import fs from "fs";
@@ -217,10 +219,32 @@ app.use((req, res, next) => {
           await validateDatabaseConnection();
           console.log('[STARTUP] Database validation completed successfully');
           
+          // Automatic development seeding - check if products exist and auto-seed if empty
+          if (!IS_PRODUCTION) {
+            console.log('[SEED] Checking development database for existing products...');
+            try {
+              const [{ count }] = await db.select({ count: sql<number>`count(*)` }).from(products);
+              const productCount = Number(count || 0);
+              console.log(`[SEED] Found ${productCount} products in development database`);
+              
+              if (productCount === 0) {
+                console.log('[SEED] No products found, auto-seeding development data...');
+                const seedResult = await seedDatabaseAtomic();
+                console.log('[SEED] Development seeding completed successfully');
+                console.log(`[SEED] Seeded: ${seedResult.categories} categories, ${seedResult.brands} brands, ${seedResult.products} products`);
+              } else {
+                console.log('[SEED] Products exist, skipping auto-seed (database already populated)');
+              }
+            } catch (seedError: any) {
+              console.error('[SEED ERROR] Failed to check/seed development database:', seedError.message);
+              console.warn('[SEED] Continuing startup without seeding - manual seed may be required');
+            }
+          }
+          
           // Seed database in production to ensure data is available
           if (IS_PRODUCTION) {
             console.log('[STARTUP] Seeding production database...');
-            await seedDatabase();
+            await seedDatabaseAtomic();
             console.log('[STARTUP] Database seeding completed');
           }
           

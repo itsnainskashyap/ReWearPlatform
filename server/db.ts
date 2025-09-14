@@ -43,11 +43,11 @@ export function getDb() {
 }
 
 // Get pool instance (initialize if needed)  
-export function getPool() {
+export function getPool(): Pool {
   if (!pool) {
     initializeDatabase();
   }
-  return pool;
+  return pool!; // Assert non-null after initialization
 }
 
 // Export for backward compatibility - use lazy initialization
@@ -61,7 +61,7 @@ const dbProxy = new Proxy({} as any, {
 const poolProxy = new Proxy({} as any, {
   get(target, prop) {
     const poolInstance = getPool();
-    return poolInstance[prop];
+    return (poolInstance as any)[prop];
   }
 });
 

@@ -2510,4 +2510,105 @@ export function setupAdminRoutes(app: Express) {
       });
     }
   });
+
+  // Database seeding endpoint - DEVELOPMENT ONLY with strict security controls
+  app.post("/api/admin/seed-database",
+    rateLimits.general,
+    isAdminAuthenticated,
+    authorizeAdmin(['super_admin']), // SECURITY: Super admin role required
+    async (req: AdminRequest, res) => {
+    try {
+      // SECURITY: Completely disable in production
+      if (process.env.NODE_ENV === 'production') {
+        console.warn(`[SECURITY] Seed endpoint access denied in production by admin ${req.admin!.email}`);
+        return res.status(403).json({
+          success: false,
+          message: "Database seeding is disabled in production for security",
+          code: "PRODUCTION_DISABLED"
+        });
+      }
+
+      // SECURITY: Require explicit confirmation for destructive operations
+      const { confirmationCode } = req.body;
+      const expectedCode = 'SEED_CONFIRM_DEV_DATA';
+      
+      if (confirmationCode !== expectedCode) {
+        console.warn(`[SECURITY] Seed endpoint confirmation failed by admin ${req.admin!.email}`);
+        return res.status(400).json({
+          success: false,
+          message: `Confirmation code required. Send confirmationCode: "${expectedCode}" in request body`,
+          code: "CONFIRMATION_REQUIRED"
+        });
+      }
+
+      console.log(`[SEED] Starting atomic database seeding by super admin ${req.admin!.email}...`);
+      
+      // Import seedDatabase function that has been fixed for atomicity
+      const { seedDatabaseAtomic } = await import('./seed');
+      
+      // Execute atomic seeding with proper transaction handling
+      const result = await seedDatabaseAtomic();
+      
+      // Verify data was actually created
+      const verification = await Promise.all([
+        db.select({ count: sql<number>`count(*)` }).from(categories),
+        db.select({ count: sql<number>`count(*)` }).from(brands),
+        db.select({ count: sql<number>`count(*)` }).from(products)
+      ]);
+      
+      const actualCounts = {
+        categories: verification[0][0].count,
+        brands: verification[1][0].count,
+        products: verification[2][0].count
+      };
+      
+      console.log('[SEED] Verification counts:', actualCounts);
+      
+      // Log audit action for seeding
+      await logAuditAction(
+        req.admin!.id,
+        "SEED_DATABASE",
+        "database",
+        "seed_operation",
+        {
+          result,
+          verification: actualCounts,
+          adminRole: req.admin!.role,
+          timestamp: new Date().toISOString()
+        },
+        req.ip,
+        req.headers["user-agent"]
+      );
+      
+      res.json({
+        success: true,
+        message: "Database seeded successfully with test data",
+        counts: actualCounts,
+        details: result
+      });
+    } catch (error) {
+      console.error("Database seeding error:", error);
+      
+      // Log failed audit action
+      await logAuditAction(
+        req.admin!.id,
+        "SEED_DATABASE_FAILED",
+        "database",
+        "seed_operation",
+        {
+          error: error instanceof Error ? error.message : 'Unknown error',
+          adminRole: req.admin!.role,
+          timestamp: new Date().toISOString()
+        },
+        req.ip,
+        req.headers["user-agent"]
+      );
+      
+      res.status(500).json({
+        success: false,
+        message: "Failed to seed database",
+        error: error instanceof Error ? error.message : 'Unknown error'
+      });
+    }
+  });
 }
