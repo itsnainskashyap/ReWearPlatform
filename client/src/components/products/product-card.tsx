@@ -1,4 +1,4 @@
-import { Heart, ShoppingBag, Sparkles } from "lucide-react";
+import { Heart, ShoppingBag, Sparkles, Video } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { AspectRatio } from "@/components/ui/aspect-ratio";
@@ -88,15 +88,21 @@ export default function ProductCard({ product, onAddToCart, onAddToWishlist, ind
             )}
           </AspectRatio>
           
-          {/* Featured Badge Only */}
-          {product.isFeatured && (
-            <div className="absolute top-2 left-2">
+          {/* Badges */}
+          <div className="absolute top-2 left-2 flex flex-col gap-1">
+            {product.isFeatured && (
               <Badge className="bg-accent/90 text-accent-foreground border-0 rounded-full px-2 py-1 text-xs font-semibold">
                 <Sparkles className="w-3 h-3 mr-1" />
                 Featured
               </Badge>
-            </div>
-          )}
+            )}
+            {product.videos && product.videos.length > 0 && (
+              <Badge className="bg-red-500/90 text-white border-0 rounded-full px-2 py-1 text-xs font-semibold" data-testid={`badge-video-${product.id}`}>
+                <Video className="w-3 h-3 mr-1" />
+                Video
+              </Badge>
+            )}
+          </div>
         </div>
 
         {/* Content */}
@@ -200,15 +206,21 @@ export default function ProductCard({ product, onAddToCart, onAddToWishlist, ind
           </Button>
         </div>
 
-        {/* Featured Badge */}
-        {product.isFeatured && (
-          <div className="absolute top-3 left-3">
+        {/* Badges */}
+        <div className="absolute top-3 left-3 flex flex-col gap-2">
+          {product.isFeatured && (
             <Badge className="bg-accent/90 text-accent-foreground border-0 rounded-full px-3 py-1 text-xs font-semibold">
               <Sparkles className="w-3 h-3 mr-1" />
               Featured
             </Badge>
-          </div>
-        )}
+          )}
+          {product.videos && product.videos.length > 0 && (
+            <Badge className="bg-red-500/90 text-white border-0 rounded-full px-3 py-1 text-xs font-semibold" data-testid={`badge-video-${product.id}`}>
+              <Video className="w-3 h-3 mr-1" />
+              Video
+            </Badge>
+          )}
+        </div>
       </div>
 
       {/* Content */}

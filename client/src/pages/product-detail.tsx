@@ -13,6 +13,7 @@ import { apiRequest } from "@/lib/queryClient";
 import { useCartStore } from "@/store/cart-store";
 import VirtualTryOn from "@/components/ai/virtual-tryon";
 import AIRecommendations from "@/components/ai/recommendations";
+import MediaCarousel from "@/components/ui/media-carousel";
 import type { Product } from "@shared/schema";
 
 export default function ProductDetail() {
@@ -24,7 +25,6 @@ export default function ProductDetail() {
   const queryClient = useQueryClient();
   const { openCart } = useCartStore();
   
-  const [selectedImage, setSelectedImage] = useState(0);
   const [isVisible, setIsVisible] = useState(false);
   const [quantity, setQuantity] = useState(1);
   const [selectedSize, setSelectedSize] = useState<string>("");
@@ -206,42 +206,17 @@ export default function ProductDetail() {
         </div>
       </div>
 
-      {/* Image Carousel */}
+      {/* Media Carousel */}
       <div className="relative">
-        <div className="overflow-hidden">
-          <div 
-            className="flex transition-transform duration-500 ease-out"
-            style={{ transform: `translateX(-${selectedImage * 100}%)` }}
-          >
-            {images.map((image: string, index: number) => (
-              <div key={index} className="w-full flex-shrink-0">
-                <img
-                  src={image}
-                  alt={`${product.name} ${index + 1}`}
-                  className="w-full aspect-square object-cover"
-                />
-              </div>
-            ))}
-          </div>
-        </div>
-        
-        {/* Image Dots */}
-        <div className="absolute bottom-4 left-0 right-0 flex justify-center space-x-2">
-          {images.map((_: string, index: number) => (
-            <button
-              key={index}
-              onClick={() => setSelectedImage(index)}
-              className={`w-2 h-2 rounded-full transition-all duration-300 ${
-                selectedImage === index 
-                  ? 'w-8 bg-primary' 
-                  : 'bg-white/50'
-              }`}
-            />
-          ))}
-        </div>
+        <MediaCarousel 
+          images={images}
+          videos={product.videos || []}
+          aspectRatio="square"
+          className="w-full"
+        />
 
         {/* Try On Button */}
-        <div className="absolute top-4 right-4">
+        <div className="absolute top-4 right-4 z-10">
           <VirtualTryOn 
             productId={params?.id || ''} 
             productName={product?.name || ''} 

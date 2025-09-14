@@ -27,7 +27,11 @@ import {
   Package,
   AlertCircle,
   Link,
-  Sparkles
+  Sparkles,
+  Video,
+  Play,
+  FileVideo,
+  Trash2
 } from "lucide-react";
 
 const enhancedProductSchema = z.object({
@@ -52,6 +56,7 @@ const enhancedProductSchema = z.object({
   }).optional(),
   washCare: z.string().optional(),
   images: z.array(z.string()).min(1, "At least one image is required"),
+  videos: z.array(z.string()).max(3, "Maximum 3 videos allowed").optional(),
   sizes: z.array(z.string()).min(1, "At least one size is required"),
   ecoBadges: z.array(z.string()).optional(),
   discount: z.number().min(0).max(100).optional(),
@@ -79,6 +84,8 @@ interface EnhancedAddProductModalProps {
 export function EnhancedAddProductModal({ open, onOpenChange }: EnhancedAddProductModalProps) {
   const { toast } = useToast();
   const [imageUrls, setImageUrls] = useState<string[]>([""]);
+  const [videos, setVideos] = useState<string[]>([]);
+  const [uploading, setUploading] = useState<{ [key: number]: boolean }>({});
   const [sizes, setSizes] = useState<string[]>([""]);
   const [tags, setTags] = useState<string[]>([]);
   const [ecoBadges, setEcoBadges] = useState<string[]>([]);
@@ -110,6 +117,7 @@ export function EnhancedAddProductModal({ open, onOpenChange }: EnhancedAddProdu
     defaultValues: {
       condition: "new",
       images: [],
+      videos: [],
       sizes: [],
       stock: 1,
       stockAlert: 5,
@@ -152,6 +160,8 @@ export function EnhancedAddProductModal({ open, onOpenChange }: EnhancedAddProdu
   const resetForm = () => {
     reset();
     setImageUrls([""]);
+    setVideos([]);
+    setUploading({});
     setSizes([""]);
     setTags([]);
     setEcoBadges([]);
@@ -161,12 +171,14 @@ export function EnhancedAddProductModal({ open, onOpenChange }: EnhancedAddProdu
 
   const onSubmit = (data: EnhancedProductForm) => {
     const validImageUrls = imageUrls.filter(url => url.trim() !== "");
+    const validVideos = videos.filter(url => url.trim() !== "");
     const validSizes = sizes.filter(size => size.trim() !== "");
     
     // Convert discountExpiry string to Date object if present, otherwise remove it
     const processedData = {
       ...data,
       images: validImageUrls,
+      videos: validVideos,
       sizes: validSizes,
       tags,
       ecoBadges,
@@ -179,6 +191,78 @@ export function EnhancedAddProductModal({ open, onOpenChange }: EnhancedAddProdu
     }
     
     createProductMutation.mutate(processedData);
+  };
+
+  // Video upload functions
+  const handleVideoUpload = async (file: File, index: number) => {
+    if (!file) return;
+
+    // Validate file type
+    if (!['video/mp4', 'video/webm'].includes(file.type)) {
+      toast({
+        title: "Invalid File Type",
+        description: "Please upload MP4 or WebM video files only.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    // Validate file size (50MB)
+    if (file.size > 50 * 1024 * 1024) {
+      toast({
+        title: "File Too Large",
+        description: "Video file must be smaller than 50MB.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    setUploading(prev => ({ ...prev, [index]: true }));
+
+    try {
+      const formData = new FormData();
+      formData.append('video', file);
+
+      const response = await apiRequest("POST", "/api/upload/video", formData, {
+        headers: { 'Content-Type': 'multipart/form-data' },
+      });
+
+      const newVideos = [...videos];
+      newVideos[index] = response.videoUrl;
+      setVideos(newVideos);
+      setValue("videos", newVideos.filter(url => url.trim() !== ""));
+
+      toast({
+        title: "Video Uploaded",
+        description: "Video has been uploaded successfully.",
+      });
+    } catch (error) {
+      toast({
+        title: "Upload Failed",
+        description: "Failed to upload video. Please try again.",
+        variant: "destructive",
+      });
+    } finally {
+      setUploading(prev => ({ ...prev, [index]: false }));
+    }
+  };
+
+  const addVideoSlot = () => {
+    if (videos.length >= 3) {
+      toast({
+        title: "Maximum Reached",
+        description: "You can upload a maximum of 3 videos per product.",
+        variant: "destructive",
+      });
+      return;
+    }
+    setVideos([...videos, ""]);
+  };
+
+  const removeVideo = (index: number) => {
+    const newVideos = videos.filter((_, i) => i !== index);
+    setVideos(newVideos);
+    setValue("videos", newVideos.filter(url => url.trim() !== ""));
   };
 
   const addImageUrl = () => setImageUrls([...imageUrls, ""]);
@@ -588,6 +672,91 @@ export function EnhancedAddProductModal({ open, onOpenChange }: EnhancedAddProdu
                 </div>
                 {errors.images && (
                   <p className="text-sm text-destructive mt-1">{errors.images.message}</p>
+                )}
+              </div>
+
+              {/* Video Upload Section */}
+              <div>
+                <Label>Product Videos (Optional - Max 3)</Label>
+                <div className="space-y-2">
+                  {videos.map((videoUrl, index) => (
+                    <div key={index} className="space-y-2">
+                      <div className="flex items-center space-x-2">
+                        <div className="flex-1 space-y-2">
+                          <Input
+                            type="file"
+                            accept="video/mp4,video/webm"
+                            onChange={(e) => {
+                              const file = e.target.files?.[0];
+                              if (file) {
+                                handleVideoUpload(file, index);
+                              }
+                            }}
+                            disabled={uploading[index]}
+                            className="cursor-pointer"
+                            data-testid={`input-video-${index}`}
+                          />
+                          {videoUrl && (
+                            <div className="text-sm text-muted-foreground">
+                              ✓ Video uploaded: {videoUrl.split('/').pop()}
+                            </div>
+                          )}
+                        </div>
+                        {videos.length > 1 && (
+                          <Button
+                            type="button"
+                            variant="ghost"
+                            size="icon"
+                            onClick={() => removeVideo(index)}
+                            disabled={uploading[index]}
+                            data-testid={`button-remove-video-${index}`}
+                          >
+                            <Trash2 className="w-4 h-4" />
+                          </Button>
+                        )}
+                      </div>
+                      
+                      {videoUrl && (
+                        <div className="w-full max-w-sm">
+                          <video
+                            src={videoUrl}
+                            controls
+                            className="w-full h-32 object-cover rounded border"
+                            data-testid={`video-preview-${index}`}
+                          >
+                            Your browser does not support the video tag.
+                          </video>
+                        </div>
+                      )}
+                      
+                      {uploading[index] && (
+                        <div className="flex items-center space-x-2 text-sm text-muted-foreground">
+                          <div className="animate-spin w-4 h-4 border-2 border-primary border-t-transparent rounded-full"></div>
+                          Uploading video...
+                        </div>
+                      )}
+                    </div>
+                  ))}
+                  
+                  {videos.length < 3 && (
+                    <Button 
+                      type="button" 
+                      variant="outline" 
+                      onClick={addVideoSlot}
+                      className="w-full"
+                      data-testid="button-add-video"
+                    >
+                      <Video className="w-4 h-4 mr-2" />
+                      Add Video ({videos.length}/3)
+                    </Button>
+                  )}
+                  
+                  <div className="text-xs text-muted-foreground">
+                    Supported formats: MP4, WebM • Max size: 50MB per video • Max videos: 3
+                  </div>
+                </div>
+                {errors.videos && (
+                  <p className="text-sm text-destructive mt-1">{errors.videos.message}</p>
                 )}
               </div>
             </TabsContent>

@@ -31,10 +31,20 @@ import { db } from "./db";
 import { sendEmail, getOrderConfirmationEmail, getStatusUpdateEmail } from "./email-service";
 import { eq, and, or, gte, isNull, asc, desc, sql } from "drizzle-orm";
 import multer from "multer";
+import express from "express";
 import fs from "fs";
 import path from "path";
 
 export async function registerRoutes(app: Express): Promise<Server> {
+  // Serve uploaded files statically with range support for videos
+  app.use('/uploads', (req, res, next) => {
+    // Enable range requests for video files
+    if (req.path.match(/\.(mp4|webm)$/i)) {
+      res.setHeader('Accept-Ranges', 'bytes');
+    }
+    next();
+  }, express.static('uploads'));
+
   // Health check endpoint for deployment monitoring
   app.get('/api/health', async (req, res) => {
     try {
@@ -523,7 +533,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   // Initialize Gemini AI
 
-  // Configure multer for file uploads
+  // Configure multer for image uploads (AI try-on)
   const upload = multer({ 
     dest: 'uploads/',
     limits: { fileSize: 5 * 1024 * 1024 }, // 5MB limit
@@ -532,6 +542,20 @@ export async function registerRoutes(app: Express): Promise<Server> {
         cb(null, true);
       } else {
         cb(new Error('Only JPEG and PNG files are allowed'));
+      }
+    }
+  });
+
+  // Configure multer for video uploads (product videos)
+  const videoUpload = multer({
+    dest: 'uploads/videos/',
+    limits: { fileSize: 50 * 1024 * 1024 }, // 50MB limit for videos
+    fileFilter: (req, file, cb) => {
+      const allowedMimeTypes = ['video/mp4', 'video/webm'];
+      if (allowedMimeTypes.includes(file.mimetype)) {
+        cb(null, true);
+      } else {
+        cb(new Error('Only MP4 and WebM video files are allowed'));
       }
     }
   });
@@ -598,6 +622,121 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const products = await storage.getProducts();
       const fallback = products?.filter(p => p.isFeatured === true).slice(0, 6) || [];
       res.json(fallback);
+    }
+  });
+
+  // Video Upload API (Admin only)
+  app.post('/api/upload/video', isAuthenticated, videoUpload.single('video'), async (req: any, res) => {
+    try {
+      // Check if user is admin
+      const userId = req.user.claims.sub;
+      const user = await storage.getUser(userId);
+      if (!user || user.email !== 'admin@reweara.com') {
+        if (req.file) {
+          // Clean up uploaded file
+          await fs.promises.unlink(req.file.path);
+        }
+        return res.status(403).json({ error: 'Admin access required' });
+      }
+
+      if (!req.file) {
+        return res.status(400).json({ error: 'Video file is required' });
+      }
+
+      // Generate unique filename with original extension
+      const fileExtension = path.extname(req.file.originalname);
+      const uniqueFilename = `video_${Date.now()}_${Math.random().toString(36).substring(2)}${fileExtension}`;
+      const finalPath = path.join('uploads/videos', uniqueFilename);
+
+      // Move file to final location with unique name
+      await fs.promises.rename(req.file.path, finalPath);
+
+      // Return the accessible URL
+      const videoUrl = `/uploads/videos/${uniqueFilename}`;
+      
+      res.json({ 
+        success: true,
+        videoUrl,
+        filename: uniqueFilename,
+        originalName: req.file.originalname,
+        size: req.file.size
+      });
+
+    } catch (error) {
+      console.error('Video upload error:', error);
+      // Clean up file if it exists
+      if (req.file?.path && fs.existsSync(req.file.path)) {
+        try {
+          await fs.promises.unlink(req.file.path);
+        } catch (unlinkError) {
+          console.error('Failed to clean up uploaded file:', unlinkError);
+        }
+      }
+      res.status(500).json({ error: 'Video upload failed' });
+    }
+  });
+
+  // Product Video Management API (Admin only)
+  app.patch('/api/products/:id/videos', isAuthenticated, async (req: any, res) => {
+    try {
+      // Check if user is admin
+      const userId = req.user.claims.sub;
+      const user = await storage.getUser(userId);
+      if (!user || user.email !== 'admin@reweara.com') {
+        return res.status(403).json({ error: 'Admin access required' });
+      }
+
+      const { productId } = req.params;
+      const { action, videoUrl } = req.body;
+
+      if (!productId) {
+        return res.status(400).json({ error: 'Product ID is required' });
+      }
+
+      if (!action || !['add', 'remove'].includes(action)) {
+        return res.status(400).json({ error: 'Action must be "add" or "remove"' });
+      }
+
+      if (!videoUrl) {
+        return res.status(400).json({ error: 'Video URL is required' });
+      }
+
+      let updatedProduct;
+      
+      if (action === 'add') {
+        try {
+          updatedProduct = await storage.addProductVideo(productId, videoUrl);
+        } catch (error: any) {
+          return res.status(400).json({ error: error.message });
+        }
+      } else if (action === 'remove') {
+        updatedProduct = await storage.removeProductVideo(productId, videoUrl);
+        
+        // Clean up the actual video file from filesystem
+        try {
+          const videoPath = path.join(process.cwd(), videoUrl.replace(/^\//, ''));
+          if (fs.existsSync(videoPath)) {
+            await fs.promises.unlink(videoPath);
+          }
+        } catch (fileError) {
+          console.error('Failed to delete video file:', fileError);
+          // Continue without failing the API call
+        }
+      }
+
+      if (!updatedProduct) {
+        return res.status(404).json({ error: 'Product not found' });
+      }
+
+      res.json({ 
+        success: true, 
+        product: updatedProduct,
+        message: `Video ${action === 'add' ? 'added to' : 'removed from'} product successfully`
+      });
+
+    } catch (error) {
+      console.error('Product video management error:', error);
+      res.status(500).json({ error: 'Video management failed' });
     }
   });
 

@@ -96,6 +96,10 @@ export interface IStorage {
   updateProduct(id: string, updates: Partial<InsertProduct>): Promise<Product | undefined>;
   incrementProductViewCount(id: string): Promise<void>;
   
+  // Product video operations
+  addProductVideo(productId: string, videoUrl: string): Promise<Product | undefined>;
+  removeProductVideo(productId: string, videoUrl: string): Promise<Product | undefined>;
+  
   // Cart operations
   getOrCreateCart(userId?: string, sessionId?: string): Promise<Cart>;
   getCartWithItems(cartId: string): Promise<(Cart & { items: (CartItem & { product: Product })[] }) | undefined>;
@@ -546,6 +550,42 @@ export class DatabaseStorage implements IStorage {
       .update(products)
       .set({ viewCount: sql`${products.viewCount} + 1` })
       .where(eq(products.id, id));
+  }
+
+  // Product video operations
+  async addProductVideo(productId: string, videoUrl: string): Promise<Product | undefined> {
+    const [product] = await db.select().from(products).where(eq(products.id, productId));
+    if (!product) return undefined;
+
+    const currentVideos = product.videos || [];
+    if (currentVideos.length >= 3) {
+      throw new Error('Maximum of 3 videos allowed per product');
+    }
+
+    const updatedVideos = [...currentVideos, videoUrl];
+    const [updatedProduct] = await db
+      .update(products)
+      .set({ videos: updatedVideos })
+      .where(eq(products.id, productId))
+      .returning();
+
+    return updatedProduct;
+  }
+
+  async removeProductVideo(productId: string, videoUrl: string): Promise<Product | undefined> {
+    const [product] = await db.select().from(products).where(eq(products.id, productId));
+    if (!product) return undefined;
+
+    const currentVideos = product.videos || [];
+    const updatedVideos = currentVideos.filter(video => video !== videoUrl);
+
+    const [updatedProduct] = await db
+      .update(products)
+      .set({ videos: updatedVideos })
+      .where(eq(products.id, productId))
+      .returning();
+
+    return updatedProduct;
   }
 
   // Cart operations

@@ -11,7 +11,7 @@ import { useMutation } from "@tanstack/react-query";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 import { z } from "zod";
-import { Plus, X } from "lucide-react";
+import { Plus, X, Upload, Video, Play } from "lucide-react";
 import { Switch } from "@/components/ui/switch";
 
 const editProductSchema = z.object({
@@ -22,6 +22,7 @@ const editProductSchema = z.object({
   brand: z.string().min(1, "Brand is required"),
   condition: z.enum(["new", "like-new", "good", "fair"]),
   images: z.array(z.string()).min(1, "At least one image is required"),
+  videos: z.array(z.string()).optional(),
   sizes: z.array(z.string()).min(1, "At least one size is required"),
   isFeatured: z.boolean().default(false),
 });
@@ -37,6 +38,8 @@ interface EditProductModalProps {
 export function EditProductModal({ open, onOpenChange, product }: EditProductModalProps) {
   const { toast } = useToast();
   const [imageUrls, setImageUrls] = useState<string[]>([""]);
+  const [videos, setVideos] = useState<string[]>([]);
+  const [uploading, setUploading] = useState<{ [key: number]: boolean }>({});
   const [sizes, setSizes] = useState<string[]>([""]);
 
   const {
@@ -50,6 +53,7 @@ export function EditProductModal({ open, onOpenChange, product }: EditProductMod
     defaultValues: {
       condition: "new",
       images: [],
+      videos: [],
       sizes: [],
       isFeatured: false
     }
@@ -67,12 +71,15 @@ export function EditProductModal({ open, onOpenChange, product }: EditProductMod
       setValue("isFeatured", product.isFeatured || false);
       
       const productImages = product.images || [""];
+      const productVideos = product.videos || [];
       const productSizes = product.sizes || [""];
       
       setImageUrls(productImages.length > 0 ? productImages : [""]);
+      setVideos(productVideos);
       setSizes(productSizes.length > 0 ? productSizes : [""]);
       
       setValue("images", productImages);
+      setValue("videos", productVideos);
       setValue("sizes", productSizes);
     }
   }, [product, open, setValue]);
@@ -102,11 +109,13 @@ export function EditProductModal({ open, onOpenChange, product }: EditProductMod
 
   const onSubmit = (data: EditProductForm) => {
     const validImageUrls = imageUrls.filter(url => url.trim() !== "");
+    const validVideos = videos.filter(url => url.trim() !== "");
     const validSizes = sizes.filter(size => size.trim() !== "");
     
     updateProductMutation.mutate({
       ...data,
       images: validImageUrls,
+      videos: validVideos,
       sizes: validSizes
     });
   };
@@ -143,6 +152,116 @@ export function EditProductModal({ open, onOpenChange, product }: EditProductMod
     newSizes[index] = value;
     setSizes(newSizes);
     setValue("sizes", newSizes.filter(size => size.trim() !== ""));
+  };
+
+  // Video handling functions
+  const addVideoSlot = () => {
+    if (videos.length >= 3) {
+      toast({
+        title: "Maximum videos reached",
+        description: "You can upload up to 3 videos per product.",
+        variant: "destructive",
+      });
+      return;
+    }
+    setVideos([...videos, ""]);
+  };
+
+  const removeVideo = async (index: number) => {
+    const videoToRemove = videos[index];
+    const newVideos = videos.filter((_, i) => i !== index);
+    setVideos(newVideos);
+    setValue("videos", newVideos);
+
+    // If it's an existing video (not empty string), remove from server
+    if (videoToRemove && videoToRemove.trim() && product?.id) {
+      try {
+        await apiRequest("PATCH", `/api/products/${product.id}/videos`, {
+          action: "remove",
+          videoUrl: videoToRemove
+        });
+        toast({
+          title: "Video removed",
+          description: "Video has been successfully removed from the product.",
+        });
+      } catch (error) {
+        toast({
+          title: "Error removing video",
+          description: "Failed to remove video from server. Please try again.",
+          variant: "destructive",
+        });
+      }
+    }
+  };
+
+  const handleVideoUpload = async (index: number, file: File) => {
+    if (!file) return;
+
+    // Validate file type
+    if (!file.type.startsWith('video/')) {
+      toast({
+        title: "Invalid file type",
+        description: "Please select a video file (MP4 or WebM).",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    // Validate file size (50MB limit)
+    if (file.size > 50 * 1024 * 1024) {
+      toast({
+        title: "File too large",
+        description: "Video files must be under 50MB.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    setUploading(prev => ({ ...prev, [index]: true }));
+
+    try {
+      const formData = new FormData();
+      formData.append('video', file);
+
+      const response = await fetch('/api/upload/video', {
+        method: 'POST',
+        body: formData,
+      });
+
+      if (!response.ok) {
+        throw new Error('Upload failed');
+      }
+
+      const data = await response.json();
+      
+      // Update videos array
+      const newVideos = [...videos];
+      newVideos[index] = data.url;
+      setVideos(newVideos);
+      setValue("videos", newVideos.filter(url => url.trim() !== ""));
+
+      // If editing existing product, add video to server
+      if (product?.id) {
+        await apiRequest("PATCH", `/api/products/${product.id}/videos`, {
+          action: "add",
+          videoUrl: data.url
+        });
+      }
+
+      toast({
+        title: "Video uploaded",
+        description: "Video has been successfully uploaded.",
+      });
+    } catch (error) {
+      console.error('Video upload error:', error);
+      toast({
+        title: "Upload failed",
+        description: "Failed to upload video. Please try again.",
+        variant: "destructive",
+      });
+    } finally {
+      setUploading(prev => ({ ...prev, [index]: false }));
+    }
   };
 
   if (!product) return null;
@@ -291,6 +410,108 @@ export function EditProductModal({ open, onOpenChange, product }: EditProductMod
             {errors.images && (
               <p className="text-sm text-red-600">{errors.images.message}</p>
             )}
+          </div>
+
+          {/* Product Videos Section */}
+          <div className="space-y-2">
+            <div className="flex items-center justify-between">
+              <Label>Product Videos (Optional)</Label>
+              <span className="text-sm text-muted-foreground">
+                {videos.length}/3 videos
+              </span>
+            </div>
+            <p className="text-sm text-muted-foreground">
+              Upload up to 3 videos (MP4/WebM, max 50MB each) to showcase your product in action
+            </p>
+            
+            <div className="space-y-3">
+              {videos.map((video, index) => (
+                <div key={index} className="border border-border rounded-xl p-4 space-y-3">
+                  <div className="flex items-center justify-between">
+                    <h4 className="font-medium text-sm">Video {index + 1}</h4>
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => removeVideo(index)}
+                      className="text-destructive hover:text-destructive"
+                      data-testid={`button-edit-remove-video-${index}`}
+                    >
+                      <X className="w-4 h-4" />
+                    </Button>
+                  </div>
+
+                  {video ? (
+                    <div className="space-y-2">
+                      <div className="relative aspect-video bg-muted rounded-lg overflow-hidden">
+                        <video
+                          src={video}
+                          controls
+                          muted
+                          playsInline
+                          className="w-full h-full object-cover"
+                          data-testid={`video-edit-preview-${index}`}
+                        >
+                          Your browser does not support the video tag.
+                        </video>
+                      </div>
+                      <p className="text-sm text-muted-foreground truncate">{video}</p>
+                    </div>
+                  ) : (
+                    <div className="space-y-2">
+                      <div className="border-2 border-dashed border-border rounded-lg p-8 text-center">
+                        <Video className="w-8 h-8 mx-auto mb-2 text-muted-foreground" />
+                        <p className="text-sm text-muted-foreground mb-2">Upload a video</p>
+                        <Input
+                          type="file"
+                          accept="video/mp4,video/webm"
+                          onChange={(e) => {
+                            const file = e.target.files?.[0];
+                            if (file) {
+                              handleVideoUpload(index, file);
+                              e.target.value = '';
+                            }
+                          }}
+                          className="hidden"
+                          id={`edit-video-upload-${index}`}
+                          data-testid={`input-edit-video-upload-${index}`}
+                        />
+                        <Button
+                          type="button"
+                          variant="outline"
+                          size="sm"
+                          onClick={() => document.getElementById(`edit-video-upload-${index}`)?.click()}
+                          disabled={uploading[index]}
+                          data-testid={`button-edit-upload-video-${index}`}
+                        >
+                          {uploading[index] ? (
+                            "Uploading..."
+                          ) : (
+                            <>
+                              <Upload className="w-4 h-4 mr-2" />
+                              Choose Video
+                            </>
+                          )}
+                        </Button>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              ))}
+
+              {videos.length < 3 && (
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={addVideoSlot}
+                  className="w-full rounded-xl border-dashed"
+                  data-testid="button-edit-add-video"
+                >
+                  <Plus className="w-4 h-4 mr-2" />
+                  Add Video
+                </Button>
+              )}
+            </div>
           </div>
 
           <div className="space-y-2">
