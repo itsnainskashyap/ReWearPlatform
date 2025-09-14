@@ -28,20 +28,24 @@ export async function verifyPassword(password: string, hash: string): Promise<bo
   return await bcrypt.compare(password, hash);
 }
 
-// Generate JWT token
+// Module-level JWT secret for consistency
+const JWT_SECRET = getJWTSecret();
+
+// Generate JWT token with consistent algorithm
 export function generateToken(adminId: string, email: string, role: string): string {
   return jwt.sign(
     { id: adminId, email, role },
-    getJWTSecret(),
-    { expiresIn: "1h" }
+    JWT_SECRET,
+    { expiresIn: "1h", algorithm: "HS256" }
   );
 }
 
-// Verify JWT token
+// Verify JWT token with proper error logging
 export function verifyToken(token: string): any {
   try {
-    return jwt.verify(token, getJWTSecret());
-  } catch (error) {
+    return jwt.verify(token, JWT_SECRET, { algorithms: ['HS256'] });
+  } catch (error: any) {
+    console.error('JWT verify failed:', error.name, error.message);
     return null;
   }
 }
@@ -77,10 +81,11 @@ export async function isAdminAuthenticated(
   next: NextFunction
 ) {
   try {
-    const token = req.headers.authorization?.replace("Bearer ", "");
+    const authHeader = req.headers.authorization || "";
+    const [scheme, token] = authHeader.split(/\s+/);
     
-    if (!token) {
-      return res.status(401).json({ message: "No token provided" });
+    if (!token || !/^Bearer$/i.test(scheme)) {
+      return res.status(401).json({ message: "Invalid or missing token" });
     }
 
     const decoded = verifyToken(token);
