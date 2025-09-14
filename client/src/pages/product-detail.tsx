@@ -161,9 +161,9 @@ export default function ProductDetail() {
     );
   }
 
-  const images = product.images?.length > 0 ? product.images : ['/api/placeholder/400/400'];
-  const averageRating = reviews?.average || 4.5;
-  const reviewCount = reviews?.count || 0;
+  const images = product?.images?.length ? product.images : ['/api/placeholder/400/400'];
+  const averageRating = (reviews as any)?.average || 4.5;
+  const reviewCount = (reviews as any)?.count || 0;
 
   return (
     <div className={`min-h-screen bg-gradient-to-br from-background via-background to-primary/5 pb-32 transition-all duration-500 ${isVisible ? 'animate-fadeInUp' : 'opacity-0'}`}>
@@ -181,7 +181,7 @@ export default function ProductDetail() {
           </Button>
           
           <h1 className="font-bold text-lg gradient-text truncate max-w-[200px]">
-            {product.name}
+            {product?.name || 'Product'}
           </h1>
           
           <div className="flex space-x-2">
@@ -210,7 +210,7 @@ export default function ProductDetail() {
       <div className="relative">
         <MediaCarousel 
           images={images}
-          videos={product.videos || []}
+          videos={product?.videos || []}
           aspectRatio="square"
           className="w-full"
         />
@@ -241,10 +241,10 @@ export default function ProductDetail() {
             )}
           </div>
           
-          <h1 className="text-2xl font-bold">{product.name}</h1>
+          <h1 className="text-2xl font-bold">{product?.name || 'Product'}</h1>
           
-          {product.brandId && (
-            <p className="text-muted-foreground">by {product.brandName || 'Brand'}</p>
+          {product?.brandId && (
+            <p className="text-muted-foreground">by Brand</p>
           )}
           
           {/* Rating */}
@@ -270,14 +270,14 @@ export default function ProductDetail() {
         {/* Price and Stock */}
         <div className="space-y-1 animate-scaleIn" style={{ animationDelay: '0.2s' }}>
           <div className="flex items-baseline space-x-3">
-            <span className="text-3xl font-bold text-primary">₹{product.price}</span>
-            {product.originalPrice && parseFloat(product.originalPrice) > parseFloat(product.price) && (
+            <span className="text-3xl font-bold text-primary">₹{product?.price || '0'}</span>
+            {product?.originalPrice && parseFloat(product.originalPrice) > parseFloat(product.price || '0') && (
               <>
                 <span className="text-xl text-muted-foreground line-through">
                   ₹{product.originalPrice}
                 </span>
                 <Badge className="bg-green-100 text-green-800 border-green-200">
-                  {Math.round(((parseFloat(product.originalPrice) - parseFloat(product.price)) / parseFloat(product.originalPrice)) * 100)}% OFF
+                  {Math.round(((parseFloat(product.originalPrice) - parseFloat(product.price || '0')) / parseFloat(product.originalPrice)) * 100)}% OFF
                 </Badge>
               </>
             )}
@@ -294,7 +294,7 @@ export default function ProductDetail() {
         </div>
 
         {/* Size Selection */}
-        {product.sizes && (
+        {product?.sizes && (
           <div className="space-y-3">
             <div className="flex items-center justify-between">
               <label className="font-semibold">Select Size</label>
@@ -309,7 +309,7 @@ export default function ProductDetail() {
               </Button>
             </div>
             <div className="flex flex-wrap gap-2">
-              {(product.sizes || []).map(size => (
+              {(product?.sizes || []).map(size => (
                 <Button
                   key={size}
                   variant={selectedSize === size ? "default" : "outline"}
@@ -357,21 +357,21 @@ export default function ProductDetail() {
           <div className="flex space-x-3">
             <Button
               onClick={() => addToCartMutation.mutate()}
-              disabled={!product.stock || product.stock <= 0}
+              disabled={!(product?.stock) || (product?.stock || 0) <= 0}
               className="flex-1 h-14 rounded-2xl glassmorphism border border-primary text-primary hover:bg-primary/10 disabled:opacity-50 disabled:cursor-not-allowed"
               data-testid="button-add-to-cart"
             >
               <ShoppingBag className="w-5 h-5 mr-2" />
-              {!product.stock || product.stock <= 0 ? 'Out of Stock' : 'Add to Cart'}
+              {!(product?.stock) || (product?.stock || 0) <= 0 ? 'Out of Stock' : 'Add to Cart'}
             </Button>
             <Button
               onClick={buyNowHandler}
-              disabled={!product.stock || product.stock <= 0}
+              disabled={!(product?.stock) || (product?.stock || 0) <= 0}
               className="flex-1 h-14 bg-gradient-to-r from-accent to-accent/90 text-accent-foreground rounded-2xl button-glow hover-lift disabled:opacity-50 disabled:cursor-not-allowed"
               data-testid="button-buy-now"
             >
               <Sparkles className="w-5 h-5 mr-2" />
-              {!product.stock || product.stock <= 0 ? 'Out of Stock' : 'Buy Now'}
+              {!(product?.stock) || (product?.stock || 0) <= 0 ? 'Out of Stock' : 'Buy Now'}
             </Button>
           </div>
           {/* Virtual Try-On */}
@@ -410,7 +410,7 @@ export default function ProductDetail() {
             <Card className="card-premium rounded-2xl">
               <CardContent className="p-4">
                 <p className="text-muted-foreground leading-relaxed">
-                  {product.description || 'High-quality sustainable fashion piece perfect for eco-conscious shoppers. This item combines style with environmental responsibility.'}
+                  {product?.description || 'High-quality sustainable fashion piece perfect for eco-conscious shoppers. This item combines style with environmental responsibility.'}
                 </p>
               </CardContent>
             </Card>
@@ -473,18 +473,18 @@ export default function ProductDetail() {
         {/* AI Recommendations */}
         <div className="pt-6">
           <AIRecommendations 
-            productId={params?.id} 
+            productId={params?.id || ''} 
             title="AI Recommended Similar Items" 
             maxItems={6}
           />
         </div>
 
         {/* Related Products */}
-        {related && related.length > 0 && (
+        {related && (related as any)?.length > 0 && (
           <div className="pt-6">
             <h3 className="text-xl font-bold mb-4">You May Also Like</h3>
             <div className="flex space-x-4 overflow-x-auto scroll-container">
-              {related.map((item: any) => (
+              {(related as any).map((item: any) => (
                 <Card
                   key={item.id}
                   onClick={() => navigate(`/product/${item.id}`)}
