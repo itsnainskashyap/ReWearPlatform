@@ -38,8 +38,8 @@ const enhancedProductSchema = z.object({
   name: z.string().min(1, "Product name is required"),
   description: z.string().min(1, "Description is required"),
   shortDescription: z.string().optional(),
-  price: z.number().min(0, "Price must be positive"),
-  originalPrice: z.number().optional(),
+  price: z.number().min(0, "Price must be positive").max(99999999.99, "Price cannot exceed ₹99,999,999.99"),
+  originalPrice: z.number().min(0, "Original price must be positive").max(99999999.99, "Original price cannot exceed ₹99,999,999.99").optional(),
   categoryId: z.string().min(1, "Category is required"),
   brandId: z.string().optional(),
   condition: z.enum(["new", "like-new", "good", "fair"]),
@@ -59,11 +59,11 @@ const enhancedProductSchema = z.object({
   videos: z.array(z.string()).max(3, "Maximum 3 videos allowed").optional(),
   sizes: z.array(z.string()).min(1, "At least one size is required"),
   ecoBadges: z.array(z.string()).optional(),
-  discount: z.number().min(0).max(100).optional(),
+  discount: z.number().min(0, "Discount cannot be negative").max(100, "Discount cannot exceed 100%").optional(),
   discountType: z.enum(["percentage", "fixed"]).optional(),
   discountExpiry: z.string().optional(),
-  stock: z.number().min(0).default(1),
-  stockAlert: z.number().min(0).default(5),
+  stock: z.number().min(0, "Stock cannot be negative").max(999999, "Stock cannot exceed 999,999").default(1),
+  stockAlert: z.number().min(0, "Stock alert cannot be negative").max(999999, "Stock alert cannot exceed 999,999").default(5),
   relatedProducts: z.array(z.string()).optional(),
   tags: z.array(z.string()).optional(),
   isOriginal: z.boolean().default(false),
@@ -768,9 +768,13 @@ export function EnhancedAddProductModal({ open, onOpenChange }: EnhancedAddProdu
                     id="price" 
                     type="number" 
                     step="0.01"
+                    max="99999999.99"
                     {...register("price", { valueAsNumber: true })} 
-                    placeholder="0.00"
+                    placeholder="299.99"
                   />
+                  <p className="text-xs text-muted-foreground mt-1">
+                    Maximum: ₹99,999,999.99
+                  </p>
                   {errors.price && (
                     <p className="text-sm text-destructive mt-1">{errors.price.message}</p>
                   )}
@@ -781,9 +785,16 @@ export function EnhancedAddProductModal({ open, onOpenChange }: EnhancedAddProdu
                     id="originalPrice" 
                     type="number" 
                     step="0.01"
+                    max="99999999.99"
                     {...register("originalPrice", { valueAsNumber: true })} 
-                    placeholder="0.00"
+                    placeholder="399.99"
                   />
+                  <p className="text-xs text-muted-foreground mt-1">
+                    Optional - for showing discounts
+                  </p>
+                  {errors.originalPrice && (
+                    <p className="text-sm text-destructive mt-1">{errors.originalPrice.message}</p>
+                  )}
                 </div>
               </div>
 
