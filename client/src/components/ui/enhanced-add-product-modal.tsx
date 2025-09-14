@@ -361,8 +361,6 @@ export function EnhancedAddProductModal({ open, onOpenChange }: EnhancedAddProdu
                       <SelectValue placeholder="Select category" />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="thrift">Thrift Store</SelectItem>
-                      <SelectItem value="originals">ReWeara Originals</SelectItem>
                       {Array.isArray(categories) && categories.map((cat: any) => (
                         <SelectItem key={cat.id} value={cat.id}>
                           {cat.name}
@@ -378,7 +376,7 @@ export function EnhancedAddProductModal({ open, onOpenChange }: EnhancedAddProdu
 
               <div className="grid grid-cols-2 gap-4">
                 {/* Only show brand selection if not ReWeara Originals */}
-                {selectedCategory !== "originals" && (
+                {(
                   <div>
                     <Label htmlFor="brandId">Brand/Logo</Label>
                     <Select onValueChange={(value) => setValue("brandId", value)}>
@@ -396,7 +394,7 @@ export function EnhancedAddProductModal({ open, onOpenChange }: EnhancedAddProdu
                   </div>
                 )}
 
-                <div className={selectedCategory === "originals" ? "col-span-2" : ""}>
+                <div>
                   <Label htmlFor="condition">Condition *</Label>
                   <Select 
                     defaultValue="new"
